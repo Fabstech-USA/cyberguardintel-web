@@ -30,7 +30,7 @@ export function withTenant(handler: (req: Request, ctx: TenantContext) => Promis
     })
 
     if (!member) {
-      await writeAuditLog({
+      writeAuditLog({
         organizationId: orgId,
         actorId: userId,
         action: 'security.unauthorized_access_attempt',
