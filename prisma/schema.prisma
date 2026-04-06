@@ -1,10 +1,426 @@
-// https://pris.ly/d/prisma-schema
-
+// prisma/schema.prisma
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgvector(map: "vector")]
+}
+
+// ── ENUMS ─────────────────────────────────────────────────────
+enum PlanType {
+  STARTER
+  GROWTH
+  BUSINESS
+  ENTERPRISE
+}
+
+enum OrgRole {
+  OWNER
+  ADMIN
+  MEMBER
+  AUDITOR
+}
+
+enum Industry {
+  HEALTHCARE
+  TECHNOLOGY
+  FINANCE
+  ECOMMERCE
+  OTHER
+}
+
+enum FrameworkSlug {
+  HIPAA
+  SOC2
+  PCI_DSS
+  ISO27001
+  CMMC
+}
+
+enum FrameworkStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  AUDIT_READY
+  CERTIFIED
+}
+
+enum ControlStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  IMPLEMENTED
+  NEEDS_REVIEW
+  EXCEPTION
+}
+
+enum EvidenceSource {
+  INTEGRATION
+  MANUAL
+  AI_GENERATED
+}
+
+enum PolicyType {
+  ACCESS_CONTROL
+  INCIDENT_RESPONSE
+  WORKFORCE_TRAINING
+  DEVICE_MEDIA
+  CONTINGENCY_PLAN
+  AUDIT_CONTROLS
+  TRANSMISSION_SECURITY
+  FACILITY_ACCESS
+  WORKSTATION_USE
+  INFORMATION_ACCESS
+  DATA_CLASSIFICATION
+  VENDOR_MANAGEMENT
+}
+
+enum PolicyStatus {
+  DRAFT
+  UNDER_REVIEW
+  APPROVED
+  ARCHIVED
+}
+
+enum IntegrationStatus {
+  ACTIVE
+  PAUSED
+  ERROR
+  DISCONNECTED
+}
+
+enum JobStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum BaaStatus {
+  PENDING
+  SIGNED
+  EXPIRED
+  TERMINATED
+}
+
+
+// ── MULTI-TENANCY FOUNDATION ──────────────────────────────────────
+model Organization {
+  id              String       @id @default(cuid())
+  clerkOrgId      String       @unique
+  name            String
+  slug            String       @unique
+  plan            PlanType     @default(STARTER)
+  billingEmail    String
+  industry        Industry     @default(HEALTHCARE)
+  employeeCount   Int?
+  hipaaSubjectType String?     // covered_entity | business_associate | both
+  techStack       String[]     // e.g. ["aws", "google-workspace", "epic"]
+  stripeCustomerId String?     @unique
+  stripeSubId     String?      @unique
+  trialEndsAt     DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  members         OrgMember[]
+  frameworks      OrgFramework[]
+  integrations    Integration[]
+  evidence        Evidence[]
+  policies        Policy[]
+  controls        OrgControl[]
+  auditLogs       AuditLog[]
+  riskAssessments RiskAssessment[]
+  baaRecords      BaaRecord[]
+  trainingRecords TrainingRecord[]
+  phiSystems      PhiSystem[]
+  collectionJobs  CollectionJob[]
+}
+
+model OrgMember {
+  id             String   @id @default(cuid())
+  clerkUserId    String
+  organizationId String
+  role           OrgRole  @default(MEMBER)
+  createdAt      DateTime @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  @@unique([clerkUserId, organizationId])
+  @@index([organizationId])
+}
+
+// ── COMPLIANCE FRAMEWORK LIBRARY (shared across all orgs) ──────────
+model Framework {
+  id          String        @id @default(cuid())
+  slug        FrameworkSlug @unique
+  name        String
+  version     String
+  description String
+  isActive    Boolean       @default(true)
+
+  controls     FrameworkControl[]
+  orgFrameworks OrgFramework[]
+}
+
+model FrameworkControl {
+  id              String    @id @default(cuid())
+  frameworkId     String
+  controlRef      String    // e.g. '164.308(a)(1)' for HIPAA, 'CC6.1' for SOC2
+  category        String    // e.g. 'Administrative Safeguards'
+  title           String
+  description     String    @db.Text
+  guidance        String    @db.Text  // Mwombeki writes this content
+  evidenceHints   String    @db.Text  // What auditors look for
+  isRequired      Boolean   @default(true)
+  // pgvector embedding for semantic cross-framework search
+  embedding       Unsupported("vector(384)")?
+
+  framework       Framework   @relation(fields: [frameworkId], references: [id])
+  orgControls     OrgControl[]
+  sourceMappings  ControlMapping[] @relation("sourceControl")
+  targetMappings  ControlMapping[] @relation("targetControl")
+  @@unique([frameworkId, controlRef])
+  @@index([frameworkId])
+}
+
+// Cross-framework control mappings (HIPAA 164.312(a) <-> SOC2 CC6.1)
+model ControlMapping {
+  id              String @id @default(cuid())
+  sourceControlId String
+  targetControlId String
+  mappingStrength String @default("partial") // full | partial | related
+
+  sourceControl   FrameworkControl @relation("sourceControl", fields: [sourceControlId], references: [id])
+  targetControl   FrameworkControl @relation("targetControl", fields: [targetControlId], references: [id])
+  @@unique([sourceControlId, targetControlId])
+}
+
+// ── ORG-SPECIFIC FRAMEWORK ENROLLMENT ─────────────────────────────
+model OrgFramework {
+  id              String          @id @default(cuid())
+  organizationId  String
+  frameworkId     String
+  status          FrameworkStatus @default(NOT_STARTED)
+  targetAuditDate DateTime?
+  score           Float           @default(0)   // 0-100 readiness score
+  scoreUpdatedAt  DateTime?
+  createdAt       DateTime        @default(now())
+
+  organization    Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  framework       Framework       @relation(fields: [frameworkId], references: [id])
+  @@unique([organizationId, frameworkId])
+  @@index([organizationId])
+}
+
+// Per-org control implementation status
+model OrgControl {
+  id                 String        @id @default(cuid())
+  organizationId     String
+  frameworkControlId String
+  status             ControlStatus @default(NOT_STARTED)
+  ownerId            String?       // clerkUserId of the responsible person
+  implementationNotes String?      @db.Text
+  dueDate            DateTime?
+  lastReviewedAt     DateTime?
+  score              Float         @default(0)
+  updatedAt          DateTime      @updatedAt
+
+  organization      Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  frameworkControl  FrameworkControl @relation(fields: [frameworkControlId], references: [id])
+  evidence          Evidence[]
+  @@unique([organizationId, frameworkControlId])
+  @@index([organizationId])
+}
+
+// ── EVIDENCE ────────────────────────────────────────────────────────
+model Evidence {
+  id              String         @id @default(cuid())
+  organizationId  String
+  orgControlId    String
+  title           String
+  description     String?        @db.Text
+  sourceType      EvidenceSource
+  integrationId   String?
+  s3Key           String?        // path in S3 bucket
+  mimeType        String?
+  fileHash        String?        // SHA-256 for tamper detection
+  collectedAt     DateTime       @default(now())
+  expiresAt       DateTime?      // access reviews expire in 90 days, etc.
+  metadata        Json?          // integration-specific raw data
+  isValid         Boolean        @default(true)
+
+  organization    Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  orgControl      OrgControl     @relation(fields: [orgControlId], references: [id])
+  integration     Integration?   @relation(fields: [integrationId], references: [id])
+  @@index([organizationId, orgControlId])
+  @@index([organizationId, collectedAt])
+}
+
+// ── POLICIES ────────────────────────────────────────────────────────
+model Policy {
+  id              String       @id @default(cuid())
+  organizationId  String
+  frameworkSlug   FrameworkSlug
+  type            PolicyType
+  title           String
+  content         String       @db.Text   // Markdown content
+  version         Int          @default(1)
+  status          PolicyStatus @default(DRAFT)
+  aiGenerated     Boolean      @default(true)
+  approvedById    String?      // clerkUserId
+  approvedAt      DateTime?
+  effectiveDate   DateTime?
+  reviewDate      DateTime?    // Typically 1 year from effectiveDate
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  @@unique([organizationId, frameworkSlug, type])
+  @@index([organizationId, frameworkSlug])
+}
+
+// ── HIPAA-SPECIFIC MODELS ──────────────────────────────────────────
+model RiskAssessment {
+  id              String    @id @default(cuid())
+  organizationId  String
+  version         Int       @default(1)
+  status          PolicyStatus @default(DRAFT)
+  conductedById   String?   // clerkUserId
+  approvedById    String?
+  approvedAt      DateTime?
+  scope           String    @db.Text   // PHI systems in scope
+  threats         Json      // Array of identified threats with likelihood/impact
+  vulnerabilities Json      // Array of vulnerabilities
+  riskLevel       RiskLevel @default(MEDIUM)
+  recommendations Json      // Prioritized remediation steps
+  aiGenerated     Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  @@index([organizationId])
+}
+
+model BaaRecord {
+  id              String    @id @default(cuid())
+  organizationId  String
+  vendorName      String
+  vendorEmail     String?
+  services        String    @db.Text   // What PHI services the vendor provides
+  status          BaaStatus @default(PENDING)
+  signedAt        DateTime?
+  expiresAt       DateTime?
+  documentS3Key   String?   // Signed BAA PDF stored in S3
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  @@index([organizationId, status])
+}
+
+model TrainingRecord {
+  id              String   @id @default(cuid())
+  organizationId  String
+  employeeId      String   // clerkUserId or external employee ID
+  employeeName    String
+  employeeEmail   String
+  trainingTitle   String
+  completedAt     DateTime
+  nextDueAt       DateTime // completedAt + 1 year
+  attestationS3Key String? // Signed attestation PDF
+  createdAt       DateTime @default(now())
+
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  @@index([organizationId, nextDueAt])
+}
+
+model PhiSystem {
+  id              String   @id @default(cuid())
+  organizationId  String
+  name            String   // e.g. 'Epic EHR', 'AWS RDS prod'
+  systemType      String   // emr | database | api | cloud | communication | analytics
+  description     String?
+  containsPhi     Boolean  @default(true)
+  phiTypes        String[] // e.g. ["demographics", "diagnoses", "medications"]
+  accessControls  String?  @db.Text
+  encryptionAtRest Boolean @default(false)
+  encryptionInTransit Boolean @default(false)
+  connections     Json?    // Which other systems this connects to
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  @@index([organizationId])
+}
+
+// ── INTEGRATIONS ────────────────────────────────────────────────────
+model Integration {
+  id              String            @id @default(cuid())
+  organizationId  String
+  type            String            // 'aws' | 'google-workspace' | 'github' | 'okta'...
+  displayName     String
+  status          IntegrationStatus @default(ACTIVE)
+  // AES-256-GCM encrypted credentials string: iv:tag:ciphertext
+  encryptedCreds  String            @db.Text
+  config          Json?             // Non-sensitive integration config
+  lastSyncAt      DateTime?
+  lastSyncStatus  String?           // 'success' | 'partial' | 'error'
+  lastSyncCount   Int               @default(0)
+  errorMessage    String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  organization    Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  evidence        Evidence[]
+  jobs            CollectionJob[]
+  @@unique([organizationId, type])
+  @@index([organizationId])
+}
+
+model CollectionJob {
+  id              String    @id @default(cuid())
+  organizationId  String
+  integrationId   String
+  jobType         String    @default("INCREMENTAL") // FULL | INCREMENTAL
+  bullmqJobId     String?   // ID in the Redis queue
+  status          JobStatus @default(QUEUED)
+  startedAt       DateTime?
+  completedAt     DateTime?
+  evidenceAdded   Int       @default(0)
+  errorMessage    String?
+  createdAt       DateTime  @default(now())
+
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  integration     Integration  @relation(fields: [integrationId], references: [id])
+  @@index([organizationId, status])
+}
+
+// ── IMMUTABLE AUDIT LOG (HIPAA 164.312(b) requirement) ─────────────
+// This table is append-only. No row is ever updated or deleted.
+// The application role does not have DELETE permission on this table.
+model AuditLog {
+  id              String   @id @default(cuid())
+  organizationId  String
+  actorId         String   // clerkUserId or 'system'
+  actorEmail      String?
+  action          String   // 'evidence.created' | 'policy.approved' | 'baa.signed'
+  resourceType    String   // 'Evidence' | 'Policy' | 'BaaRecord' | 'RiskAssessment'
+  resourceId      String?
+  metadata        Json?    // Additional context, e.g. old values for updates
+  ipAddress       String?
+  userAgent       String?
+  createdAt       DateTime @default(now())
+
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  @@index([organizationId, createdAt])
+  @@index([organizationId, resourceType, resourceId])
 }
