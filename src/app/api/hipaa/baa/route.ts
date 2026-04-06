@@ -1,9 +1,10 @@
-import { NextResponse } from "next/server";
+import { withTenant } from '@/lib/tenant'
+import { NextResponse } from 'next/server'
 
-export async function GET() {
-  return NextResponse.json([]);
-}
+export const GET = withTenant(async (_req, _tenant) => {
+  return NextResponse.json([])
+})
 
-export async function POST() {
-  return NextResponse.json({ ok: true });
-}
+export const POST = withTenant(async (_req, _tenant) => {
+  return NextResponse.json({ ok: true })
+})

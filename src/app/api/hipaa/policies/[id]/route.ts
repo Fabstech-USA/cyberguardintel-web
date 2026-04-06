@@ -1,16 +1,17 @@
-import { NextResponse } from "next/server";
+import { withTenant } from '@/lib/tenant'
+import { NextResponse } from 'next/server'
 
-export async function GET(
-  _request: Request,
-  _context: { params: Promise<{ id: string }> },
-) {
-  return NextResponse.json({});
+export async function GET(req: Request, context: { params: Promise<{ id: string }> }) {
+  const _params = await context.params
+  return withTenant(async (_req, _tenant) => {
+    return NextResponse.json({})
+  })(req)
 }
 
-export async function PATCH() {
-  return NextResponse.json({ ok: true });
-}
+export const PATCH = withTenant(async (_req, _tenant) => {
+  return NextResponse.json({ ok: true })
+})
 
-export async function DELETE() {
-  return NextResponse.json({ ok: true });
-}
+export const DELETE = withTenant(async (_req, _tenant) => {
+  return NextResponse.json({ ok: true })
+})
