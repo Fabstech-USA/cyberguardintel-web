@@ -15,6 +15,7 @@ const isPublicAuthRoute = createRouteMatcher([
  */
 const isDashboardRoute = createRouteMatcher([
   "/onboarding(.*)",
+  "/dashboard(.*)",
   "/soc2(.*)",
   "/hipaa(.*)",
   "/integrations(.*)",

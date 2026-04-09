@@ -1,4 +1,4 @@
-export default function Page() {
+export default function DashboardHomePage() {
   return (
     <main className="flex w-full flex-1 flex-col gap-2 p-8">
       <h1 className="text-2xl font-semibold">Dashboard</h1>
@@ -8,4 +8,3 @@ export default function Page() {
     </main>
   );
 }
-
