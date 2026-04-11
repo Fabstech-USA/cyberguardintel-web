@@ -23,10 +23,10 @@ export async function writeAuditLog(entry: AuditEntry): Promise<void> {
   // It must never block the main response
   prisma.auditLog
     .create({ data: entry as AuditLogCreateData })
-    .catch(err => {
-    console.error('AuditLog write failed:', err)
-    // In production, send to Sentry as well
-  })
+    .catch((err: unknown) => {
+      console.error('AuditLog write failed:', err)
+      // In production, send to Sentry as well
+    })
 }
 
 // Standard action strings to use consistently:
