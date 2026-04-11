@@ -8,6 +8,8 @@
 
 generator client {
   provider = "prisma-client-js"
+  // App-local output: Turbopack resolves this; avoid importing via ../../node_modules/.prisma/...
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
