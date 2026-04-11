@@ -3,14 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "postinstall": "prisma generate",
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.0.11",
     "@hookform/resolvers": "^5.2.2",
+    "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.7.0",
     "@tiptap/react": "^3.22.2",
     "@tiptap/starter-kit": "^3.22.2",
@@ -20,6 +24,7 @@
     "date-fns": "^4.1.0",
     "lucide-react": "^1.7.0",
     "next": "16.2.2",
+    "pg": "^8.20.0",
     "prisma": "^7.7.0",
     "radix-ui": "^1.4.3",
     "react": "19.2.4",
@@ -32,15 +37,17 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "dotenv": "^16.4.5",
-    "tsx": "^4.19.3",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^16.4.5",
     "eslint": "^9",
     "eslint-config-next": "16.2.2",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "tsx": "^4.19.3",
+    "typescript": "^5",
+    "vitest": "^4.1.4"
   }
 }
