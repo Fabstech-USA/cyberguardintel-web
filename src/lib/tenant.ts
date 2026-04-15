@@ -22,26 +22,34 @@ export function withTenant(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Verify membership in our own database as defense-in-depth
+    const org = await prisma.organization.findUnique({
+      where: { clerkOrgId: orgId },
+      select: { id: true },
+    })
+
+    if (!org) {
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
+    }
+
     const member = await prisma.orgMember.findUnique({
       where: {
-        clerkUserId_organizationId: { clerkUserId: userId, organizationId: orgId }
+        clerkUserId_organizationId: { clerkUserId: userId, organizationId: org.id }
       }
     })
 
     if (!member) {
       await writeAuditLog({
-        organizationId: orgId,
+        organizationId: org.id,
         actorId:        userId,
         action:         'security.unauthorized_access_attempt',
         resourceType:   'Organization',
-        resourceId:     orgId,
+        resourceId:     org.id,
       })
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     return handler(req, {
-      organizationId: orgId,
+      organizationId: org.id,
       clerkUserId:    userId,
       orgRole:        member.role,
     })
