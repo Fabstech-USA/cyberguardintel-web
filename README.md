@@ -1,4 +1,4 @@
-# CyberGuardIntel
+# CyberGuardIntel-Web
 
 HIPAA & SOC 2 compliance automation platform built by **Fabstech LLC**.
 
