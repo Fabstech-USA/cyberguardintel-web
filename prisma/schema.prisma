@@ -132,6 +132,7 @@ model Organization {
   techStack       String[]     // e.g. ["aws", "google-workspace", "epic"]
   stripeCustomerId String?     @unique
   stripeSubId     String?      @unique
+  onboardingStep  Int?         @default(0) // null = onboarding complete
   trialEndsAt     DateTime?
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
