@@ -1,0 +1,21 @@
+# .cursorrules
+# CyberGuardIntel AI - Cursor AI Rules
+
+## Project Overview
+CyberGuardIntel AI is a HIPAA compliance automation SaaS built by Fabstech LLC.
+HIPAA compliance is a first-class requirement, not an afterthought.
+
+## Critical Rules - Always Follow
+1. Every database query MUST include WHERE organizationId = context.organizationId
+2. Every mutation MUST call writeAuditLog() after success (HIPAA 164.312(b))
+3. NEVER store plaintext credentials. Always use encryptCredentials() from src/lib/crypto.ts
+4. All API routes use withTenant middleware from src/lib/tenant.ts
+5. AI-generated content is always status: DRAFT until a human approves it
+6. All user-facing compliance content has been reviewed by Mwombeki (medical doctor)
+
+## Code Style
+- TypeScript strict mode. No 'any' types. No ts-ignore comments.
+- All async functions have explicit return types
+- All API route inputs validated with Zod before any DB operation
+- Server components for data fetching, client components for interactivity
+
