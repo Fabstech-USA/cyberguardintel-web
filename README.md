@@ -1,36 +1,86 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CyberGuardIntel
+
+HIPAA & SOC 2 compliance automation platform built by **Fabstech LLC**.
+
+## Tech Stack
+
+- **Framework:** Next.js 16 (App Router, Turbopack)
+- **Language:** TypeScript (strict)
+- **Auth:** Clerk (MFA enforced)
+- **Database:** PostgreSQL via Prisma 7
+- **UI:** shadcn/ui, Tailwind CSS 4, Radix UI, Recharts
+- **Storage:** AWS S3 (SSE-KMS encrypted evidence files)
+- **Payments:** Stripe
+- **Editor:** Tiptap (policy authoring)
+- **Testing:** Vitest
+
+## Prerequisites
+
+- Node.js 20+
+- PostgreSQL database
+- Clerk, Stripe, and AWS credentials
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp .env.example .env.local   # then fill in values
+
+# Push the Prisma schema to your database
+npx prisma db push
+
+# Start the dev server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to view the app.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Command            | Description                       |
+| ------------------ | --------------------------------- |
+| `npm run dev`      | Start development server          |
+| `npm run build`    | Generate Prisma client & build    |
+| `npm run start`    | Start production server           |
+| `npm run lint`     | Run ESLint                        |
+| `npm run type-check` | Run TypeScript type checking    |
+| `npm run test`     | Run Vitest test suite             |
 
-## Learn More
+## Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+  app/
+    (auth)/          # Sign-in & sign-up pages (public)
+    (dashboard)/     # Authenticated app routes
+      audit/         # Audit log & export
+      dashboard/     # Main dashboard
+      evidence/      # Evidence management & uploads
+      hipaa/         # Policies, BAA tracker, PHI map, risk assessment, training
+      integrations/  # Third-party integrations
+      onboarding/    # New-org onboarding flow
+      settings/      # Organization settings
+      soc2/          # SOC 2 framework & controls
+    api/             # API routes
+  components/        # Reusable UI components
+  lib/               # Utilities (prisma, s3, crypto, tenant, etc.)
+  generated/         # Prisma generated client
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Environment Variables
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Variable          | Purpose                            |
+| ----------------- | ---------------------------------- |
+| `DATABASE_URL`    | PostgreSQL connection string       |
+| `ENCRYPTION_KEY`  | Hex-encoded AES key for credential encryption |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk frontend key |
+| `CLERK_SECRET_KEY` | Clerk backend key                 |
 
-## Deploy on Vercel
+Refer to `.env.example` for the full list.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## License
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Proprietary &mdash; Fabstech LLC. All rights reserved.
