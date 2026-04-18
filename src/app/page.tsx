@@ -8,7 +8,7 @@ export default async function Home() {
   const { userId } = await auth();
 
   if (userId) {
-    redirect("/onboarding");
+    redirect("/post-auth");
   }
 
   redirect("/sign-in");

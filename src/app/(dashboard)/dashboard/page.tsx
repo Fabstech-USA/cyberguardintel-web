@@ -15,7 +15,7 @@ export default async function DashboardHomePage(): Promise<React.JSX.Element> {
   const { userId, orgId } = await auth();
 
   if (!userId) redirect("/sign-in");
-  if (!orgId) redirect("/onboarding");
+  if (!orgId) redirect("/post-auth");
 
   const user = await currentUser();
 
