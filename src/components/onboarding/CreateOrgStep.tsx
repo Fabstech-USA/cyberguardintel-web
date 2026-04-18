@@ -82,13 +82,28 @@ export function CreateOrgStep({ onComplete }: Props): React.JSX.Element {
         }),
       });
 
-      const data = (await res.json()) as {
-        error?: string;
-        clerkOrgId?: string;
-      };
+      // Defensive: the server *should* always return JSON, but if it ever
+      // returns an empty body (e.g. a crashed route), we surface a useful
+      // message instead of the browser's opaque "Unexpected end of JSON input".
+      const raw = await res.text();
+      const data = raw
+        ? ((): { error?: string; clerkOrgId?: string } => {
+            try {
+              return JSON.parse(raw) as {
+                error?: string;
+                clerkOrgId?: string;
+              };
+            } catch {
+              return {};
+            }
+          })()
+        : {};
 
       if (!res.ok) {
-        throw new Error(data.error ?? "Failed to create organization");
+        throw new Error(
+          data.error ??
+            `Failed to create organization (${res.status} ${res.statusText})`
+        );
       }
 
       if (data.clerkOrgId) {

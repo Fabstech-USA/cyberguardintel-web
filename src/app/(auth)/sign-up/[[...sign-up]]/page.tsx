@@ -1,14 +1,20 @@
-import { SignUp } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
+import { AuthTabs } from "@/components/auth/AuthTabs";
+import { AuthFooter } from "@/components/auth/AuthFooter";
+import { SignUpForm } from "@/components/auth/SignUpForm";
 
-export default function SignUpPage() {
+export default async function SignUpPage() {
+  const { userId } = await auth();
+  if (userId) {
+    redirect("/post-auth");
+  }
+
   return (
-    <main className="flex min-h-full flex-1 flex-col items-center justify-center p-6">
-      <SignUp
-        routing="path"
-        path="/sign-up"
-        signInUrl="/sign-in"
-        forceRedirectUrl="/onboarding"
-      />
-    </main>
+    <div className="space-y-8">
+      <AuthTabs active="sign-up" />
+      <SignUpForm />
+      <AuthFooter />
+    </div>
   );
 }
