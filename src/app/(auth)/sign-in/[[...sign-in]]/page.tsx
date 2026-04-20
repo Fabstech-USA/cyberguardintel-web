@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { AuthTabs } from "@/components/auth/AuthTabs";
+import { AuthFooter } from "@/components/auth/AuthFooter";
 import { SignInForm } from "@/components/auth/SignInForm";
 
 export default async function SignInPage() {
@@ -13,6 +14,7 @@ export default async function SignInPage() {
     <div className="space-y-8">
       <AuthTabs active="sign-in" />
       <SignInForm />
+      <AuthFooter showLegalLinks={false} />
     </div>
   );
 }

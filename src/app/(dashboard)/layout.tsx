@@ -1,17 +1,36 @@
 import type { ReactNode } from "react";
+import { auth } from "@clerk/nextjs/server";
 
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { UserMenu } from "./user-menu";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { prisma } from "@/lib/prisma";
+import { formatPlanChipText } from "@/lib/plan-display";
 
-export default function Layout({ children }: { children: ReactNode }) {
+export default async function Layout({
+  children,
+}: {
+  children: ReactNode;
+}): Promise<React.JSX.Element> {
+  const { orgId } = await auth();
+
+  let planChipText: string | null = null;
+  let orgName: string | null = null;
+  if (orgId) {
+    const org = await prisma.organization.findUnique({
+      where: { clerkOrgId: orgId },
+      select: { name: true, plan: true, trialEndsAt: true },
+    });
+    if (org) {
+      orgName = org.name;
+      planChipText = formatPlanChipText(org.plan, org.trialEndsAt);
+    }
+  }
+
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <header className="flex h-14 shrink-0 items-center justify-end gap-3 border-b border-border bg-background px-4">
-        <ThemeToggle />
-        <UserMenu />
-      </header>
-      <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+      <DashboardHeader orgName={orgName} planChipText={planChipText} />
+      <div className="flex min-h-0 flex-1 flex-col justify-start bg-muted/30">
+        {children}
+      </div>
     </div>
   );
 }
-
