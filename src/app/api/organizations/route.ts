@@ -1,18 +1,28 @@
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { addDays } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { writeAuditLog } from "@/lib/audit-log";
 
 const CreateOrgSchema = z.object({
   name: z.string().min(2).max(100),
-  industry: z.enum(["HEALTHCARE", "TECHNOLOGY", "FINANCE", "ECOMMERCE", "OTHER"]),
-  employeeCount: z.number().int().positive().optional(),
-  hipaaSubjectType: z
-    .enum(["covered_entity", "business_associate", "both"])
-    .optional(),
   billingEmail: z.string().email(),
+  employeeCount: z.number().int().positive().optional(),
+  jobTitle: z.string().min(1).max(100).optional(),
+  // Plan + period arrive from the (client-only) Plan step via sessionStorage
+  // and get persisted atomically here so we never create a zombie org without
+  // a plan. Optional so the endpoint still works if the client re-runs the
+  // wizard (activeOrg path) without a fresh plan pick.
+  plan: z.enum(["STARTER", "GROWTH", "BUSINESS", "ENTERPRISE"]).optional(),
+  period: z.enum(["MONTHLY", "ANNUAL"]).optional(),
 });
+
+const TRIAL_DAYS = 14;
+
+// Onboarding step the org advances to *after* Step 1/4 (Org details) succeeds.
+// Matches the wizard's internal index for the HIPAA role step (Step 2/4).
+const STEP_AFTER_ORG_DETAILS = 3;
 
 export async function POST(req: Request): Promise<Response> {
   try {
@@ -30,7 +40,7 @@ export async function POST(req: Request): Promise<Response> {
       );
     }
 
-    const { name, industry, employeeCount, hipaaSubjectType, billingEmail } =
+    const { name, billingEmail, employeeCount, jobTitle, plan, period } =
       parsed.data;
 
     const normalizedName = name.trim().replace(/\s+/g, " ");
@@ -100,24 +110,39 @@ export async function POST(req: Request): Promise<Response> {
     // churn the slug (and risk a collision).
     const slug = await generateUniqueSlug(normalizedName, clerkOrgId);
 
+    // Preserve an existing trialEndsAt (rerun of the wizard) so users can't
+    // game a fresh 14 days by bouncing back through Plan.
+    const existing = await prisma.organization.findUnique({
+      where: { clerkOrgId },
+      select: { trialEndsAt: true },
+    });
+
+    const trialEndsAt =
+      existing?.trialEndsAt ?? (plan ? addDays(new Date(), TRIAL_DAYS) : null);
+
     const org = await prisma.organization.upsert({
       where: { clerkOrgId },
       update: {
         name: normalizedName,
         billingEmail,
-        industry,
         employeeCount: employeeCount ?? null,
-        hipaaSubjectType: hipaaSubjectType ?? null,
+        // Only overwrite plan/period when the client sent a fresh pick;
+        // a bare re-submit shouldn't clobber a prior selection.
+        ...(plan ? { plan } : {}),
+        ...(period ? { planPeriod: period } : {}),
+        ...(trialEndsAt ? { trialEndsAt } : {}),
+        onboardingStep: STEP_AFTER_ORG_DETAILS,
       },
       create: {
         clerkOrgId,
         name: normalizedName,
         slug,
         billingEmail,
-        industry,
         employeeCount: employeeCount ?? null,
-        hipaaSubjectType: hipaaSubjectType ?? null,
-        onboardingStep: 1,
+        plan: plan ?? "STARTER",
+        planPeriod: period ?? "MONTHLY",
+        trialEndsAt,
+        onboardingStep: STEP_AFTER_ORG_DETAILS,
       },
     });
 
@@ -128,13 +153,40 @@ export async function POST(req: Request): Promise<Response> {
           organizationId: org.id,
         },
       },
-      update: {},
+      update: jobTitle ? { jobTitle } : {},
       create: {
         clerkUserId: userId,
         organizationId: org.id,
         role: "OWNER",
+        jobTitle: jobTitle ?? null,
       },
     });
+
+    // MVP ships with HIPAA as the only framework, so auto-enroll on org
+    // create instead of making the user pick from a single-option list.
+    const hipaa = await prisma.framework.findUnique({
+      where: { slug: "HIPAA" },
+      select: { id: true },
+    });
+    if (hipaa) {
+      await prisma.orgFramework.upsert({
+        where: {
+          organizationId_frameworkId: {
+            organizationId: org.id,
+            frameworkId: hipaa.id,
+          },
+        },
+        update: {},
+        create: {
+          organizationId: org.id,
+          frameworkId: hipaa.id,
+        },
+      });
+    } else {
+      console.warn(
+        "HIPAA framework row not found; run `prisma db seed` to enable auto-enroll."
+      );
+    }
 
     writeAuditLog({
       organizationId: org.id,
@@ -142,7 +194,12 @@ export async function POST(req: Request): Promise<Response> {
       action: "org.created",
       resourceType: "Organization",
       resourceId: org.id,
-      metadata: { name: normalizedName, industry, billingEmail },
+      metadata: {
+        name: normalizedName,
+        billingEmail,
+        plan: plan ?? null,
+        period: period ?? null,
+      },
     });
 
     return NextResponse.json({ id: org.id, clerkOrgId });

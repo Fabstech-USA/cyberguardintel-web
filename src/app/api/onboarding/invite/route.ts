@@ -43,7 +43,7 @@ export const POST = withTenant(async (req, ctx) => {
 
   await prisma.organization.update({
     where: { id: ctx.organizationId },
-    data: { onboardingStep: 3 },
+    data: { onboardingStep: 4 },
   });
 
   writeAuditLog({
