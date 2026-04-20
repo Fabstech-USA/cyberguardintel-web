@@ -24,6 +24,11 @@ enum PlanType {
   ENTERPRISE
 }
 
+enum BillingPeriod {
+  MONTHLY
+  ANNUAL
+}
+
 enum OrgRole {
   OWNER
   ADMIN
@@ -125,6 +130,7 @@ model Organization {
   name            String
   slug            String       @unique
   plan            PlanType     @default(STARTER)
+  planPeriod      BillingPeriod @default(MONTHLY)
   billingEmail    String
   industry        Industry     @default(HEALTHCARE)
   employeeCount   Int?
@@ -156,6 +162,7 @@ model OrgMember {
   clerkUserId    String
   organizationId String
   role           OrgRole  @default(MEMBER)
+  jobTitle       String?  // free-form role the user picked during onboarding (Compliance lead, etc.)
   createdAt      DateTime @default(now())
 
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
