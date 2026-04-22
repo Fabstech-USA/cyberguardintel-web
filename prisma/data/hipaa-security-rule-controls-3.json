@@ -1,0 +1,462 @@
+{
+  "metadata": {
+    "cfrTitle": "45",
+    "cfrPart": "164",
+    "subpart": "C",
+    "scopeSections": [
+      "164.308",
+      "164.310",
+      "164.312",
+      "164.314",
+      "164.316"
+    ],
+    "ecfrVersionerDate": "2025-01-01",
+    "ecfrRetrievedAt": "2026-04-22",
+    "ecfrSourceUrl": "https://www.ecfr.gov/api/versioner/v1/full/2025-01-01/title-45.xml?part=164&subpart=C",
+    "humanReadableSource": "https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-C/part-164/subpart-C",
+    "controlRefConvention": [
+      "controlRef uses 164.xxx paragraph form (no '45 CFR §' prefix), aligned to eCFR implementation specifications.",
+      "Follow eCFR paragraph numbering: (a)(1)(ii)(A) uses letters for implementation-spec clauses under a standard; 164.310(d)(2) uses roman numerals (i)–(iv) as in the CFR.",
+      "A standalone standard with no nested implementation specification uses the standard citation only (e.g. 164.308(a)(2)).",
+      "164.314 group health plan obligations use (b)(2)(i)–(iv) for each enumerated plan-document requirement."
+    ],
+    "descriptionNote": "Description combines spec_name, Required/Addressable, and verified_requirement_text from the enriched catalog (CFR-aligned baseline where verification populated).",
+    "guidanceNote": "Guidance is smb_guidance from the enriched catalog (operational interpretation). It is not legal advice and does not replace the CFR; review before production use (see AGENTS.md).",
+    "enrichedCatalogVersion": "1.1-audited-enriched",
+    "enrichedCatalogLastUpdated": "2026-04-20"
+  },
+  "controls": [
+    {
+      "controlRef": "164.308(a)(1)(ii)(A)",
+      "title": "Risk Analysis",
+      "category": "Administrative Safeguards",
+      "isRequired": true,
+      "description": "Risk Analysis (Required). Conduct an accurate and thorough assessment of the potential risks and vulnerabilities to the confidentiality, integrity, and availability of electronic protected health information held by the covered entity or business associate.",
+      "guidance": "Identify every system, device, and application that touches ePHI — EHR, billing software, email, cloud storage, mobile devices, fax servers. For each, document the threats (ransomware, employee error, lost device), the likelihood, and the impact if breached. HHS provides a free Security Risk Assessment (SRA) Tool at healthit.gov/topic/privacy-security-and-hipaa/security-risk-assessment-tool. Complete it annually and after any significant change to systems or operations. Store the output in a dated, signed document.",
+      "evidenceHints": "Completed, dated Security Risk Assessment document covering all systems that create, receive, maintain, or transmit ePHI; Inventory of all ePHI locations — on-premises servers, cloud platforms, workstations, mobile devices, email; Documented threat and vulnerability identification with likelihood and impact ratings; Risk ratings (high/medium/low) assigned to each identified risk; Date of most recent assessment — OCR expects annual or post-change reassessment; Evidence the assessment was reviewed by organizational leadership; Prior-year assessments showing a pattern of ongoing review"
+    },
+    {
+      "controlRef": "164.308(a)(1)(ii)(B)",
+      "title": "Risk Management",
+      "category": "Administrative Safeguards",
+      "isRequired": true,
+      "description": "Risk Management (Required). Implement security measures sufficient to reduce risks and vulnerabilities to a reasonable and appropriate level to comply with § 164.306(a).",
+      "guidance": "After completing the risk analysis, create a Risk Management Plan — a dated document that assigns a remediation owner, a target date, and a chosen control to each identified risk. Acceptable responses include: implement a technical control (e.g., enable encryption), implement a policy control (e.g., workforce training), accept the risk with documented rationale, or transfer the risk (e.g., cyber insurance). The plan must be reviewed regularly — at minimum annually. Document that remediation actions were completed.",
+      "evidenceHints": "Written Risk Management Plan tied directly to the risk analysis findings; Each identified risk has an assigned owner, remediation action, and target completion date; Evidence of completed remediation actions (e.g., configuration screenshots, policy signatures, training completion records); Documentation of accepted risks with business justification; Periodic review dates showing the plan is maintained and updated; Audit log or change log demonstrating security measures were implemented after risk identification"
+    },
+    {
+      "controlRef": "164.308(a)(1)(ii)(C)",
+      "title": "Sanction Policy",
+      "category": "Administrative Safeguards",
+      "isRequired": true,
+      "description": "Sanction Policy (Required). Apply appropriate sanctions against workforce members who fail to comply with the security policies and procedures of the covered entity or business associate.",
+      "guidance": "Draft a written Sanction Policy that defines violation categories (minor, moderate, severe) and corresponding consequences (verbal warning, written warning, termination, referral to law enforcement). Include the policy in the employee handbook. Require all workforce members to sign an acknowledgment. Document every instance where a sanction was issued — date, employee role (not name in the audit file), violation type, and action taken. Even a first verbal warning must be logged.",
+      "evidenceHints": "Written Sanction Policy document with version date and approval signature; Signed employee acknowledgments of the Sanction Policy (dated); Documentation of any sanctions issued — date, violation category, action taken; Inclusion of sanction procedures in workforce security training materials; Evidence the policy covers contractors and business associates, not just direct employees"
+    },
+    {
+      "controlRef": "164.308(a)(1)(ii)(D)",
+      "title": "Information System Activity Review",
+      "category": "Administrative Safeguards",
+      "isRequired": true,
+      "description": "Information System Activity Review (Required). Implement procedures to regularly review records of information system activity, such as audit logs, access reports, and security incident tracking reports.",
+      "guidance": "Enable audit logging on your EHR, cloud storage, email, and any other system containing ePHI. Schedule a regular (at minimum monthly) review of these logs — looking for unusual access times, access to records by staff without a care relationship, failed login attempts, and bulk data exports. Document each review with a date, the reviewer's name, the systems reviewed, and any anomalies found. Anomalies must be investigated and documented even if resolved as benign.",
+      "evidenceHints": "Audit log samples from EHR, email, cloud storage, and network systems — showing timestamps, user IDs, and actions; Documented schedule and records of regular audit log reviews; Written procedure for how activity reviews are conducted; Evidence of follow-up investigations when anomalies were detected; Access reports showing which users accessed which ePHI records and when; Evidence logs are retained for the required 6-year period per §164.316(b)(2)(i)"
+    },
+    {
+      "controlRef": "164.308(a)(2)",
+      "title": "Assigned Security Responsibility",
+      "category": "Administrative Safeguards",
+      "isRequired": true,
+      "description": "Assigned Security Responsibility (Required). Identify the security official who is responsible for the development and implementation of the policies and procedures required by this subpart for the covered entity or business associate.",
+      "guidance": "Formally designate a HIPAA Security Officer in writing — even in a small practice this is typically the owner, practice manager, or IT lead. The designation must be documented (job description update, board resolution, or written memo), include the person's name and date of appointment, and define their responsibilities. In a sole-proprietorship practice, the physician-owner typically holds this role. The Security Officer must have the authority and resources to carry out their responsibilities.",
+      "evidenceHints": "Written designation document naming the HIPAA Security Officer — signed and dated; Job description or role description documenting HIPAA Security Officer responsibilities; Evidence the named individual has actively discharged security duties (meeting notes, policy sign-offs, risk assessment ownership); Organizational chart or policy showing the Security Officer role; If the role changed hands — documentation of the transition and new appointment"
+    },
+    {
+      "controlRef": "164.308(a)(3)(ii)(A)",
+      "title": "Authorization and/or Supervision",
+      "category": "Administrative Safeguards",
+      "isRequired": false,
+      "description": "Authorization and/or Supervision (Addressable). Implement procedures for the authorization and/or supervision of workforce members who work with electronic protected health information or in locations where it might be accessed.",
+      "guidance": "Define which roles require access to ePHI and document the approval process for granting that access. For small practices, this typically means the Security Officer or practice manager must authorize ePHI access before an employee's account is provisioned. For remote workers or contractors, document how their access is supervised. If you determine supervision is not reasonable and appropriate for your environment, document that decision with your rationale.",
+      "evidenceHints": "Written procedure for authorizing workforce access to ePHI systems; Access request forms or workflow records showing approval before access is granted; Role-based access matrix documenting which roles are authorized to access which ePHI systems; Supervision policies for remote workers or contractors with ePHI access; If not implemented: written documentation of why it is not reasonable and appropriate plus description of equivalent alternative measure"
+    },
+    {
+      "controlRef": "164.308(a)(3)(ii)(B)",
+      "title": "Workforce Clearance Procedure",
+      "category": "Administrative Safeguards",
+      "isRequired": false,
+      "description": "Workforce Clearance Procedure (Addressable). Implement procedures to determine that the access of a workforce member to electronic protected health information is appropriate.",
+      "guidance": "Before granting any new hire or contractor access to ePHI systems, verify that the level of access requested is appropriate for their job function. For clinical staff, this means EHR access scoped to their patient panel. For billing staff, access to billing modules only. Document the review — who approved the access level, the date, and the scope of access granted. Consider background checks for roles with broad ePHI access. Update access levels when roles change.",
+      "evidenceHints": "Written clearance procedure specifying how appropriate access levels are determined before provisioning; Documentation of access level approvals for each workforce member — date, approver, scope; Evidence that access is scoped to job function (role-based access control configuration); Records showing access was reviewed when an employee changed roles; Background check policy (if implemented) and records; If not implemented: written documentation of why it is not reasonable and appropriate plus equivalent alternative"
+    },
+    {
+      "controlRef": "164.308(a)(3)(ii)(C)",
+      "title": "Termination Procedures",
+      "category": "Administrative Safeguards",
+      "isRequired": false,
+      "description": "Termination Procedures (Addressable). Implement procedures for terminating access to electronic protected health information when the employment of, or other arrangement with, a workforce member ends or as required by determinations made as specified in § 164.308(a)(3)(ii)(B).",
+      "guidance": "Create a written termination checklist that is executed on the last day (or immediately for involuntary terminations) of any workforce member with ePHI access. The checklist must include: disabling EHR account, revoking cloud storage access, reclaiming physical access badges, disabling email, and removing from shared drives. For involuntary terminations, access should be revoked before or during the termination meeting. Document each completed termination with dates and the IT or administrative staff who executed each step.",
+      "evidenceHints": "Written termination procedure and checklist; Completed termination checklists for former employees — with dates of access revocation; System logs showing accounts were disabled on or before the last day of employment; Evidence of prompt revocation for involuntary terminations; HR records cross-referenced against active system accounts showing no orphaned accounts; If not implemented: written documentation of why it is not reasonable and appropriate plus equivalent alternative"
+    },
+    {
+      "controlRef": "164.308(a)(4)(ii)(A)",
+      "title": "Isolating Healthcare Clearinghouse Function",
+      "category": "Administrative Safeguards",
+      "isRequired": true,
+      "description": "Isolating Healthcare Clearinghouse Function (Required). If a health care clearinghouse is part of a larger organization, the clearinghouse must implement policies and procedures that protect the electronic protected health information of the clearinghouse from unauthorized access by the larger organization.",
+      "guidance": "This applies only to entities that function as healthcare clearinghouses within a larger parent organization (e.g., a billing clearinghouse subsidiary). If your organization is not a clearinghouse, document that this standard is not applicable and your rationale. If it does apply, implement network segmentation, access controls, and policies that prevent the parent organization's staff from accessing the clearinghouse's ePHI.",
+      "evidenceHints": "Written determination of applicability — either confirming the entity is a clearinghouse or documenting it is not; If applicable: network segmentation documentation and access control policies isolating clearinghouse ePHI; Policies preventing parent-organization access to clearinghouse ePHI; Evidence of separate user accounts and access logs for clearinghouse systems"
+    },
+    {
+      "controlRef": "164.308(a)(4)(ii)(B)",
+      "title": "Access Authorization",
+      "category": "Administrative Safeguards",
+      "isRequired": false,
+      "description": "Access Authorization (Addressable). Implement policies and procedures for granting access to electronic protected health information, for example, through access to a workstation, transaction, program, process, or other mechanism.",
+      "guidance": "Document a formal Access Authorization Policy that defines who can approve ePHI access, the process for submitting an access request, and the criteria for approval. Tie access grants to job function using the principle of minimum necessary access. Maintain a dated access authorization log for every user account with ePHI access. Review the authorization log at least annually against active employees.",
+      "evidenceHints": "Written Access Authorization Policy with approval date; Access request and approval records for every active ePHI user account; Evidence of minimum-necessary access scoping (role-based access control configuration); Annual access authorization review records; If not implemented: written documentation of why it is not reasonable and appropriate plus equivalent alternative"
+    },
+    {
+      "controlRef": "164.308(a)(4)(ii)(C)",
+      "title": "Access Establishment and Modification",
+      "category": "Administrative Safeguards",
+      "isRequired": false,
+      "description": "Access Establishment and Modification (Addressable). Implement policies and procedures that, based upon the covered entity's or the business associate's access authorization policies, establish, document, review, and modify a user's right of access to a workstation, transaction, program, or process.",
+      "guidance": "Build a process for provisioning new accounts, modifying access when roles change, and deprovisioning accounts at termination. Every change to a user's access rights must be documented with the date, the change made, and the approver. Conduct a formal access rights review at minimum annually — comparing your active user list against HR records and current job functions.",
+      "evidenceHints": "Written procedure for establishing, modifying, and revoking access rights; Access change logs — provisioning, modification, and deprovisioning events with timestamps and approvers; Annual access review documentation — showing active accounts were compared to current workforce; Evidence that access was modified promptly when employees changed roles; If not implemented: written documentation of why it is not reasonable and appropriate plus equivalent alternative"
+    },
+    {
+      "controlRef": "164.308(a)(5)(ii)(A)",
+      "title": "Security Reminders",
+      "category": "Administrative Safeguards",
+      "isRequired": false,
+      "description": "Security Reminders (Addressable). Implement periodic security updates.",
+      "guidance": "Send periodic security reminders to all staff — at minimum quarterly. Acceptable formats include email newsletters, posted notices, brief staff meeting updates, or phishing simulation results. Document each reminder: date issued, format, topic covered, and distribution list. Topics should be practical and timely: phishing awareness, password hygiene, proper disposal of printed ePHI, remote work security.",
+      "evidenceHints": "Log of security reminders issued — date, format, topic, distribution; Copies or screenshots of reminder content (emails, posters, newsletter text); Distribution records or email send confirmations; Evidence reminders are issued at regular intervals (quarterly minimum); If not implemented: written documentation of why it is not reasonable and appropriate plus equivalent alternative"
+    },
+    {
+      "controlRef": "164.308(a)(5)(ii)(B)",
+      "title": "Protection from Malicious Software",
+      "category": "Administrative Safeguards",
+      "isRequired": false,
+      "description": "Protection from Malicious Software (Addressable). Implement procedures for guarding against, detecting, and reporting malicious software.",
+      "guidance": "Deploy endpoint protection (antivirus/EDR) on all workstations, servers, and managed mobile devices that access ePHI. Enable automatic updates and scheduled scans. Document the software deployed, the version, and the configuration. Review scan reports at least monthly. Train staff to recognize and report suspicious emails, links, and attachments. Document any malware incidents detected and the response taken.",
+      "evidenceHints": "Inventory of endpoint protection software deployed across all ePHI-capable devices; Evidence software is current and actively managed (version screenshots, update logs); Scheduled scan configuration and recent scan reports; Policy or procedure for reporting suspected malware; Incident records for any malware detections and response actions; Training records showing staff have been trained on malware recognition; If not implemented: written documentation of why it is not reasonable and appropriate plus equivalent alternative"
+    },
+    {
+      "controlRef": "164.308(a)(5)(ii)(C)",
+      "title": "Log-in Monitoring",
+      "category": "Administrative Safeguards",
+      "isRequired": false,
+      "description": "Log-in Monitoring (Addressable). Implement procedures for monitoring log-in attempts and reporting discrepancies.",
+      "guidance": "Configure all ePHI systems to log failed login attempts and alert on account lockouts or brute-force patterns. Review login reports at least monthly. Set account lockout policies (e.g., lock after 5 failed attempts). Document the monitoring configuration and the review schedule. Flag and investigate logins outside business hours, logins from unusual IP addresses, and repeated failures on the same account.",
+      "evidenceHints": "Account lockout policy configuration documentation; Login monitoring enabled on EHR, cloud systems, and network infrastructure — configuration evidence; Periodic review records of login reports — with dates and reviewer names; Evidence of investigation when anomalous login activity was detected; If not implemented: written documentation of why it is not reasonable and appropriate plus equivalent alternative"
+    },
+    {
+      "controlRef": "164.308(a)(5)(ii)(D)",
+      "title": "Password Management",
+      "category": "Administrative Safeguards",
+      "isRequired": false,
+      "description": "Password Management (Addressable). Implement procedures for creating, changing, and safeguarding passwords.",
+      "guidance": "Implement and enforce a written password policy covering minimum length (minimum 12 characters), complexity, prohibition of shared passwords, and prohibition of reuse. Enforce the policy technically where possible — configure your EHR and IT systems to enforce complexity and rotation requirements. Train staff on password hygiene and the use of a password manager. Document the policy and enforce it consistently. Consider multi-factor authentication (MFA) as the stronger alternative.",
+      "evidenceHints": "Written password policy — specifying minimum length, complexity, rotation, and prohibition of sharing; Technical enforcement evidence — system configuration screenshots showing password policy is enforced; Training records showing staff received password management training; Evidence of MFA deployment (if used as equivalent or additional control); If not implemented: written documentation of why it is not reasonable and appropriate plus equivalent alternative"
+    },
+    {
+      "controlRef": "164.308(a)(6)(ii)",
+      "title": "Response and Reporting",
+      "category": "Administrative Safeguards",
+      "isRequired": true,
+      "description": "Response and Reporting (Required). Identify and respond to suspected or known security incidents; mitigate, to the extent practicable, harmful effects of security incidents that are known to the covered entity or business associate; and document security incidents and their outcomes.",
+      "guidance": "Draft a written Security Incident Response Plan that defines: what constitutes a security incident (any unauthorized access, use, disclosure, modification, or destruction of ePHI), who is responsible for incident response, how incidents are reported internally, how they are investigated, and how outcomes are documented. Maintain a Security Incident Log — a running record of every incident, including near-misses. Even minor incidents (e.g., a workforce member accidentally emailing ePHI to a wrong address) must be logged. Note: incidents that meet the threshold of a HIPAA Breach trigger separate Breach Notification Rule obligations under §164.400.",
+      "evidenceHints": "Written Security Incident Response Plan — with version date and approval signature; Security Incident Log — dated entries for each incident, including description, response, and outcome; Evidence workforce members know how to report incidents (training records, posted reporting procedures); Documentation of incident investigations — with findings and remediation actions; For incidents that escalated to breaches — evidence of Breach Notification Rule compliance; Post-incident review records showing lessons learned were incorporated into policies"
+    },
+    {
+      "controlRef": "164.308(a)(7)(ii)(A)",
+      "title": "Data Backup Plan",
+      "category": "Administrative Safeguards",
+      "isRequired": true,
+      "description": "Data Backup Plan (Required). Establish and implement procedures to create and maintain retrievable exact copies of electronic protected health information.",
+      "guidance": "Implement automated, regular backups of all ePHI — at minimum daily for active clinical systems. Backups must be encrypted, tested for restorability, and stored separately from the primary system (offsite or cloud-based). Document the backup schedule, storage location, encryption method, and retention period. Test restoration at least annually — document the test date and result. A backup that has never been tested is not a compliant backup.",
+      "evidenceHints": "Written Data Backup Plan specifying schedule, storage location, encryption, and retention period; Automated backup logs showing backups are running on schedule; Backup storage configuration — demonstrating separation from primary systems; Restoration test records — date, system tested, result (successful/failed), and remediation if failed; Evidence backups are encrypted at rest; Evidence of periodic review of backup coverage as ePHI systems are added or changed"
+    },
+    {
+      "controlRef": "164.308(a)(7)(ii)(B)",
+      "title": "Disaster Recovery Plan",
+      "category": "Administrative Safeguards",
+      "isRequired": true,
+      "description": "Disaster Recovery Plan (Required). Establish and implement as needed procedures to restore any loss of data.",
+      "guidance": "Document a written Disaster Recovery Plan (DRP) that defines how ePHI systems will be restored after a major failure (hardware failure, ransomware, natural disaster, facility loss). Define Recovery Time Objectives (RTO — how quickly systems must be back online) and Recovery Point Objectives (RPO — how much data loss is acceptable). The DRP must name responsible parties, list recovery steps in sequence, and reference the backup resources that will be used. Test the plan at least annually through a tabletop exercise and document the result.",
+      "evidenceHints": "Written Disaster Recovery Plan — with version date, approval signature, and defined RTO/RPO; Named responsible parties for each recovery step; Tabletop exercise or DRP test records — date, participants, scenarios tested, gaps identified; Evidence gaps from prior tests were remediated; Evidence the DRP covers all critical ePHI systems identified in the risk analysis"
+    },
+    {
+      "controlRef": "164.308(a)(7)(ii)(C)",
+      "title": "Emergency Mode Operation Plan",
+      "category": "Administrative Safeguards",
+      "isRequired": true,
+      "description": "Emergency Mode Operation Plan (Required). Establish and implement as needed procedures to enable continuation of critical business processes for protection of the security of electronic protected health information while operating in emergency mode.",
+      "guidance": "Document how the organization will continue to protect ePHI during an emergency — when normal systems are unavailable. This includes: who has emergency access to ePHI, what paper-based or manual procedures will be used, how emergency access will be monitored and logged, and how access will be revoked when normal operations resume. Emergency mode does not suspend HIPAA obligations — access to ePHI must still be controlled and documented even in a crisis.",
+      "evidenceHints": "Written Emergency Mode Operation Plan — specifying procedures for ePHI access during emergencies; Defined emergency access roles and credentials (stored securely); Evidence of testing — at minimum through tabletop exercise; Procedures for re-securing ePHI access after emergency mode ends; Training records showing relevant staff know the emergency procedures"
+    },
+    {
+      "controlRef": "164.308(a)(7)(ii)(D)",
+      "title": "Testing and Revision Procedure",
+      "category": "Administrative Safeguards",
+      "isRequired": false,
+      "description": "Testing and Revision Procedure (Addressable). Implement procedures for periodic testing and revision of contingency plans.",
+      "guidance": "Schedule annual tests of each contingency plan component — backup restoration, disaster recovery tabletop, and emergency mode walkthrough. Document each test with date, participants, scenarios covered, gaps found, and remediation actions. Update the plans to reflect the findings. For small practices, a structured tabletop exercise (2 hours annually) is typically sufficient and reasonable.",
+      "evidenceHints": "Written testing schedule for contingency plan components; Test records — dated, with participants named, scenarios documented, and gaps identified; Evidence plan revisions were made following test findings; If not implemented: written documentation of why it is not reasonable and appropriate plus equivalent alternative"
+    },
+    {
+      "controlRef": "164.308(a)(7)(ii)(E)",
+      "title": "Applications and Data Criticality Analysis",
+      "category": "Administrative Safeguards",
+      "isRequired": false,
+      "description": "Applications and Data Criticality Analysis (Addressable). Assess the relative criticality of specific applications and data in support of other contingency plan components.",
+      "guidance": "Create a written inventory that ranks each ePHI system by criticality to patient care and operations. For each system, define: what data it holds, how quickly it must be restored (RTO), and what the maximum acceptable data loss is (RPO). This analysis directly informs the priorities in your Disaster Recovery Plan and Emergency Mode Operation Plan. Typically a small practice has 2–5 critical systems — EHR, billing, email, and perhaps a lab results platform.",
+      "evidenceHints": "Written Applications and Data Criticality Analysis — listing all ePHI systems with criticality ratings; Defined RTO and RPO for each critical system; Evidence the criticality analysis informed the prioritization in the DRP; Review date showing the analysis is updated when systems are added or changed; If not implemented: written documentation of why it is not reasonable and appropriate plus equivalent alternative"
+    },
+    {
+      "controlRef": "164.308(a)(8)",
+      "title": "Evaluation",
+      "category": "Administrative Safeguards",
+      "isRequired": true,
+      "description": "Evaluation (Required). Perform a periodic technical and nontechnical evaluation, based initially upon the standards implemented under this rule and subsequently in response to environmental or operational changes affecting the security of electronic protected health information.",
+      "guidance": "Conduct a formal HIPAA Security Rule evaluation at minimum annually and after any significant change (new EHR, new cloud vendor, workforce expansion, office relocation, major security incident). The evaluation reviews whether existing policies and procedures still adequately address the Security Rule's requirements given current operations. Document the evaluation with date, scope, findings, and any corrective actions. This is distinct from the risk analysis — it evaluates policy adequacy, not just technical risks.",
+      "evidenceHints": "Written record of periodic HIPAA Security Rule evaluations — dated and signed; Evaluation scope documenting which standards and specifications were reviewed; Findings and gap analysis from each evaluation; Corrective action plans tied to evaluation findings; Evidence evaluations were triggered by operational changes (new systems, new staff, incidents); Evidence corrective actions from prior evaluations were completed"
+    },
+    {
+      "controlRef": "164.308(b)(3)",
+      "title": "Written Contract or Other Arrangement",
+      "category": "Administrative Safeguards",
+      "isRequired": true,
+      "description": "Written Contract or Other Arrangement (Required). Document satisfactory assurances through a written contract or other arrangement with the business associate that meets the applicable requirements of § 164.314(a).",
+      "guidance": "Maintain a complete BAA inventory — a list of every vendor, contractor, and service provider who touches your ePHI, with a signed BAA on file for each. Common vendors requiring BAAs include: EHR vendors, billing services, cloud storage providers (Dropbox, Google Workspace, Microsoft 365 when used for ePHI), transcription services, answering services, IT support firms, shredding services, and attorneys who review patient records. A BAA must be in place BEFORE any ePHI is shared — not retroactively. Review all BAAs annually and upon contract renewal.",
+      "evidenceHints": "Complete BAA inventory — listing all business associates with BAA execution dates and renewal dates; Signed BAA documents for every vendor with ePHI access — with execution dates; Evidence BAAs were executed before ePHI was shared (not retroactively); Annual review records showing BAA inventory was reviewed; Evidence that terminated vendor relationships resulted in BAA termination and ePHI return/destruction; BAA language covering all required elements: compliance with Security Rule, breach reporting to covered entity, subcontractor obligations"
+    },
+    {
+      "controlRef": "164.310(a)(2)(i)",
+      "title": "Contingency Operations",
+      "category": "Physical Safeguards",
+      "isRequired": false,
+      "description": "Contingency Operations (Addressable). Establish and implement as needed procedures that allow facility access in support of restoration of lost data under the disaster recovery plan and emergency mode operations plan in the event of an emergency.",
+      "guidance": "Define in writing which personnel are authorized to access the facility during a declared emergency — including after-hours access when normal access controls may be unavailable. Document how these emergency authorizations are managed, how they are communicated to staff, and how they are revoked when normal operations resume. For cloud-first practices with no on-premises servers, document how this standard applies (or document it is not applicable with rationale).",
+      "evidenceHints": "Written contingency operations procedure for facility access during emergencies; List of personnel authorized for emergency facility access and the authorization basis; Evidence of coordination with the Disaster Recovery Plan and Emergency Mode Operation Plan; If not implemented: written documentation of why it is not reasonable and appropriate plus equivalent alternative"
+    },
+    {
+      "controlRef": "164.310(a)(2)(ii)",
+      "title": "Facility Security Plan",
+      "category": "Physical Safeguards",
+      "isRequired": false,
+      "description": "Facility Security Plan (Addressable). Implement policies and procedures to safeguard the facility and the equipment therein from unauthorized physical access, tampering, and theft.",
+      "guidance": "Document a written Facility Security Plan covering: which areas of the facility contain ePHI systems (server room, reception workstations, exam rooms), what physical controls are in place (locks, keycard access, cameras, alarm systems), how visitor access is managed, and how the plan is maintained. For practices without on-premises servers, focus on workstation locations and physical access to devices. Review annually.",
+      "evidenceHints": "Written Facility Security Plan — with facility inventory and physical controls documented; Evidence of physical controls in place: door lock types, keycard logs, security camera coverage; Visitor access procedures and sign-in logs; Maintenance records for physical security equipment; Annual review records showing the plan is kept current; If not implemented: written documentation of why it is not reasonable and appropriate plus equivalent alternative"
+    },
+    {
+      "controlRef": "164.310(a)(2)(iii)",
+      "title": "Access Control and Validation Procedures",
+      "category": "Physical Safeguards",
+      "isRequired": false,
+      "description": "Access Control and Validation Procedures (Addressable). Implement procedures to control and validate a person's access to facilities based on role or function, including visitor control, and control of access to software programs for testing and revision.",
+      "guidance": "Define access levels for different areas of the facility based on job function — clinical staff access exam rooms, IT staff access server/network closets, billing staff may not need clinical areas. Implement visitor management: all visitors must be signed in, escorted in areas with ePHI access, and signed out. Document who has physical key or keycard access to ePHI areas and review the list when employees leave.",
+      "evidenceHints": "Written access validation procedure by role and facility zone; Visitor log — dated entries with name, purpose, escorting employee, and time in/out; Key/keycard assignment records — showing current holders and removal records for departed staff; Evidence that access levels match job functions; If not implemented: written documentation of why it is not reasonable and appropriate plus equivalent alternative"
+    },
+    {
+      "controlRef": "164.310(a)(2)(iv)",
+      "title": "Maintenance Records",
+      "category": "Physical Safeguards",
+      "isRequired": false,
+      "description": "Maintenance Records (Addressable). Implement policies and procedures to document repairs and modifications to the physical components of a facility which are related to security.",
+      "guidance": "Maintain a physical security maintenance log that records any repair or modification to door locks, access control systems, server room walls or doors, security cameras, and alarm systems. Each entry should include the date, the change made, who performed the work, and who authorized it. Retain records for 6 years per §164.316(b)(2)(i).",
+      "evidenceHints": "Physical security maintenance log with dated entries; Entries covering lock changes, access control system updates, alarm system service, and server room modifications; Authorization records for physical security modifications; If not implemented: written documentation of why it is not reasonable and appropriate plus equivalent alternative"
+    },
+    {
+      "controlRef": "164.310(b)",
+      "title": "Workstation Use",
+      "category": "Physical Safeguards",
+      "isRequired": true,
+      "description": "Workstation Use (Required). Implement policies and procedures that specify the proper functions to be performed, the manner in which those functions are to be performed, and the physical attributes of the surroundings of a specific workstation or class of workstation that can access electronic protected health information.",
+      "guidance": "Define in writing what workstations may be used for, in what physical environment, and what behaviors are prohibited. For clinical workstations: position screens away from patient waiting areas, require screen locks when unattended, prohibit personal use on ePHI workstations, and define whether personal devices may be used for work. Extend this to remote work — define physical security requirements for home offices (privacy screens, locked door during telehealth sessions, prohibition of ePHI on personal devices without MDM).",
+      "evidenceHints": "Written Workstation Use Policy — covering permitted functions, physical environment requirements, and prohibited activities; Policy covers both facility workstations and remote/home-office workstations; Signed workforce acknowledgments of the Workstation Use Policy; Training records showing staff were trained on workstation use requirements; Physical inspection records or photographs showing screens are positioned appropriately"
+    },
+    {
+      "controlRef": "164.310(c)",
+      "title": "Workstation Security",
+      "category": "Physical Safeguards",
+      "isRequired": true,
+      "description": "Workstation Security (Required). Implement physical safeguards for all workstations that access electronic protected health information, to restrict access to authorized users.",
+      "guidance": "Implement physical controls on all workstations that access ePHI: cable locks for desktops, laptop locks or secured storage for portable devices, privacy screens in open areas, and screen lock policies (auto-lock after 15 minutes or less). For mobile devices, implement mobile device management (MDM) with remote wipe capability. Document the controls in place for each workstation category. Review and update when new devices are deployed.",
+      "evidenceHints": "Workstation inventory showing every device that accesses ePHI; Physical security controls documented for each device category (cable locks, locked storage, privacy screens); Screen lock policy configuration — showing auto-lock is enabled and set to 15 minutes or less; MDM enrollment records for mobile devices — with remote wipe capability confirmed; Evidence of physical controls for remote workers (MDM, disk encryption on laptops); Training records showing staff were trained on workstation physical security"
+    },
+    {
+      "controlRef": "164.310(d)(2)(i)",
+      "title": "Disposal",
+      "category": "Physical Safeguards",
+      "isRequired": true,
+      "description": "Disposal (Required). Implement policies and procedures to address the final disposition of electronic protected health information, and/or the hardware or electronic media on which it is stored.",
+      "guidance": "Define and implement a written disposal procedure for all hardware (workstations, servers, tablets, phones) and media (hard drives, USB drives, backup tapes) that contain ePHI. Acceptable disposal methods include: DoD-standard multi-pass data wiping (for re-used or donated devices), degaussing (for magnetic media), and physical destruction (shredding or crushing for end-of-life devices). Use a certified destruction vendor and obtain a Certificate of Destruction for every device. Never dispose of ePHI devices in regular trash or donation bins without verified data destruction.",
+      "evidenceHints": "Written Device Disposal Policy and procedure; Disposal log — dated entries for each device disposed of, method used, and employee who authorized; Certificates of Destruction from destruction vendor for each disposed device; If internal data wiping is used — documented wipe method (e.g., DoD 5220.22-M) and software used with date; Evidence disposal procedure covers all device types: workstations, laptops, phones, tablets, portable media"
+    },
+    {
+      "controlRef": "164.310(d)(2)(ii)",
+      "title": "Media Re-use",
+      "category": "Physical Safeguards",
+      "isRequired": true,
+      "description": "Media Re-use (Required). Implement procedures for removal of electronic protected health information from electronic media before the media are made available for re-use.",
+      "guidance": "Before any device or media is reassigned to a new user or repurposed, ensure all ePHI is securely removed — not just deleted. Document the sanitization method for each re-used device. NIST SP 800-88 provides guidance on media sanitization methods appropriate for different media types. Maintain a log of re-use events showing the device, the sanitization method, and who performed and verified the sanitization.",
+      "evidenceHints": "Written Media Re-use procedure specifying sanitization methods; Media sanitization log — device ID, date sanitized, method used, employee who performed and verified; Evidence the sanitization method is appropriate for the media type (reference to NIST SP 800-88 or equivalent); Evidence re-use log is maintained contemporaneously — not reconstructed after the fact"
+    },
+    {
+      "controlRef": "164.310(d)(2)(iii)",
+      "title": "Accountability",
+      "category": "Physical Safeguards",
+      "isRequired": false,
+      "description": "Accountability (Addressable). Maintain a record of the movements of hardware and electronic media and any person responsible therefore.",
+      "guidance": "Maintain a device inventory and movement log for all hardware and media containing ePHI. When a device is moved — taken off-site, transferred between locations, loaned to a staff member — document the date, device ID, current location, destination, and responsible person. This is especially critical for laptops and portable hard drives. Your MDM tool can support automated location tracking for mobile devices.",
+      "evidenceHints": "Device inventory listing all hardware and media that contain ePHI — with assigned responsible owners; Movement log for devices taken off-site or transferred between locations; MDM records showing device location history for mobile devices; Procedure for reporting lost or stolen devices; If not implemented: written documentation of why it is not reasonable and appropriate plus equivalent alternative"
+    },
+    {
+      "controlRef": "164.310(d)(2)(iv)",
+      "title": "Data Backup and Storage",
+      "category": "Physical Safeguards",
+      "isRequired": false,
+      "description": "Data Backup and Storage (Addressable). Create a retrievable, exact copy of electronic protected health information, when needed, before movement of equipment.",
+      "guidance": "Before any hardware containing ePHI is moved, sent for repair, or transferred, create and verify a backup of the ePHI on that device. Document the backup creation, verification, and the subsequent device movement. This is in addition to — not a substitute for — the ongoing data backup plan under §164.308(a)(7)(ii)(A).",
+      "evidenceHints": "Written procedure for creating backups before device movement; Backup records tied to specific device movement events — showing backup was created and verified before movement; If not implemented: written documentation of why it is not reasonable and appropriate plus equivalent alternative"
+    },
+    {
+      "controlRef": "164.312(a)(2)(i)",
+      "title": "Unique User Identification",
+      "category": "Technical Safeguards",
+      "isRequired": true,
+      "description": "Unique User Identification (Required). Assign a unique name and/or number for identifying and tracking user identity.",
+      "guidance": "Configure every system containing ePHI to require individual user accounts — no shared credentials, no group logins, no use of a vendor's default shared account. Each account must be tied to a named individual. Shared emergency access credentials must be stored in a sealed envelope or password vault and their use logged and reviewed. Audit your EHR, email system, cloud storage, and network infrastructure to confirm no shared accounts exist.",
+      "evidenceHints": "User account list for all ePHI systems — each account tied to a named individual; Evidence no shared accounts exist on ePHI systems (or documented exception with compensating controls for emergency accounts); Account provisioning records confirming unique identifiers assigned to each user; EHR configuration screenshots showing individual user account requirement is enforced"
+    },
+    {
+      "controlRef": "164.312(a)(2)(ii)",
+      "title": "Emergency Access Procedure",
+      "category": "Technical Safeguards",
+      "isRequired": true,
+      "description": "Emergency Access Procedure (Required). Establish and implement as needed procedures for obtaining necessary electronic protected health information during an emergency.",
+      "guidance": "Document a written Emergency Access Procedure specifying: who is authorized to invoke emergency ePHI access, what systems/data may be accessed, what alternative means are available if primary systems are down (printed records, read-only backup access, break-glass accounts), and how emergency access will be logged and reviewed after the emergency ends. Store emergency credentials securely — in a sealed physical envelope or password vault accessible only by designated personnel.",
+      "evidenceHints": "Written Emergency Access Procedure — naming authorized personnel and access methods; Secure storage documentation for emergency credentials; Evidence emergency access has been tested; Post-emergency access review records (if emergency access was ever invoked); Training records showing relevant staff know the emergency access procedure"
+    },
+    {
+      "controlRef": "164.312(a)(2)(iii)",
+      "title": "Automatic Logoff",
+      "category": "Technical Safeguards",
+      "isRequired": false,
+      "description": "Automatic Logoff (Addressable). Implement electronic procedures that terminate an electronic session after a predetermined time of inactivity.",
+      "guidance": "Configure automatic session timeout on all workstations, EHR systems, and applications that access ePHI. 15 minutes or less is the commonly accepted interval for clinical environments. Document the timeout setting for each system. For shared clinical workstations, shorter timeouts (5 minutes) may be appropriate given high turnover between users. Screen lock (requiring re-authentication) is the minimum acceptable implementation — full session termination is stronger.",
+      "evidenceHints": "System configuration screenshots showing automatic logoff is enabled — with timeout interval documented for each system; Written policy specifying the required timeout interval; Evidence timeout applies to EHR, clinical applications, and any other ePHI-capable application; If not implemented: written documentation of why it is not reasonable and appropriate plus equivalent alternative"
+    },
+    {
+      "controlRef": "164.312(a)(2)(iv)",
+      "title": "Encryption and Decryption",
+      "category": "Technical Safeguards",
+      "isRequired": false,
+      "description": "Encryption and Decryption (Addressable). Implement a mechanism to encrypt and decrypt electronic protected health information.",
+      "guidance": "Encrypt ePHI at rest on all laptops, portable devices, backup media, and cloud storage — using AES-256 or equivalent. Enable full-disk encryption on all laptops (BitLocker for Windows, FileVault for macOS). Encrypt backup media. Configure cloud storage encryption at rest. Document the encryption standard used, which systems are encrypted, and the date encryption was verified. Note: if you choose not to implement encryption for a specific system, you must document the risk analysis rationale for that decision — and OCR will scrutinize that decision closely in any breach investigation.",
+      "evidenceHints": "Encryption policy specifying required encryption standards; Laptop full-disk encryption status — configuration report or MDM compliance report showing all laptops are encrypted; Cloud storage encryption configuration documentation; Backup encryption verification; For any system where encryption was not implemented — written risk analysis documenting the rationale and equivalent safeguard; If not implemented: written documentation of why it is not reasonable and appropriate plus equivalent alternative"
+    },
+    {
+      "controlRef": "164.312(b)",
+      "title": "Audit Controls",
+      "category": "Technical Safeguards",
+      "isRequired": true,
+      "description": "Audit Controls (Required). Implement hardware, software, and/or procedural mechanisms that record and examine activity in information systems that contain or use electronic protected health information.",
+      "guidance": "Enable audit logging on every system that contains or accesses ePHI: EHR, email platform, cloud storage, network infrastructure, and any application with ePHI access. At minimum, logs must capture: user ID, date and time, action taken (view, create, modify, delete, export), and the record or data element accessed. Retain logs for 6 years. Review logs regularly — at minimum monthly — and document each review. Configure alerts for high-risk events (bulk exports, access outside business hours, access to deceased patients' records).",
+      "evidenceHints": "Audit logging enabled on all ePHI systems — configuration evidence for each system; Sample audit log exports showing required fields: user ID, timestamp, action, record accessed; Log retention policy specifying 6-year retention and evidence of enforcement; Documented schedule and records of regular log reviews; Alert configuration for high-risk audit events; Evidence logs are protected from modification (read-only access, separate storage)"
+    },
+    {
+      "controlRef": "164.312(c)(2)",
+      "title": "Mechanism to Authenticate ePHI",
+      "category": "Technical Safeguards",
+      "isRequired": false,
+      "description": "Mechanism to Authenticate ePHI (Addressable). Implement electronic mechanisms to corroborate that electronic protected health information has not been altered or destroyed in an unauthorized manner.",
+      "guidance": "Implement technical mechanisms that can detect unauthorized modification of ePHI. Common approaches include: cryptographic hash verification for stored ePHI files, database audit logs with change tracking, file integrity monitoring (FIM) for ePHI repositories, and version control for clinical documents. For most SMB practices, the EHR's built-in audit trail and change tracking — combined with access controls — satisfies this requirement. Document which mechanisms are in place and how they detect unauthorized alteration.",
+      "evidenceHints": "Documentation of integrity verification mechanisms in place for ePHI systems; EHR audit trail configuration showing change history is captured for clinical records; File integrity monitoring configuration (if implemented); Evidence of periodic review of integrity logs; Incident records for any detected integrity violations and response; If not implemented: written documentation of why it is not reasonable and appropriate plus equivalent alternative"
+    },
+    {
+      "controlRef": "164.312(d)",
+      "title": "Person or Entity Authentication",
+      "category": "Technical Safeguards",
+      "isRequired": true,
+      "description": "Person or Entity Authentication (Required). Implement procedures to verify that a person or entity seeking access to electronic protected health information is the one claimed.",
+      "guidance": "Implement multi-factor authentication (MFA) on all systems that contain ePHI — particularly any system accessible via the internet (web-based EHR, cloud storage, email, remote access VPN). MFA satisfies this requirement more robustly than passwords alone. At minimum, strong passwords plus MFA is the expected standard for internet-accessible ePHI systems. Document which authentication methods are used on each system and verify MFA is enforced — not optional — for all users.",
+      "evidenceHints": "MFA enrollment records showing all users on internet-accessible ePHI systems are enrolled; System configuration showing MFA is enforced (not optional) — screenshots from identity provider or EHR admin console; Written authentication policy specifying MFA requirement for ePHI system access; Evidence of MFA on remote access (VPN, remote desktop, cloud platforms); For on-premises systems not internet-accessible: documentation of authentication method used and rationale"
+    },
+    {
+      "controlRef": "164.312(e)(2)(i)",
+      "title": "Integrity Controls",
+      "category": "Technical Safeguards",
+      "isRequired": false,
+      "description": "Integrity Controls (Addressable). Implement security measures to ensure that electronically transmitted electronic protected health information is not improperly modified without detection until disposed of.",
+      "guidance": "Implement transmission protocols that include integrity verification: TLS 1.2 or higher for all web-based ePHI transmissions, secure email (encrypted email or patient portal), and secure file transfer protocols (SFTP, HTTPS) for data exchange with partners and vendors. Avoid transmitting ePHI over unencrypted channels — standard email, FTP, or HTTP. Document the transmission protocols used for each type of ePHI transmission in your environment.",
+      "evidenceHints": "Written policy on approved ePHI transmission protocols; TLS configuration evidence on web-facing systems — SSL certificate documentation, TLS version settings; Evidence that ePHI is not transmitted via unencrypted channels (email policy, configuration of secure messaging); Secure file transfer configuration for data exchange with business associates; If not implemented: written documentation of why it is not reasonable and appropriate plus equivalent alternative"
+    },
+    {
+      "controlRef": "164.312(e)(2)(ii)",
+      "title": "Encryption",
+      "category": "Technical Safeguards",
+      "isRequired": false,
+      "description": "Encryption (Addressable). Implement a mechanism to encrypt electronic protected health information whenever deemed appropriate.",
+      "guidance": "Encrypt all ePHI transmitted over any open or untrusted network — including the internet, public Wi-Fi, and cellular networks. Use TLS 1.2 or higher for all web-based transmissions. Use encrypted email or secure messaging platforms (patient portal, Direct messaging) for patient communications involving ePHI. For external data exchanges with billing services, labs, or other partners, use encrypted file transfer. Document which encryption standards are used for each type of ePHI transmission. As with encryption at rest, any decision not to encrypt must be documented with risk analysis rationale.",
+      "evidenceHints": "Encryption policy for ePHI in transit — specifying required protocols and standards; TLS configuration documentation for all web applications handling ePHI; Encrypted email or secure messaging platform in use for patient communications; Evidence that staff are prohibited from sending ePHI via unencrypted standard email; For any transmission channel where encryption was not implemented — written risk analysis and equivalent safeguard; If not implemented: written documentation of why it is not reasonable and appropriate plus equivalent alternative"
+    },
+    {
+      "controlRef": "164.314(a)(2)(i)-(iii)",
+      "title": "Business Associate Contracts or Other Arrangements",
+      "category": "Organizational Requirements",
+      "isRequired": true,
+      "description": "Business Associate Contracts or Other Arrangements (Required). Business associate contracts must require the business associate to comply with applicable Security Rule requirements, require subcontractors to do the same by contract or other arrangement, and report security incidents of which the business associate becomes aware.",
+      "guidance": "Every BAA in your inventory must contain the three required elements from §164.314(a)(2): (1) the BA will comply with the applicable Security Rule requirements, (2) the BA will require its subcontractors to do the same through their own BAAs, and (3) the BA will report security incidents — including breaches — to you. Review every BAA on file to confirm these elements are present. Many vendor-provided BAA templates omit the subcontractor obligation or limit breach reporting timelines — review carefully. Verbal assurances do not satisfy this requirement.",
+      "evidenceHints": "BAA documents containing all three required provisions: Security Rule compliance, subcontractor obligation, and incident/breach reporting; Evidence BAA language has been reviewed — not just executed without review; Any BAA amendments or updated agreements where prior versions were deficient; Process for reviewing BAA terms upon contract renewal"
+    },
+    {
+      "controlRef": "164.314(b)(2)(i)-(iv)",
+      "title": "Requirements for Group Health Plans",
+      "category": "Organizational Requirements",
+      "isRequired": true,
+      "description": "Requirements for Group Health Plans (Required). Group health plan documents must require the plan sponsor to implement administrative, physical, and technical safeguards, support adequate separation, require agents to apply reasonable and appropriate security measures, and report security incidents to the group health plan.",
+      "guidance": "This requirement applies to self-funded employer group health plans — not to most clinical healthcare providers or small practices. If your organization sponsors a self-funded group health plan (where the employer directly funds employee health benefits), your plan documents must contain specific ePHI protection provisions for the plan sponsor. If you do not sponsor a self-funded plan, document that this standard is not applicable and state your rationale.",
+      "evidenceHints": "Written determination of applicability — confirming whether the organization sponsors a self-funded group health plan; If applicable: plan documents containing required ePHI safeguard provisions for the plan sponsor; Evidence plan documents have been reviewed by legal counsel for compliance with §164.314(b)(2); If not applicable: documented rationale for non-applicability"
+    },
+    {
+      "controlRef": "164.316(a)",
+      "title": "Policies and Procedures",
+      "category": "Administrative Safeguards",
+      "isRequired": true,
+      "description": "Policies and Procedures (Required). Implement reasonable and appropriate policies and procedures to comply with the standards, implementation specifications, or other requirements of Subpart C, taking into account the factors in § 164.306(b)(2)(i)-(iv).",
+      "guidance": "Every HIPAA Security Rule standard and implemented specification must have a corresponding written policy or procedure. Maintain a policy library with version dates and approval signatures. Policies must be written — verbal procedures do not satisfy this requirement. Review the entire policy library at minimum annually and after any significant operational change. When policies are updated, retain prior versions with their effective dates. For small practices, a single comprehensive HIPAA Security Policies and Procedures Manual is acceptable.",
+      "evidenceHints": "Complete policy library covering all applicable Security Rule standards and implementation specifications; Version dates and approval signatures on each policy; Evidence policies are implemented in practice — not just documented but not followed; Annual policy review records — showing each policy was reviewed and either confirmed current or updated; Prior-year versions of updated policies retained in the policy archive; Signed workforce acknowledgments of key policies"
+    },
+    {
+      "controlRef": "164.316(b)(2)(i)",
+      "title": "Time Limit",
+      "category": "Administrative Safeguards",
+      "isRequired": true,
+      "description": "Time Limit (Required). Retain required documentation for 6 years from the date of its creation or the date when it last was in effect, whichever is later.",
+      "guidance": "Establish a documentation retention schedule that ensures all HIPAA Security Rule records — policies, risk assessments, training records, incident logs, BAAs, audit logs, and all other required documentation — are retained for a minimum of 6 years. Apply this to electronic and paper records. If you use a document management system or cloud storage, configure retention policies to prevent automatic deletion before the 6-year mark. When policies are superseded, retain both the prior version and the date it was last in effect.",
+      "evidenceHints": "Written document retention policy specifying 6-year minimum for all HIPAA Security Rule documentation; Evidence retention is technically enforced — document management system configuration, cloud storage retention settings; Archived prior versions of policies with effective dates; Old risk assessments, BAAs, training records, and incident logs retained and accessible; No evidence of pre-6-year deletion of HIPAA Security Rule documentation"
+    },
+    {
+      "controlRef": "164.316(b)(2)(ii)",
+      "title": "Availability",
+      "category": "Administrative Safeguards",
+      "isRequired": true,
+      "description": "Availability (Required). Make documentation available to those persons responsible for implementing the procedures to which the documentation pertains.",
+      "guidance": "Store all HIPAA Security Rule policies, procedures, and supporting documentation in a location accessible to the personnel responsible for carrying them out — not just to the Security Officer. Workforce members responsible for backup procedures must be able to access the Data Backup Plan. Workforce members responsible for incident response must be able to access the Incident Response Plan. Use a shared drive, document management platform, or intranet. Confirm accessibility in your annual policy review.",
+      "evidenceHints": "Documentation storage location accessible to responsible personnel — shared drive or intranet screenshot; Evidence relevant staff can access the documentation they are responsible for implementing; No policies stored exclusively on the Security Officer's personal device or locked in a drawer; Annual confirmation that documentation is current and accessible"
+    },
+    {
+      "controlRef": "164.316(b)(2)(iii)",
+      "title": "Updates",
+      "category": "Administrative Safeguards",
+      "isRequired": true,
+      "description": "Updates (Required). Review documentation periodically, and update as needed, in response to environmental or operational changes affecting the security of electronic protected health information.",
+      "guidance": "Establish a formal policy update trigger list: any new ePHI system deployment, any new vendor with ePHI access, any workforce expansion or reduction, any security incident, any regulatory guidance change, and the annual review cycle. When a trigger event occurs, document the review — even if no update is required. 'Reviewed — no changes required' is an acceptable outcome, but the review must be documented. Undated policies are treated by OCR as never reviewed.",
+      "evidenceHints": "Written policy review procedure specifying triggers for review and update; Dated review records for each policy — showing review was conducted; Evidence of policy updates following trigger events (new system deployments, incidents, annual review); Change log or version history for each policy document; No policies with stale or undated last-reviewed dates"
+    }
+  ]
+}

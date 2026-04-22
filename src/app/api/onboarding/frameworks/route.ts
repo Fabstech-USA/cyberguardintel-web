@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ensureOrgControlsForFramework } from "@/lib/ensure-org-framework-controls";
 import { withTenant } from "@/lib/tenant";
 import { prisma } from "@/lib/prisma";
 import { writeAuditLog } from "@/lib/audit-log";
@@ -38,6 +39,14 @@ export const POST = withTenant(async (req, ctx) => {
         frameworkId: fw.id,
       },
     });
+    if (fw.slug === "HIPAA") {
+      await ensureOrgControlsForFramework({
+        organizationId: ctx.organizationId,
+        frameworkId: fw.id,
+        frameworkSlug: "HIPAA",
+        actorId: ctx.clerkUserId,
+      });
+    }
   }
 
   await prisma.organization.update({
