@@ -2,6 +2,7 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { addDays } from "date-fns";
+import { ensureOrgControlsForFramework } from "@/lib/ensure-org-framework-controls";
 import { prisma } from "@/lib/prisma";
 import { writeAuditLog } from "@/lib/audit-log";
 
@@ -181,6 +182,12 @@ export async function POST(req: Request): Promise<Response> {
           organizationId: org.id,
           frameworkId: hipaa.id,
         },
+      });
+      await ensureOrgControlsForFramework({
+        organizationId: org.id,
+        frameworkId: hipaa.id,
+        frameworkSlug: "HIPAA",
+        actorId: userId,
       });
     } else {
       console.warn(
