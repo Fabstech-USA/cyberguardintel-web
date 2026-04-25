@@ -29,6 +29,11 @@ export async function writeAuditLog(entry: AuditEntry): Promise<void> {
     })
 }
 
+/** Awaited audit row for webhooks and jobs where delivery must not 200 until persisted. */
+export async function writeAuditLogAwait(entry: AuditEntry): Promise<void> {
+  await prisma.auditLog.create({ data: entry as AuditLogCreateData })
+}
+
 // Standard action strings to use consistently:
 // evidence.created   evidence.deleted   evidence.downloaded
 // policy.created     policy.approved    policy.archived
@@ -37,4 +42,5 @@ export async function writeAuditLog(entry: AuditEntry): Promise<void> {
 // training.recorded
 // integration.connected  integration.disconnected  integration.synced
 // org.member_invited  org.member_removed
+// org.provisioned_webhook  org.member_added_webhook  (Clerk sync; actorId system)
 // security.unauthorized_access_attempt

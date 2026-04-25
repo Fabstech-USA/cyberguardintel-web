@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { addDays } from "date-fns";
 import { ensureOrgControlsForFramework } from "@/lib/ensure-org-framework-controls";
+import { generateUniqueSlug } from "@/lib/org-slug";
 import { prisma } from "@/lib/prisma";
 import { writeAuditLog } from "@/lib/audit-log";
 
@@ -219,41 +220,6 @@ export async function POST(req: Request): Promise<Response> {
       { status: 500 }
     );
   }
-}
-
-function slugify(input: string): string {
-  const cleaned = input
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-  return cleaned.length > 0 ? cleaned.slice(0, 48) : "org";
-}
-
-async function generateUniqueSlug(
-  name: string,
-  clerkOrgId: string
-): Promise<string> {
-  const base = slugify(name);
-
-  const taken = await prisma.organization.findMany({
-    where: {
-      slug: { startsWith: base },
-      NOT: { clerkOrgId },
-    },
-    select: { slug: true },
-  });
-  const usedSlugs = new Set(taken.map((o) => o.slug));
-
-  if (!usedSlugs.has(base)) return base;
-
-  for (let i = 2; i < 100; i += 1) {
-    const candidate = `${base}-${i}`;
-    if (!usedSlugs.has(candidate)) return candidate;
-  }
-
-  // Fall back to a random suffix in the (extremely unlikely) case the first
-  // 99 numeric variants are all taken.
-  return `${base}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 export async function GET(): Promise<Response> {
