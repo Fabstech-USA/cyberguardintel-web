@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { DASHBOARD_NEXT_STEPS } from "@/lib/dashboard-next-steps";
 import { aggregateSafeguardScores } from "@/lib/dashboard-safeguards";
 import { DashboardFrameworkTabs } from "@/components/dashboard/DashboardFrameworkTabs";
+import { HipaaWorkspaceNav } from "@/components/dashboard/HipaaWorkspaceNav";
 import { DashboardMetricStrip } from "@/components/dashboard/DashboardMetricStrip";
 import { NextUpSection } from "@/components/dashboard/NextUpSection";
 import { ReadinessSection } from "@/components/dashboard/ReadinessSection";
@@ -82,7 +83,10 @@ export default async function DashboardHomePage(): Promise<React.JSX.Element> {
   return (
     <main className="flex w-full flex-col px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8 lg:px-8">
       <div className="w-full space-y-6 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-6">
-        <DashboardFrameworkTabs active="hipaa" />
+        <div className="space-y-0">
+          <DashboardFrameworkTabs active="hipaa" />
+          <HipaaWorkspaceNav />
+        </div>
 
         <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
           <ReadinessSection score={readinessScore} />
