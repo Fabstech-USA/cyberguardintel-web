@@ -1,6 +1,9 @@
 import { Webhook } from "svix";
 import { headers } from "next/headers";
-import { prisma } from "@/lib/prisma";
+import {
+  handleOrganizationCreated,
+  handleOrganizationMembershipCreated,
+} from "@/lib/clerk-webhook-sync";
 
 type ClerkWebhookEvent = {
   type: string;
@@ -9,7 +12,9 @@ type ClerkWebhookEvent = {
 
 async function verifyWebhook(req: Request): Promise<ClerkWebhookEvent> {
   const secret = process.env.CLERK_WEBHOOK_SECRET;
-  if (!secret) throw new Error("CLERK_WEBHOOK_SECRET is not set");
+  if (!secret) {
+    throw new Error("CLERK_WEBHOOK_SECRET is not set");
+  }
 
   const headerPayload = await headers();
   const svixId = headerPayload.get("svix-id");
@@ -31,35 +36,44 @@ async function verifyWebhook(req: Request): Promise<ClerkWebhookEvent> {
 }
 
 export async function POST(req: Request): Promise<Response> {
+  const headerPayload = await headers();
+  const svixId = headerPayload.get("svix-id") ?? "";
+
   let event: ClerkWebhookEvent;
   try {
     event = await verifyWebhook(req);
-  } catch {
-    return new Response("Invalid signature", { status: 400 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (message === "CLERK_WEBHOOK_SECRET is not set") {
+      return new Response("Server misconfiguration", { status: 500 });
+    }
+    if (message === "Missing svix headers") {
+      return new Response("Missing svix headers", { status: 400 });
+    }
+    return new Response("Invalid signature", { status: 401 });
   }
 
-  if (event.type === "organization.created") {
-    const data = event.data as {
-      id: string;
-      name: string;
-      slug: string;
-    };
+  const meta = { eventType: event.type, svixId };
 
-    const existing = await prisma.organization.findUnique({
-      where: { clerkOrgId: data.id },
-    });
-
-    if (!existing) {
-      await prisma.organization.create({
-        data: {
-          clerkOrgId: data.id,
-          name: data.name,
-          slug: data.slug ?? data.id,
-          billingEmail: "",
-          onboardingStep: 0,
+  try {
+    if (event.type === "organization.created") {
+      await handleOrganizationCreated(
+        event.data as { id?: string; name?: string },
+        meta
+      );
+    } else if (event.type === "organizationMembership.created") {
+      await handleOrganizationMembershipCreated(
+        event.data as {
+          organization?: { id?: string; name?: string };
+          public_user_data?: { user_id?: string };
+          role?: string;
         },
-      });
+        meta
+      );
     }
+  } catch (e) {
+    console.error("Clerk webhook handler failed:", e);
+    return new Response("Handler error", { status: 500 });
   }
 
   return Response.json({ received: true });
