@@ -223,11 +223,63 @@ function PostAuthGate() {
 
     clearBounces();
 
+    async function fetchClerkOrganizationIdsFromServer(): Promise<string[]> {
+      try {
+        const token = await getToken();
+        const res = await fetch("/api/auth/clerk-organization-ids", {
+          credentials: "include",
+          headers:
+            token !== null && token !== ""
+              ? { Authorization: `Bearer ${token}` }
+              : {},
+        });
+        if (!res.ok) return [];
+        const body: unknown = await res.json();
+        if (
+          typeof body !== "object" ||
+          body === null ||
+          !("organizationIds" in body) ||
+          !Array.isArray((body as { organizationIds: unknown }).organizationIds)
+        ) {
+          return [];
+        }
+        const ids = (body as { organizationIds: unknown[] }).organizationIds;
+        return ids.filter((id): id is string => typeof id === "string" && id.length > 0);
+      } catch {
+        return [];
+      }
+    }
+
+    async function fetchFirstClerkOrganizationIdFromServer(): Promise<string | null> {
+      const ids = await fetchClerkOrganizationIdsFromServer();
+      const id = ids[0];
+      return id ?? null;
+    }
+
     if (orgId) {
-      routed.current = true;
-      clearPendingOrgInviteMarkers();
-      router.replace("/dashboard");
-      return;
+      void (async () => {
+        const validIds = await fetchClerkOrganizationIdsFromServer();
+        if (cancelled || routed.current) return;
+
+        if (validIds.includes(orgId)) {
+          routed.current = true;
+          clearPendingOrgInviteMarkers();
+          router.replace("/dashboard");
+          return;
+        }
+
+        // Session still points at an org that no longer exists (e.g. deleted in settings).
+        try {
+          if (setActive) {
+            await setActive({ organization: null });
+          }
+        } catch {
+          // Let the next effect run re-evaluate; avoids a tight redirect loop with Next.js history.
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
     }
 
     const delay = (ms: number): Promise<void> =>
@@ -254,34 +306,6 @@ function PostAuthGate() {
         if (!cancelled) {
           router.replace("/dashboard");
         }
-      }
-    }
-
-    async function fetchFirstClerkOrganizationIdFromServer(): Promise<string | null> {
-      try {
-        const token = await getToken();
-        const res = await fetch("/api/auth/clerk-organization-ids", {
-          credentials: "include",
-          headers:
-            token !== null && token !== ""
-              ? { Authorization: `Bearer ${token}` }
-              : {},
-        });
-        if (!res.ok) return null;
-        const body: unknown = await res.json();
-        if (
-          typeof body !== "object" ||
-          body === null ||
-          !("organizationIds" in body) ||
-          !Array.isArray((body as { organizationIds: unknown }).organizationIds)
-        ) {
-          return null;
-        }
-        const ids = (body as { organizationIds: unknown[] }).organizationIds;
-        const id = ids[0];
-        return typeof id === "string" && id.length > 0 ? id : null;
-      } catch {
-        return null;
       }
     }
 

@@ -4,7 +4,7 @@ import { clerkClient } from "@clerk/nextjs/server";
 
 import { withTenant } from "@/lib/tenant";
 import { prisma } from "@/lib/prisma";
-import { writeAuditLog } from "@/lib/audit-log";
+import { writeAuditLog, writeAuditLogAwait } from "@/lib/audit-log";
 import { Industry, type OrgRole } from "@/generated/prisma";
 
 const HipaaSubjectTypeSchema = z
@@ -172,17 +172,17 @@ export const DELETE = withTenant(async (req, ctx): Promise<Response> => {
   const clerk = await clerkClient();
   await clerk.organizations.deleteOrganization(org.clerkOrgId);
 
-  await prisma.organization.delete({
-    where: { id: ctx.organizationId },
-  });
-
-  writeAuditLog({
+  await writeAuditLogAwait({
     organizationId: org.id,
     actorId: ctx.clerkUserId,
     action: "org.deleted",
     resourceType: "Organization",
     resourceId: org.id,
     metadata: { name: org.name, slug: org.slug, clerkOrgId: org.clerkOrgId },
+  });
+
+  await prisma.organization.delete({
+    where: { id: ctx.organizationId },
   });
 
   return NextResponse.json({ ok: true });

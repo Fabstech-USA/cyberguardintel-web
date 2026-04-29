@@ -21,7 +21,7 @@ export default async function Soc2ComingSoonPage(): Promise<React.JSX.Element> {
     select: { id: true, onboardingStep: true },
   });
 
-  if (!org) redirect("/onboarding");
+  if (!org) redirect("/post-auth");
 
   if (org.onboardingStep !== null) {
     const runOrgWizard = await userShouldRunOrgOnboardingWizard(userId, orgId);
