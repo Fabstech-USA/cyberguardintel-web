@@ -3,6 +3,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { ArrowRight, Shield } from "lucide-react";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { userShouldRunOrgOnboardingWizard } from "@/lib/clerk-org-onboarding";
 import { SOC2_TRUST_SERVICE_CARDS } from "@/lib/soc2-mvp-content";
 import { DashboardFrameworkTabs } from "@/components/dashboard/DashboardFrameworkTabs";
 import { Soc2WaitlistForm } from "@/components/dashboard/Soc2WaitlistForm";
@@ -21,7 +22,13 @@ export default async function Soc2ComingSoonPage(): Promise<React.JSX.Element> {
   });
 
   if (!org) redirect("/onboarding");
-  if (org.onboardingStep !== null) redirect("/onboarding");
+
+  if (org.onboardingStep !== null) {
+    const runOrgWizard = await userShouldRunOrgOnboardingWizard(userId, orgId);
+    if (runOrgWizard) {
+      redirect("/onboarding");
+    }
+  }
 
   const user = await currentUser();
   const defaultEmail =

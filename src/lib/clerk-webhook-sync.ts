@@ -22,6 +22,19 @@ type ClerkMembershipData = {
   role?: string;
 };
 
+function clerkIdsFromMembershipPayload(
+  data: ClerkMembershipData
+): { clerkOrgId: string | null; clerkUserId: string | null } {
+  const extended = data as ClerkMembershipData & {
+    organization_id?: string;
+    user_id?: string;
+  };
+  return {
+    clerkOrgId: data.organization?.id ?? extended.organization_id ?? null,
+    clerkUserId: data.public_user_data?.user_id ?? extended.user_id ?? null,
+  };
+}
+
 function normalizeOrgName(raw: string | undefined): string {
   const n = (raw?.trim() || "Organization").replace(/\s+/g, " ");
   return n.length > 0 ? n : "Organization";
@@ -132,13 +145,7 @@ export async function handleOrganizationMembershipCreated(
   data: ClerkMembershipData,
   meta: { eventType: string; svixId: string }
 ): Promise<void> {
-  const extended = data as ClerkMembershipData & {
-    organization_id?: string;
-    user_id?: string;
-  };
-  const clerkOrgId = data.organization?.id ?? extended.organization_id;
-  const clerkUserId =
-    data.public_user_data?.user_id ?? extended.user_id;
+  const { clerkOrgId, clerkUserId } = clerkIdsFromMembershipPayload(data);
   if (!clerkOrgId || !clerkUserId) {
     console.error(
       "Clerk webhook: organizationMembership.created missing organization.id or public_user_data.user_id"
@@ -205,6 +212,78 @@ export async function handleOrganizationMembershipCreated(
       clerkOrgId,
       clerkUserId,
       clerkRole: data.role ?? null,
+    },
+  });
+}
+
+/**
+ * Keeps `OrgMember.role` aligned when roles change in Clerk (Dashboard, API, etc.).
+ * Also backfills a missing row (same as our members API `ensure` path).
+ */
+export async function handleOrganizationMembershipUpdated(
+  data: ClerkMembershipData,
+  meta: { eventType: string; svixId: string }
+): Promise<void> {
+  const { clerkOrgId, clerkUserId } = clerkIdsFromMembershipPayload(data);
+  if (!clerkOrgId || !clerkUserId) {
+    console.error(
+      "Clerk webhook: organizationMembership.updated missing organization id or user id"
+    );
+    return;
+  }
+
+  const { organizationId } = await upsertOrganizationFromClerk(
+    clerkOrgId,
+    data.organization?.name
+  );
+
+  await provisionHipaaForOrganization(organizationId);
+
+  const newRole = mapClerkRoleToOrgRole(data.role);
+  const prior = await prisma.orgMember.findUnique({
+    where: {
+      clerkUserId_organizationId: {
+        clerkUserId,
+        organizationId,
+      },
+    },
+    select: { id: true, role: true },
+  });
+
+  if (prior && prior.role === newRole) {
+    return;
+  }
+
+  const member = await prisma.orgMember.upsert({
+    where: {
+      clerkUserId_organizationId: {
+        clerkUserId,
+        organizationId,
+      },
+    },
+    create: {
+      clerkUserId,
+      organizationId,
+      role: newRole,
+    },
+    update: { role: newRole },
+    select: { id: true, role: true },
+  });
+
+  await writeAuditLogAwait({
+    organizationId,
+    actorId: SYSTEM_ACTOR,
+    action: "org.member_membership_synced",
+    resourceType: "OrgMember",
+    resourceId: member.id,
+    metadata: {
+      clerkEventType: meta.eventType,
+      svixId: meta.svixId,
+      clerkOrgId,
+      clerkUserId,
+      clerkRole: data.role ?? null,
+      priorAppRole: prior?.role ?? null,
+      nextAppRole: member.role,
     },
   });
 }

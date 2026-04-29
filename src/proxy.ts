@@ -8,6 +8,8 @@ import { NextResponse } from "next/server";
 const isPublicAuthRoute = createRouteMatcher([
   "/sign-in(.*)",
   "/sign-up(.*)",
+  "/post-auth(.*)",
+  "/sso-callback(.*)",
 ]);
 
 /**

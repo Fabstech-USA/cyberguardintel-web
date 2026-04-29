@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 import { recommendedPlanFor } from "@/lib/plans";
+import { userShouldRunOrgOnboardingWizard } from "@/lib/clerk-org-onboarding";
 
 // Match the wizard's internal indices. Users landing on /onboarding with no
 // org at all start at Plan (0); users resuming from a persisted onboardingStep
@@ -24,15 +25,24 @@ export default async function OnboardingPage(): Promise<React.JSX.Element> {
       select: { onboardingStep: true, employeeCount: true },
     });
 
-    if (org && org.onboardingStep === null) {
+    if (!org) {
+      redirect("/post-auth");
+    }
+
+    if (org.onboardingStep === null) {
+      redirect("/dashboard");
+    }
+
+    const runOrgWizard = await userShouldRunOrgOnboardingWizard(userId, orgId);
+    if (!runOrgWizard) {
       redirect("/dashboard");
     }
 
     return (
       <main className="flex w-full flex-1 flex-col items-center justify-center p-8">
         <OnboardingWizard
-          initialStep={org?.onboardingStep ?? STEP_PLAN}
-          recommendedPlan={recommendedPlanFor(org?.employeeCount)}
+          initialStep={org.onboardingStep ?? STEP_PLAN}
+          recommendedPlan={recommendedPlanFor(org.employeeCount)}
         />
       </main>
     );

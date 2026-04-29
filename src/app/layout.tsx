@@ -3,6 +3,7 @@ import { Geist_Mono, Inter } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { ClerkCaptchaHost } from "@/components/clerk/ClerkCaptchaHost";
 import "./globals.css";
 
 const inter = Inter({
@@ -38,7 +39,14 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <ClerkProvider afterSignOutUrl="/sign-in">{children}</ClerkProvider>
+          <ClerkProvider afterSignOutUrl="/sign-in">
+            {/*
+              Smart CAPTCHA mounts into #clerk-captcha. Hidden outside auth routes
+              so Turnstile does not stay on screen after navigating to the app.
+            */}
+            <ClerkCaptchaHost />
+            {children}
+          </ClerkProvider>
         </ThemeProvider>
       </body>
     </html>

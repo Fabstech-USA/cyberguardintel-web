@@ -1,8 +1,8 @@
+import { Suspense } from "react";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { AuthTabs } from "@/components/auth/AuthTabs";
-import { AuthFooter } from "@/components/auth/AuthFooter";
-import { SignInForm } from "@/components/auth/SignInForm";
+import { SignInPageGate } from "@/components/auth/SignInPageGate";
+import { AuthRouteSuspenseFallback } from "@/components/auth/AuthRouteSuspenseFallback";
 
 export default async function SignInPage() {
   const { userId } = await auth();
@@ -11,10 +11,8 @@ export default async function SignInPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <AuthTabs active="sign-in" />
-      <SignInForm />
-      <AuthFooter showLegalLinks={false} />
-    </div>
+    <Suspense fallback={<AuthRouteSuspenseFallback />}>
+      <SignInPageGate />
+    </Suspense>
   );
 }

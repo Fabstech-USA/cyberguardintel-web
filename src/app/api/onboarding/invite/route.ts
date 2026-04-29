@@ -3,6 +3,7 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import { withTenant } from "@/lib/tenant";
 import { prisma } from "@/lib/prisma";
 import { writeAuditLog } from "@/lib/audit-log";
+import { getOrganizationInvitationRedirectUrl } from "@/lib/app-url";
 import { NextResponse } from "next/server";
 
 const InviteSchema = z.object({
@@ -25,6 +26,7 @@ export const POST = withTenant(async (req, ctx) => {
   }
 
   const clerk = await clerkClient();
+  const inviteRedirectUrl = getOrganizationInvitationRedirectUrl();
   const results: { email: string; status: string }[] = [];
 
   for (const email of parsed.data.emails) {
@@ -34,6 +36,7 @@ export const POST = withTenant(async (req, ctx) => {
         emailAddress: email,
         role: "org:member",
         inviterUserId: ctx.clerkUserId,
+        redirectUrl: inviteRedirectUrl,
       });
       results.push({ email, status: "invited" });
     } catch {

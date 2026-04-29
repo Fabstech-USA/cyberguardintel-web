@@ -307,8 +307,6 @@ export function SignInForm() {
         </div>
       </div>
 
-      <div id="clerk-captcha" />
-
       {error ? (
         <p
           role="alert"

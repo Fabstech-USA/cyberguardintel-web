@@ -186,9 +186,6 @@ export function SignUpForm() {
         </div>
       </div>
 
-      {/* Clerk captcha widget renders here when bot protection is enabled. */}
-      <div id="clerk-captcha" />
-
       {error ? <FormError message={error} /> : null}
 
       <PrimaryAuthButton

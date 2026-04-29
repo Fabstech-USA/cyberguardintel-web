@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import {
   handleOrganizationCreated,
   handleOrganizationMembershipCreated,
+  handleOrganizationMembershipUpdated,
 } from "@/lib/clerk-webhook-sync";
 
 type ClerkWebhookEvent = {
@@ -63,6 +64,15 @@ export async function POST(req: Request): Promise<Response> {
       );
     } else if (event.type === "organizationMembership.created") {
       await handleOrganizationMembershipCreated(
+        event.data as {
+          organization?: { id?: string; name?: string };
+          public_user_data?: { user_id?: string };
+          role?: string;
+        },
+        meta
+      );
+    } else if (event.type === "organizationMembership.updated") {
+      await handleOrganizationMembershipUpdated(
         event.data as {
           organization?: { id?: string; name?: string };
           public_user_data?: { user_id?: string };

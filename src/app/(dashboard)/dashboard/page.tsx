@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { FrameworkSlug, PolicyStatus } from "@/generated/prisma";
 import { prisma } from "@/lib/prisma";
+import { userShouldRunOrgOnboardingWizard } from "@/lib/clerk-org-onboarding";
 import { DASHBOARD_NEXT_STEPS } from "@/lib/dashboard-next-steps";
 import { aggregateSafeguardScores } from "@/lib/dashboard-safeguards";
 import { DashboardFrameworkTabs } from "@/components/dashboard/DashboardFrameworkTabs";
@@ -39,7 +40,13 @@ export default async function DashboardHomePage(): Promise<React.JSX.Element> {
   });
 
   if (!org) redirect("/onboarding");
-  if (org.onboardingStep !== null) redirect("/onboarding");
+
+  if (org.onboardingStep !== null) {
+    const runOrgWizard = await userShouldRunOrgOnboardingWizard(userId, orgId);
+    if (runOrgWizard) {
+      redirect("/onboarding");
+    }
+  }
 
   const hipaaEnrollment = org.frameworks.find(
     (f) => f.framework.slug === FrameworkSlug.HIPAA
