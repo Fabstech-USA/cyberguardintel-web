@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useClerk } from "@clerk/nextjs";
 
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -116,6 +117,7 @@ function teamSizeToEmployeeCount(size: TeamSize): number | null {
 
 export function OrganizationSettingsForm(): React.JSX.Element {
   const router = useRouter();
+  const clerk = useClerk();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -247,6 +249,12 @@ export function OrganizationSettingsForm(): React.JSX.Element {
       const data = (await res.json()) as { ok?: true; error?: string };
       if (!res.ok) {
         throw new Error(data.error ?? "Failed to delete organization.");
+      }
+
+      try {
+        await clerk.setActive({ organization: null });
+      } catch {
+        // post-auth will clear a stale active org if Clerk rejects the transition
       }
 
       setSuccess("Organization deleted.");

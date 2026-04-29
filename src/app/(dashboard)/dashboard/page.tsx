@@ -39,7 +39,7 @@ export default async function DashboardHomePage(): Promise<React.JSX.Element> {
     },
   });
 
-  if (!org) redirect("/onboarding");
+  if (!org) redirect("/post-auth");
 
   if (org.onboardingStep !== null) {
     const runOrgWizard = await userShouldRunOrgOnboardingWizard(userId, orgId);

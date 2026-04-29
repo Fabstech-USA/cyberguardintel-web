@@ -423,7 +423,7 @@ model CollectionJob {
 // The application role does not have DELETE permission on this table.
 model AuditLog {
   id              String   @id @default(cuid())
-  organizationId  String
+  organizationId  String?
   actorId         String   // clerkUserId or 'system'
   actorEmail      String?
   action          String   // 'evidence.created' | 'policy.approved' | 'baa.signed'
@@ -434,7 +434,7 @@ model AuditLog {
   userAgent       String?
   createdAt       DateTime @default(now())
 
-  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization    Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
   @@index([organizationId, createdAt])
   @@index([organizationId, resourceType, resourceId])
 }
