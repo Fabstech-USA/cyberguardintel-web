@@ -1,9 +1,40 @@
 import { describe, expect, it } from "vitest";
-import { RiskLevel } from "@/generated/prisma";
+import { z } from "zod";
+import { Industry, RiskLevel } from "@/generated/prisma";
 import {
   type AiRiskOutput,
   mapAiOutputToPersistInput,
 } from "@/lib/ai-risk-assessment";
+import {
+  WIZARD_CONTROL_IDS,
+  type WizardControlId,
+} from "@/lib/risk-assessment-controls";
+
+// Mirrors the schema in route.ts. The route file imports Clerk/Prisma at
+// module-eval time, so per the repo convention (see
+// src/app/api/onboarding/phi-systems/route.test.ts) we duplicate the schema
+// here for cheap, isolated payload validation tests.
+const HIPAA_SUBJECT_TYPES = [
+  "covered_entity",
+  "business_associate",
+  "both",
+] as const;
+const ProfileSchema = z
+  .object({
+    name: z.string().trim().min(1).max(200).optional(),
+    hipaaSubjectType: z.enum(HIPAA_SUBJECT_TYPES).optional(),
+    employeeCount: z.number().int().nonnegative().optional(),
+    industry: z.nativeEnum(Industry).optional(),
+  })
+  .optional();
+const WizardPayloadSchema = z.object({
+  profile: ProfileSchema,
+  implementedControlIds: z
+    .array(
+      z.enum(WIZARD_CONTROL_IDS as readonly [WizardControlId, ...WizardControlId[]])
+    )
+    .max(WIZARD_CONTROL_IDS.length),
+});
 
 const sampleOutput: AiRiskOutput = {
   executive_summary: "Posture is acceptable with two notable gaps.",
@@ -89,5 +120,73 @@ describe("mapAiOutputToPersistInput", () => {
   it("passes the threats array through unchanged", () => {
     const out = mapAiOutputToPersistInput(sampleOutput);
     expect(out.threats).toEqual(sampleOutput.threats);
+  });
+});
+
+describe("WizardPayloadSchema", () => {
+  it("accepts an empty implementedControlIds array (zero controls in place)", () => {
+    const result = WizardPayloadSchema.safeParse({
+      implementedControlIds: [],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts the full wizard payload with all 9 control ids", () => {
+    const result = WizardPayloadSchema.safeParse({
+      profile: {
+        name: "Sunrise Family Health",
+        hipaaSubjectType: "covered_entity",
+        employeeCount: 50,
+        industry: Industry.HEALTHCARE,
+      },
+      implementedControlIds: [...WIZARD_CONTROL_IDS],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects payload missing implementedControlIds", () => {
+    const result = WizardPayloadSchema.safeParse({
+      profile: { name: "Sunrise" },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects unknown control ids", () => {
+    const result = WizardPayloadSchema.safeParse({
+      implementedControlIds: ["mfa", "not_a_real_control"],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts partial profile updates", () => {
+    const result = WizardPayloadSchema.safeParse({
+      profile: { industry: Industry.HEALTHCARE },
+      implementedControlIds: ["mfa"],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects negative employeeCount", () => {
+    const result = WizardPayloadSchema.safeParse({
+      profile: { employeeCount: -5 },
+      implementedControlIds: [],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects empty-string organization name", () => {
+    const result = WizardPayloadSchema.safeParse({
+      profile: { name: "   " },
+      implementedControlIds: [],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects invalid hipaaSubjectType", () => {
+    const result = WizardPayloadSchema.safeParse({
+      profile: { hipaaSubjectType: "neither" },
+      implementedControlIds: [],
+    });
+    expect(result.success).toBe(false);
   });
 });

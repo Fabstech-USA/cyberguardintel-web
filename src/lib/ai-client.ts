@@ -12,7 +12,8 @@ export async function callAiService<T>(
     throw new Error("AI service env vars not set");
   }
 
-  const url = `${baseUrl.replace(/\/$/, "")}${path.startsWith("/") ? path : `/${path}`}`;
+  const origin = baseUrl.replace(/\/$/, "");
+  const url = `${origin}${path.startsWith("/") ? path : `/${path}`}`;
 
   const res = await fetch(url, {
     method: "POST",
@@ -25,7 +26,25 @@ export async function callAiService<T>(
   });
 
   if (!res.ok) {
-    throw new Error(`AI service ${path} failed: ${res.status}`);
+    let bodyPreview = "";
+    try {
+      const t = await res.text();
+      bodyPreview = t.replace(/\s+/g, " ").trim().slice(0, 120);
+    } catch {
+      /* ignore */
+    }
+
+    let hint = "";
+    if (res.status === 404) {
+      hint =
+        " This URL often means AI_SERVICE_URL is not your FastAPI service: on Railway, the project slug alone can show a placeholder (GET /health returns plain text \"OK\" instead of JSON {\"status\":\"ok\",...}). Open Railway → your Python service → Settings → Networking and set AI_SERVICE_URL to that service’s public URL.";
+    }
+
+    const detail =
+      bodyPreview.length > 0 ? ` Response: ${bodyPreview}` : "";
+    throw new Error(
+      `AI service ${path} failed: ${res.status} (${url})${detail}.${hint}`
+    );
   }
 
   return (await res.json()) as T;

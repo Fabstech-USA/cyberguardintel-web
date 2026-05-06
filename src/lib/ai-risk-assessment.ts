@@ -16,9 +16,14 @@ export const AiRiskInputSchema = z.object({
 
 export type AiRiskInput = z.infer<typeof AiRiskInputSchema>;
 
-const AiRiskLevelSchema = z.enum(["low", "medium", "high", "critical"]);
+export const AiRiskLevelSchema = z.enum([
+  "low",
+  "medium",
+  "high",
+  "critical",
+]);
 
-const ThreatItemSchema = z.object({
+export const ThreatItemSchema = z.object({
   threat_name: z.string(),
   threat_source: z.string(),
   likelihood: AiRiskLevelSchema,
@@ -28,6 +33,8 @@ const ThreatItemSchema = z.object({
   current_controls: z.string(),
   recommendation: z.string(),
 });
+
+export type ThreatItem = z.infer<typeof ThreatItemSchema>;
 
 /**
  * Mirrors `RiskAssessmentOutput` in cyberguardintel-ai/chains/hipaa_risk_assessment.py.
