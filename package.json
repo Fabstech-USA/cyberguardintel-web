@@ -16,6 +16,7 @@
     "@hookform/resolvers": "^5.2.2",
     "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.7.0",
+    "@react-pdf/renderer": "^4.5.1",
     "@tiptap/react": "^3.22.2",
     "@tiptap/starter-kit": "^3.22.2",
     "axios": "^1.14.0",
