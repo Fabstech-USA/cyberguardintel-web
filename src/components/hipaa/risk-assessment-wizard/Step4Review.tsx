@@ -33,7 +33,7 @@ export function Step4Review({
         </p>
         <h2 className="text-xl font-semibold tracking-tight">Ready to generate</h2>
         <p className="text-sm text-muted-foreground">
-          We&apos;ll use your inputs plus Mwombeki&apos;s reviewed HIPAA prompt
+          We&apos;ll use your inputs plus professionally reviewed HIPAA prompt
           (aligned with HHS guidance) to draft your Security Risk Analysis.
         </p>
       </div>
