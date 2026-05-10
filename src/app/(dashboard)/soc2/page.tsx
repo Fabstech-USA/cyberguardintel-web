@@ -3,6 +3,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { ArrowRight, Shield } from "lucide-react";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { ensureOrganizationSyncedFromClerk } from "@/lib/clerk-webhook-sync";
 import { userShouldRunOrgOnboardingWizard } from "@/lib/clerk-org-onboarding";
 import { SOC2_TRUST_SERVICE_CARDS } from "@/lib/soc2-mvp-content";
 import { DashboardFrameworkTabs } from "@/components/dashboard/DashboardFrameworkTabs";
@@ -16,10 +17,18 @@ export default async function Soc2ComingSoonPage(): Promise<React.JSX.Element> {
   if (!userId) redirect("/sign-in");
   if (!orgId) redirect("/post-auth");
 
-  const org = await prisma.organization.findUnique({
+  let org = await prisma.organization.findUnique({
     where: { clerkOrgId: orgId },
     select: { id: true, onboardingStep: true },
   });
+
+  if (!org) {
+    await ensureOrganizationSyncedFromClerk(orgId);
+    org = await prisma.organization.findUnique({
+      where: { clerkOrgId: orgId },
+      select: { id: true, onboardingStep: true },
+    });
+  }
 
   if (!org) redirect("/post-auth");
 

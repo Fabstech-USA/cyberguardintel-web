@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 import { recommendedPlanFor } from "@/lib/plans";
 import { userShouldRunOrgOnboardingWizard } from "@/lib/clerk-org-onboarding";
+import { ensureOrganizationSyncedFromClerk } from "@/lib/clerk-webhook-sync";
 
 // Match the wizard's internal indices. Users landing on /onboarding with no
 // org at all start at Plan (0); users resuming from a persisted onboardingStep
@@ -20,10 +21,18 @@ export default async function OnboardingPage(): Promise<React.JSX.Element> {
   }
 
   if (orgId) {
-    const org = await prisma.organization.findUnique({
+    let org = await prisma.organization.findUnique({
       where: { clerkOrgId: orgId },
       select: { onboardingStep: true, employeeCount: true },
     });
+
+    if (!org) {
+      await ensureOrganizationSyncedFromClerk(orgId);
+      org = await prisma.organization.findUnique({
+        where: { clerkOrgId: orgId },
+        select: { onboardingStep: true, employeeCount: true },
+      });
+    }
 
     if (!org) {
       redirect("/post-auth");
