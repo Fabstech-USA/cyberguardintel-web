@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { FrameworkSlug, PolicyStatus } from "@/generated/prisma";
 import { prisma } from "@/lib/prisma";
 import { userShouldRunOrgOnboardingWizard } from "@/lib/clerk-org-onboarding";
+import { ensureOrganizationSyncedFromClerk } from "@/lib/clerk-webhook-sync";
 import { DASHBOARD_NEXT_STEPS } from "@/lib/dashboard-next-steps";
 import { aggregateSafeguardScores } from "@/lib/dashboard-safeguards";
 import { DashboardFrameworkTabs } from "@/components/dashboard/DashboardFrameworkTabs";
@@ -21,7 +22,7 @@ export default async function DashboardHomePage(): Promise<React.JSX.Element> {
   if (!userId) redirect("/sign-in");
   if (!orgId) redirect("/post-auth");
 
-  const org = await prisma.organization.findUnique({
+  let org = await prisma.organization.findUnique({
     where: { clerkOrgId: orgId },
     include: {
       frameworks: {
@@ -38,6 +39,27 @@ export default async function DashboardHomePage(): Promise<React.JSX.Element> {
       },
     },
   });
+
+  if (!org) {
+    await ensureOrganizationSyncedFromClerk(orgId);
+    org = await prisma.organization.findUnique({
+      where: { clerkOrgId: orgId },
+      include: {
+        frameworks: {
+          include: {
+            framework: { select: { slug: true, name: true } },
+          },
+        },
+        _count: {
+          select: {
+            evidence: true,
+            baaRecords: true,
+            trainingRecords: true,
+          },
+        },
+      },
+    });
+  }
 
   if (!org) redirect("/post-auth");
 

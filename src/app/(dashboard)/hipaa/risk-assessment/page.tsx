@@ -14,6 +14,7 @@ import type {
   WizardProfile,
 } from "@/components/hipaa/risk-assessment-wizard/types";
 import { prisma } from "@/lib/prisma";
+import { ensureOrganizationSyncedFromClerk } from "@/lib/clerk-webhook-sync";
 import {
   WIZARD_CONTROLS,
   type WizardControlId,
@@ -40,7 +41,7 @@ export default async function RiskAssessmentPage(): Promise<React.JSX.Element> {
     redirect("/sign-in");
   }
 
-  const organization = await prisma.organization.findUnique({
+  let organization = await prisma.organization.findUnique({
     where: { clerkOrgId: orgId },
     select: {
       id: true,
@@ -50,6 +51,19 @@ export default async function RiskAssessmentPage(): Promise<React.JSX.Element> {
       hipaaSubjectType: true,
     },
   });
+  if (!organization) {
+    await ensureOrganizationSyncedFromClerk(orgId);
+    organization = await prisma.organization.findUnique({
+      where: { clerkOrgId: orgId },
+      select: {
+        id: true,
+        name: true,
+        industry: true,
+        employeeCount: true,
+        hipaaSubjectType: true,
+      },
+    });
+  }
   if (!organization) {
     redirect("/post-auth");
   }

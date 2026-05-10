@@ -1,3 +1,4 @@
+import { clerkClient } from "@clerk/nextjs/server";
 import { mapClerkRoleToOrgRole } from "@/lib/clerk-org-role";
 import { writeAuditLogAwait } from "@/lib/audit-log";
 import { ensureOrgControlsForFramework } from "@/lib/ensure-org-framework-controls";
@@ -106,6 +107,40 @@ export async function upsertOrganizationFromClerk(
     select: { id: true },
   });
   return { organizationId: org.id, created: true };
+}
+
+/**
+ * Clerk has an active org on the session but Prisma has no row yet (common when
+ * webhooks are not wired in local dev). Pulls the org from Clerk and applies the
+ * same upsert + HIPAA enrollment as webhook handlers so dashboard routes stop
+ * bouncing against `/post-auth`.
+ */
+export async function ensureOrganizationSyncedFromClerk(
+  clerkOrgId: string
+): Promise<boolean> {
+  const prior = await prisma.organization.findUnique({
+    where: { clerkOrgId },
+    select: { id: true },
+  });
+  if (prior) {
+    return true;
+  }
+
+  try {
+    const clerk = await clerkClient();
+    const clerkOrg = await clerk.organizations.getOrganization({
+      organizationId: clerkOrgId,
+    });
+    const { organizationId } = await upsertOrganizationFromClerk(
+      clerkOrgId,
+      clerkOrg.name ?? undefined
+    );
+    await provisionHipaaForOrganization(organizationId);
+    return true;
+  } catch (e) {
+    console.error("ensureOrganizationSyncedFromClerk failed:", e);
+    return false;
+  }
 }
 
 export async function handleOrganizationCreated(
