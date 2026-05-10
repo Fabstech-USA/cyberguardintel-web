@@ -123,6 +123,11 @@ enum BaaStatus {
   TERMINATED
 }
 
+enum PhiFlowDataClassification {
+  PHI
+  DE_IDENTIFIED
+}
+
 // --- MULTI-TENANCY FOUNDATION ---
 model Organization {
   id              String       @id @default(cuid())
@@ -154,6 +159,7 @@ model Organization {
   baaRecords      BaaRecord[]
   trainingRecords TrainingRecord[]
   phiSystems      PhiSystem[]
+  phiFlowEdges    PhiFlowEdge[]
   collectionJobs  CollectionJob[]
 }
 
@@ -338,6 +344,8 @@ model BaaRecord {
   updatedAt       DateTime  @updatedAt
 
   organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  phiSystems        PhiSystem[]
+  phiFlowEdges      PhiFlowEdge[]
   @@index([organizationId, status])
 }
 
@@ -369,11 +377,46 @@ model PhiSystem {
   encryptionAtRest Boolean @default(false)
   encryptionInTransit Boolean @default(false)
   connections     Json?    // Which other systems this connects to
+  phiCreates        Boolean  @default(false)
+  phiTransmits      Boolean  @default(false)
+  phiStores         Boolean  @default(false)
+  phiDestroys       Boolean  @default(false)
+  baaRecordId       String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  baaRecord       BaaRecord?     @relation(fields: [baaRecordId], references: [id], onDelete: SetNull)
+  outgoingFlows   PhiFlowEdge[]  @relation("PhiFlowEdgeSource")
+  incomingFlows   PhiFlowEdge[]  @relation("PhiFlowEdgeTarget")
   @@index([organizationId])
+  @@index([baaRecordId])
+}
+
+model PhiFlowEdge {
+  id                    String                   @id @default(cuid())
+  organizationId        String
+  sourcePhiSystemId     String
+  targetPhiSystemId     String?
+  targetIntegrationId   String?
+  viaIntegrationId      String?
+  baaRecordId           String?
+  isExternalVendorFlow  Boolean                  @default(false)
+  dataClassification    PhiFlowDataClassification @default(PHI)
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
+
+  organization          Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  sourcePhiSystem       PhiSystem    @relation("PhiFlowEdgeSource", fields: [sourcePhiSystemId], references: [id], onDelete: Cascade)
+  targetPhiSystem       PhiSystem?   @relation("PhiFlowEdgeTarget", fields: [targetPhiSystemId], references: [id], onDelete: Cascade)
+  targetIntegration     Integration? @relation("PhiFlowEdgeTargetIntegration", fields: [targetIntegrationId], references: [id], onDelete: Cascade)
+  viaIntegration          Integration? @relation("PhiFlowEdgeViaIntegration", fields: [viaIntegrationId], references: [id], onDelete: SetNull)
+  baaRecord               BaaRecord?   @relation(fields: [baaRecordId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([sourcePhiSystemId])
+  @@index([targetPhiSystemId])
+  @@index([targetIntegrationId])
 }
 
 // --- INTEGRATIONS ---
@@ -396,6 +439,8 @@ model Integration {
   organization    Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   evidence        Evidence[]
   jobs            CollectionJob[]
+  phiFlowEdgesAsTarget PhiFlowEdge[] @relation("PhiFlowEdgeTargetIntegration")
+  phiFlowEdgesAsVia    PhiFlowEdge[] @relation("PhiFlowEdgeViaIntegration")
   @@unique([organizationId, type])
   @@index([organizationId])
 }

@@ -1,9 +1,8 @@
-import { withTenant } from '@/lib/tenant'
+import { NextResponse } from "next/server";
+import { loadPhiMapBundle } from "@/lib/phi-map-server";
+import { withTenant } from "@/lib/tenant";
 
-export const GET = withTenant(async (_req, _ctx) => {
-  return Response.json({ ok: true })
-})
-
-export const POST = withTenant(async (_req, _ctx) => {
-  return Response.json({ ok: true })
-})
+export const GET = withTenant(async (_req, ctx) => {
+  const bundle = await loadPhiMapBundle(ctx.organizationId);
+  return NextResponse.json(bundle);
+});
