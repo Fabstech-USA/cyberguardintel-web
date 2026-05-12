@@ -101,6 +101,12 @@ describe("isBaaActive", () => {
       isBaaActive({ status: BaaStatus.PENDING, expiresAt: null }, now)
     ).toBe(false);
   });
+
+  it("returns true for not required", () => {
+    expect(
+      isBaaActive({ status: BaaStatus.NOT_REQUIRED, expiresAt: null }, now)
+    ).toBe(true);
+  });
 });
 
 describe("edgeBaaCompliant / edgeIsPhiGap", () => {
@@ -131,6 +137,16 @@ describe("edgeBaaCompliant / edgeIsPhiGap", () => {
       isExternalVendorFlow: true,
       dataClassification: PhiFlowDataClassification.PHI,
       baaRecord: { status: BaaStatus.SIGNED, expiresAt: null },
+    };
+    expect(edgeBaaCompliant(edge, now)).toBe(true);
+    expect(edgeIsPhiGap(edge, now)).toBe(false);
+  });
+
+  it("clears gap when BAA is not required", () => {
+    const edge = {
+      isExternalVendorFlow: true,
+      dataClassification: PhiFlowDataClassification.PHI,
+      baaRecord: { status: BaaStatus.NOT_REQUIRED, expiresAt: null },
     };
     expect(edgeBaaCompliant(edge, now)).toBe(true);
     expect(edgeIsPhiGap(edge, now)).toBe(false);

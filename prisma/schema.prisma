@@ -120,6 +120,7 @@ enum BaaStatus {
   PENDING
   SIGNED
   EXPIRED
+  NOT_REQUIRED
   TERMINATED
 }
 

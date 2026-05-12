@@ -4,6 +4,7 @@ import {
   PhiFlowDataClassification,
   type BaaRecord,
 } from "@/generated/prisma";
+import { getBaaComputedStatus } from "@/lib/baa";
 
 /** Allowed `PhiSystem.systemType` values for phi-map CRUD (extends onboarding presets). */
 export const PHI_MAP_SYSTEM_TYPES = [
@@ -105,9 +106,11 @@ export function isBaaActive(
   now: Date
 ): boolean {
   if (!baa) return false;
-  if (baa.status !== BaaStatus.SIGNED) return false;
-  if (baa.expiresAt && baa.expiresAt <= now) return false;
-  return true;
+  const effectiveStatus = getBaaComputedStatus(baa, now);
+  return (
+    effectiveStatus === BaaStatus.SIGNED ||
+    effectiveStatus === BaaStatus.NOT_REQUIRED
+  );
 }
 
 export function edgeBaaCompliant(

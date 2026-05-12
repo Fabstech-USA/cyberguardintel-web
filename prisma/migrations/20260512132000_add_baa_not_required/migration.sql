@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "BaaStatus" ADD VALUE IF NOT EXISTS 'NOT_REQUIRED';
