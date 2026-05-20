@@ -8,10 +8,10 @@
  * | Re-run **Generate** for the same policy type (AI upsert) | **+1** (v1 → v2, …) |
  * | Manual **Save** in the editor | **No** (same version; content updated in place) |
  * | Status change (draft → under review, archive, etc.) | **No** |
- * | **Approve** | **No** (locks approval metadata; same version number) |
+ * | **Approve** | **+1** (snapshot saved to PolicyVersion at pre-increment version) |
  *
- * To get a new version after manual edits, use **Generate** again (AI overwrite) or
- * we can add an explicit "Save as new version" later.
+ * Approved revisions are listed in version history; the live policy row holds the
+ * current working revision number after approval.
  */
 
 export function formatPolicyVersion(version: number): string {

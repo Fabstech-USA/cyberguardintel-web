@@ -5,6 +5,7 @@ import {
   type Policy,
 } from "@/generated/prisma";
 import { appendCitationsToContent, type AiPolicyOutput } from "@/lib/ai-policy-contract";
+import { normalizePolicyMarkdown } from "@/lib/normalize-policy-markdown";
 import { writeAuditLog } from "@/lib/audit-log";
 import { prisma } from "@/lib/prisma";
 
@@ -15,9 +16,8 @@ export async function upsertHipaaPolicyDraftFromAi(params: {
 }): Promise<Policy> {
   const { organizationId, clerkUserId, output } = params;
 
-  const content = appendCitationsToContent(
-    output.full_markdown,
-    output.cited_cfr_sources
+  const content = normalizePolicyMarkdown(
+    appendCitationsToContent(output.full_markdown, output.cited_cfr_sources)
   );
 
   const existing = await prisma.policy.findUnique({

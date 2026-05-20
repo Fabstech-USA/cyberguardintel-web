@@ -36,7 +36,7 @@ export async function writeAuditLogAwait(entry: AuditEntry): Promise<void> {
 
 // Standard action strings to use consistently:
 // evidence.created   evidence.deleted   evidence.downloaded
-// policy.created     policy.approved    policy.archived
+// policy.created     policy.approved    policy.archived    policy.rejected
 // baa.created        baa.signed         baa.expired
 // risk_assessment.created  risk_assessment.approved
 // training.recorded

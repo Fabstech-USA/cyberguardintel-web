@@ -6,8 +6,7 @@ import {
   FrameworkSlug,
   PolicyStatus,
 } from "@/generated/prisma";
-import { PolicyContentEditor } from "@/components/hipaa/PolicyContentEditor";
-import { PolicyDetailActions } from "@/components/hipaa/PolicyDetailActions";
+import { PolicyDetailClient } from "@/components/hipaa/PolicyDetailClient";
 import { formatPolicyVersion } from "@/lib/hipaa-policy-version";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { canManageHipaaPolicies } from "@/lib/hipaa-policy-access";
@@ -82,14 +81,6 @@ export default async function HipaaPolicyDetailPage({
         </p>
       </header>
 
-      <PolicyDetailActions
-        key={`${policy.id}-actions-v${policy.version}`}
-        policy={policy}
-        displayTitle={catalogMeta?.displayTitle ?? policy.title}
-        allowedTransitions={allowedTransitions}
-        canManagePolicies={canManage}
-      />
-
       {policy.status === PolicyStatus.DRAFT && policy.aiGenerated ? (
         <Alert variant="warning">
           <AlertTriangle className="size-5 shrink-0" aria-hidden />
@@ -102,10 +93,12 @@ export default async function HipaaPolicyDetailPage({
         </Alert>
       ) : null}
 
-      <PolicyContentEditor
-        key={`${policy.id}-editor-v${policy.version}`}
+      <PolicyDetailClient
+        key={`${policy.id}-detail-v${policy.version}`}
         policy={policy}
-        canEdit={canManage}
+        displayTitle={catalogMeta?.displayTitle ?? policy.title}
+        allowedTransitions={allowedTransitions}
+        canManagePolicies={canManage}
       />
     </div>
   );

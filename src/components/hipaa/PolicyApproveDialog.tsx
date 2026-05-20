@@ -78,8 +78,9 @@ export function PolicyApproveDialog({
         <DialogHeader>
           <DialogTitle>Approve policy</DialogTitle>
           <DialogDescription>
-            Approving locks v{version} of &ldquo;{title}&rdquo; as your current
-            policy. Review dates are set to one year from today.
+            Approving saves v{version} of &ldquo;{title}&rdquo; to version history
+            and advances the working revision to v{version + 1}. Review dates are
+            set to one year from today.
           </DialogDescription>
         </DialogHeader>
 

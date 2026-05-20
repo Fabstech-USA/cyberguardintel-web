@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { PolicyApproveDialog } from "@/components/hipaa/PolicyApproveDialog";
 import { PolicyRegenerateDialog } from "@/components/hipaa/PolicyRegenerateDialog";
+import { PolicyRejectRegenerateDialog } from "@/components/hipaa/PolicyRejectRegenerateDialog";
 import {
   POLICY_STATUS_LABELS,
   canApprovePolicyStatus,
@@ -51,6 +52,16 @@ export function PolicyDetailActions({
   const [statusError, setStatusError] = useState<string | null>(null);
   const [approveOpen, setApproveOpen] = useState(false);
   const [regenerateOpen, setRegenerateOpen] = useState(false);
+  const [rejectRegenerateOpen, setRejectRegenerateOpen] = useState(false);
+
+  const showRejectRegenerate =
+    canManagePolicies &&
+    policy.aiGenerated &&
+    (policy.status === PolicyStatus.DRAFT ||
+      policy.status === PolicyStatus.UNDER_REVIEW);
+
+  const showRegenerate =
+    canManagePolicies && !showRejectRegenerate;
 
   const transitionOptions = [
     policy.status,
@@ -155,13 +166,25 @@ export function PolicyDetailActions({
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setRegenerateOpen(true)}
-          >
-            Regenerate
-          </Button>
+          {showRejectRegenerate ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="border-destructive/40 text-destructive hover:bg-destructive/10"
+              onClick={() => setRejectRegenerateOpen(true)}
+            >
+              Reject & regenerate
+            </Button>
+          ) : null}
+          {showRegenerate ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setRegenerateOpen(true)}
+            >
+              Regenerate
+            </Button>
+          ) : null}
           {showApprove ? (
             <Button
               type="button"
@@ -193,6 +216,15 @@ export function PolicyDetailActions({
         open={regenerateOpen}
         onOpenChange={setRegenerateOpen}
         policyType={policy.type}
+        displayTitle={displayTitle}
+        currentVersion={policy.version}
+        onRegenerated={() => router.refresh()}
+      />
+
+      <PolicyRejectRegenerateDialog
+        open={rejectRegenerateOpen}
+        onOpenChange={setRejectRegenerateOpen}
+        policyId={policy.id}
         displayTitle={displayTitle}
         currentVersion={policy.version}
         onRegenerated={() => router.refresh()}

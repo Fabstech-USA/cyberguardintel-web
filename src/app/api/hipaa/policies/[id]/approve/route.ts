@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { addYears } from "date-fns";
-import { FrameworkSlug, PolicyStatus, Prisma } from "@/generated/prisma";
-import { writeAuditLog } from "@/lib/audit-log";
+import { Prisma } from "@/generated/prisma";
 import { canApproveHipaaPolicies } from "@/lib/hipaa-policy-access";
-import { canApprovePolicyStatus } from "@/lib/hipaa-policy-status";
-import { prisma } from "@/lib/prisma";
+import {
+  approveHipaaPolicy,
+  PolicyApproveError,
+} from "@/lib/hipaa-policy-approve";
 import { withTenant, type TenantContext } from "@/lib/tenant";
 
 type RouteCtx = { params: Promise<{ id: string }> };
@@ -23,56 +23,21 @@ export async function POST(
       );
     }
 
-    const existing = await prisma.policy.findFirst({
-      where: {
-        id,
-        organizationId: ctx.organizationId,
-        frameworkSlug: FrameworkSlug.HIPAA,
-      },
-    });
-
-    if (!existing) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-
-    if (!canApprovePolicyStatus(existing.status)) {
-      return NextResponse.json(
-        {
-          error:
-            "Only draft or under-review policies can be approved. Change status first if needed.",
-        },
-        { status: 409 }
-      );
-    }
-
-    const now = new Date();
-
     try {
-      const updated = await prisma.policy.update({
-        where: { id: existing.id },
-        data: {
-          status: PolicyStatus.APPROVED,
-          approvedById: ctx.clerkUserId,
-          approvedAt: now,
-          effectiveDate: now,
-          reviewDate: addYears(now, 1),
-        },
-      });
-
-      writeAuditLog({
+      const result = await approveHipaaPolicy({
         organizationId: ctx.organizationId,
-        actorId: ctx.clerkUserId,
-        action: "policy.approved",
-        resourceType: "Policy",
-        resourceId: updated.id,
-        metadata: {
-          type: updated.type,
-          version: updated.version,
-        },
+        clerkUserId: ctx.clerkUserId,
+        policyId: id,
       });
 
-      return NextResponse.json(updated, { status: 200 });
+      return NextResponse.json(result.policy, { status: 200 });
     } catch (err) {
+      if (err instanceof PolicyApproveError) {
+        if (err.code === "NOT_FOUND") {
+          return NextResponse.json({ error: "Not found" }, { status: 404 });
+        }
+        return NextResponse.json({ error: err.message }, { status: 409 });
+      }
       if (
         err instanceof Prisma.PrismaClientKnownRequestError &&
         err.code === "P2025"
