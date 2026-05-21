@@ -373,6 +373,7 @@ model TrainingRecord {
   employeeId      String   // clerkUserId or external employee ID
   employeeName    String
   employeeEmail   String
+  employeeJobTitle String? // e.g. Physician, Office Manager (matrix subtitle)
   trainingTitle   String
   completedAt     DateTime
   nextDueAt       DateTime // completedAt + 1 year

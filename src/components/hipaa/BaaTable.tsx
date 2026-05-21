@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import { HipaaStatCard } from "@/components/hipaa/HipaaStatCard";
+import { hipaaStatUi } from "@/components/hipaa/hipaa-stat-ui";
 import { BaaStatus } from "@/generated/prisma";
 import {
   getBaaBadgeClassName,
@@ -38,9 +40,7 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import {
   Dialog,
@@ -156,37 +156,28 @@ function summaryCards(summary: Summary) {
     {
       label: "Total vendors",
       value: summary.totalVendors,
-      cardClass:
-        "border-slate-200/80 bg-slate-50/80 dark:border-slate-800/80 dark:bg-slate-950/30",
-      valueClass: "text-slate-900 dark:text-slate-100",
+      valueClassName: hipaaStatUi.statDefault,
     },
     {
       label: "Signed",
       value: summary.signed,
-      cardClass:
-        "border-emerald-200/80 bg-emerald-50/80 dark:border-emerald-900/70 dark:bg-emerald-950/30",
-      valueClass: "text-emerald-700 dark:text-emerald-300",
+      valueClassName: hipaaStatUi.statOk,
     },
     {
       label: "Pending",
       value: summary.pending,
-      cardClass:
-        "border-amber-200/80 bg-amber-50/80 dark:border-amber-900/70 dark:bg-amber-950/30",
-      valueClass: "text-amber-700 dark:text-amber-300",
+      valueClassName: hipaaStatUi.statWarn,
     },
     {
       label: "Expired",
       value: summary.expired,
-      cardClass:
-        "border-red-200/80 bg-red-50/80 dark:border-red-900/70 dark:bg-red-950/30",
-      valueClass: "text-red-700 dark:text-red-300",
+      valueClassName:
+        summary.expired > 0 ? hipaaStatUi.statDanger : hipaaStatUi.statOk,
     },
     {
       label: "Not required",
       value: summary.notRequired,
-      cardClass:
-        "border-sky-200/80 bg-sky-50/80 dark:border-sky-900/70 dark:bg-sky-950/30",
-      valueClass: "text-sky-700 dark:text-sky-300",
+      valueClassName: hipaaStatUi.statDefault,
     },
   ];
 }
@@ -528,7 +519,7 @@ export function BaaTable({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight">BAA tracker</h1>
-          <p className="max-w-3xl text-sm text-muted-foreground">
+          <p className={cn("max-w-3xl", hipaaStatUi.pageDesc)}>
             Keep every vendor with PHI access in one place so expiring agreements
             are visible before an audit finds them.
           </p>
@@ -547,27 +538,14 @@ export function BaaTable({
         ) : null}
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {summaryCards(bundle.summary).map((item) => (
-          <Card
+          <HipaaStatCard
             key={item.label}
-            size="sm"
-            className={cn("border ring-1 ring-border/60", item.cardClass)}
-          >
-            <CardHeader className="gap-1">
-              <CardDescription className="text-xs font-medium uppercase tracking-wide">
-                {item.label}
-              </CardDescription>
-              <CardTitle
-                className={cn(
-                  "text-4xl font-semibold tracking-tight sm:text-5xl",
-                  item.valueClass
-                )}
-              >
-                {item.value}
-              </CardTitle>
-            </CardHeader>
-          </Card>
+            label={item.label}
+            value={item.value}
+            valueClassName={item.valueClassName}
+          />
         ))}
       </div>
 
