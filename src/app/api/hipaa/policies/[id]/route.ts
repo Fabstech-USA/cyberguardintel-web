@@ -7,6 +7,7 @@ import {
   canTransitionPolicyStatus,
   getAllowedPolicyTransitions,
 } from "@/lib/hipaa-policy-status";
+import { triggerHipaaScoreRecalculation } from "@/lib/hipaa-scoring";
 import { updateHipaaPolicyContent } from "@/lib/hipaa-policy-persist";
 import { prisma } from "@/lib/prisma";
 import { withTenant, type TenantContext } from "@/lib/tenant";
@@ -184,6 +185,10 @@ export async function PATCH(
           version: updated.version,
         },
       });
+
+      if (existing.status === PolicyStatus.APPROVED) {
+        await triggerHipaaScoreRecalculation(ctx.organizationId);
+      }
 
       return NextResponse.json(updated);
     } catch (err) {

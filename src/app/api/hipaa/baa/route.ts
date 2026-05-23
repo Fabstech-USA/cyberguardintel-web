@@ -6,6 +6,7 @@ import {
   canMutateBaa,
   normalizeBaaWriteInput,
 } from "@/lib/baa";
+import { syncBaaAndRecalculateScore } from "@/lib/baa-evidence-sync";
 import { loadBaaTrackerBundle } from "@/lib/baa-server";
 import { prisma } from "@/lib/prisma";
 import { withTenant } from "@/lib/tenant";
@@ -58,6 +59,8 @@ export const POST = withTenant(async (req, ctx) => {
     resourceId: created.id,
     metadata: { status: created.status, vendorName: created.vendorName },
   });
+
+  await syncBaaAndRecalculateScore(ctx.organizationId, created);
 
   return NextResponse.json(created, { status: 201 });
 });

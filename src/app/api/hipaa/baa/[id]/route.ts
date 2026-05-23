@@ -5,6 +5,7 @@ import {
   canMutateBaa,
   normalizeBaaWriteInput,
 } from "@/lib/baa";
+import { syncBaaAndRecalculateScore, removeBaaAndRecalculateScore } from "@/lib/baa-evidence-sync";
 import { writeAuditLog } from "@/lib/audit-log";
 import { prisma } from "@/lib/prisma";
 import { withTenant, type TenantContext } from "@/lib/tenant";
@@ -74,6 +75,8 @@ export async function PATCH(req: Request, { params }: RouteCtx): Promise<Respons
       metadata: { status: updated.status, vendorName: updated.vendorName },
     });
 
+    await syncBaaAndRecalculateScore(ctx.organizationId, updated);
+
     return NextResponse.json(updated);
   })(req);
 }
@@ -99,6 +102,8 @@ export async function DELETE(req: Request, { params }: RouteCtx): Promise<Respon
       resourceType: "BaaRecord",
       resourceId: id,
     });
+
+    await removeBaaAndRecalculateScore(ctx.organizationId, id);
 
     return NextResponse.json({ ok: true });
   })(req);

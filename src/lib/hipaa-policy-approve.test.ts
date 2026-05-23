@@ -5,11 +5,13 @@ import {
   PolicyType,
 } from "@/generated/prisma";
 
-const { findFirstMock, transactionMock, auditMock } = vi.hoisted(() => ({
-  findFirstMock: vi.fn(),
-  transactionMock: vi.fn(),
-  auditMock: vi.fn(),
-}));
+const { findFirstMock, transactionMock, auditMock, scoreRecalcMock } =
+  vi.hoisted(() => ({
+    findFirstMock: vi.fn(),
+    transactionMock: vi.fn(),
+    auditMock: vi.fn(),
+    scoreRecalcMock: vi.fn(),
+  }));
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -20,6 +22,10 @@ vi.mock("@/lib/prisma", () => ({
 
 vi.mock("@/lib/audit-log", () => ({
   writeAuditLog: auditMock,
+}));
+
+vi.mock("@/lib/hipaa-scoring", () => ({
+  triggerHipaaScoreRecalculation: scoreRecalcMock,
 }));
 
 import {
@@ -48,6 +54,7 @@ const basePolicy = {
 describe("approveHipaaPolicy", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    scoreRecalcMock.mockResolvedValue(42);
   });
 
   it("snapshots current version, approves, and increments version", async () => {
@@ -118,6 +125,8 @@ describe("approveHipaaPolicy", () => {
         }),
       })
     );
+
+    expect(scoreRecalcMock).toHaveBeenCalledWith("org_1");
   });
 
   it("throws when policy is not found", async () => {

@@ -5,6 +5,7 @@ import {
   type Policy,
 } from "@/generated/prisma";
 import { writeAuditLog } from "@/lib/audit-log";
+import { triggerHipaaScoreRecalculation } from "@/lib/hipaa-scoring";
 import { prisma } from "@/lib/prisma";
 
 export type ApproveHipaaPolicyParams = {
@@ -100,6 +101,8 @@ export async function approveHipaaPolicy(
       newVersion,
     },
   });
+
+  await triggerHipaaScoreRecalculation(organizationId);
 
   return { policy, approvedVersion, newVersion };
 }
