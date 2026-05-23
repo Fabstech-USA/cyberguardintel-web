@@ -14,6 +14,7 @@ import {
   mapAiOutputToPersistInput,
 } from "@/lib/ai-risk-assessment";
 import { writeAuditLog } from "@/lib/audit-log";
+import { triggerHipaaScoreRecalculation } from "@/lib/hipaa-scoring";
 import { prisma } from "@/lib/prisma";
 import {
   WIZARD_CONTROL_IDS,
@@ -247,6 +248,9 @@ export const POST = withTenant(async (req, ctx): Promise<Response> => {
     await applyProfileWritethrough(ctx, profile);
   }
   await mirrorImplementedControls(ctx, implementedControlIds);
+  if (implementedControlIds.length > 0) {
+    await triggerHipaaScoreRecalculation(ctx.organizationId);
+  }
 
   const loaded = await loadOrgContext(ctx);
   if (!loaded) {

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
@@ -141,5 +142,78 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+/* Policy editor / viewer: spacing when typography plugin is not applied on a parent */
+@layer components {
+  .policy-markdown :where(p, ul, ol, blockquote, pre) {
+    margin-block: 0.75em;
+  }
+
+  .policy-markdown :where(h1, h2, h3, h4) {
+    margin-block: 1.25em 0.5em;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  .policy-markdown :where(h1) {
+    font-size: 1.5rem;
+  }
+
+  .policy-markdown :where(h2) {
+    font-size: 1.25rem;
+  }
+
+  .policy-markdown :where(h3) {
+    font-size: 1.1rem;
+  }
+
+  .policy-markdown :where(ul, ol) {
+    padding-inline-start: 1.5rem;
+  }
+
+  .policy-markdown :where(li + li) {
+    margin-block-start: 0.35em;
+  }
+
+  .ProseMirror {
+    min-height: 280px;
+    padding: 0.75rem 1rem;
+    line-height: 1.65;
+    word-break: break-word;
+  }
+
+  .ProseMirror > * + * {
+    margin-block-start: 0.75em;
+  }
+
+  .ProseMirror h1,
+  .ProseMirror h2,
+  .ProseMirror h3 {
+    font-weight: 600;
+    line-height: 1.3;
+    margin-block: 1.25em 0.5em;
+  }
+
+  .ProseMirror h1 {
+    font-size: 1.5rem;
+  }
+
+  .ProseMirror h2 {
+    font-size: 1.25rem;
+  }
+
+  .ProseMirror h3 {
+    font-size: 1.1rem;
+  }
+
+  .ProseMirror ul,
+  .ProseMirror ol {
+    padding-inline-start: 1.5rem;
+  }
+
+  .ProseMirror p {
+    margin-block: 0.75em;
   }
 }

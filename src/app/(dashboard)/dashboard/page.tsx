@@ -10,7 +10,7 @@ import { DashboardFrameworkTabs } from "@/components/dashboard/DashboardFramewor
 import { HipaaWorkspaceNav } from "@/components/dashboard/HipaaWorkspaceNav";
 import { DashboardMetricStrip } from "@/components/dashboard/DashboardMetricStrip";
 import { NextUpSection } from "@/components/dashboard/NextUpSection";
-import { ReadinessSection } from "@/components/dashboard/ReadinessSection";
+import { DashboardReadinessLive } from "@/components/dashboard/DashboardReadinessLive";
 import { SafeguardBreakdownSection } from "@/components/dashboard/SafeguardBreakdownSection";
 
 /** MVP HIPAA policy catalog size — shown as approved / target on the dashboard. */
@@ -118,7 +118,7 @@ export default async function DashboardHomePage(): Promise<React.JSX.Element> {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
-          <ReadinessSection score={readinessScore} />
+          <DashboardReadinessLive initialScore={readinessScore} />
           <NextUpSection steps={DASHBOARD_NEXT_STEPS} />
         </div>
 

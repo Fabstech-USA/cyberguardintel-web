@@ -7,15 +7,7 @@ import { writeAuditLogAwait } from "@/lib/audit-log";
 import { sendEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 
-function isAuthorizedInternalRequest(req: Request): boolean {
-  const expected = process.env.INTERNAL_API_KEY;
-  if (!expected) return false;
-
-  const header =
-    req.headers.get("x-internal-key") ??
-    req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-  return header === expected;
-}
+import { isAuthorizedCronRequest } from "@/lib/cron-auth";
 
 function escapeHtml(input: string): string {
   return input
@@ -27,7 +19,7 @@ function escapeHtml(input: string): string {
 }
 
 export async function POST(req: Request): Promise<Response> {
-  if (!isAuthorizedInternalRequest(req)) {
+  if (!isAuthorizedCronRequest(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
