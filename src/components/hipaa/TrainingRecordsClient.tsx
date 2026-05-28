@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 
 import type { TrainingBundle } from "@/lib/training-server";
@@ -17,6 +17,14 @@ type TrainingRecordsClientProps = {
   bundle: TrainingBundle;
   canMutate: boolean;
 };
+
+type TrainingStatusFilter =
+  | "all"
+  | "complete"
+  | "overdue"
+  | "upcoming"
+  | "in_progress"
+  | "not_started";
 
 const trainingUi = {
   statEmployees: hipaaStatUi.statDefault,
@@ -36,11 +44,21 @@ function completionStatClass(pct: number): string {
   return trainingUi.statDanger;
 }
 
+const FILTER_LABELS: Record<TrainingStatusFilter, string> = {
+  all: "All",
+  complete: "Complete",
+  overdue: "Overdue",
+  upcoming: "Upcoming",
+  in_progress: "In progress",
+  not_started: "Not started",
+};
+
 export function TrainingRecordsClient({
   bundle,
   canMutate,
 }: TrainingRecordsClientProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [filter, setFilter] = useState<TrainingStatusFilter>("all");
   const [reminderLoading, setReminderLoading] = useState(false);
   const [downloadingEmployeeId, setDownloadingEmployeeId] = useState<
     string | null
@@ -48,6 +66,58 @@ export function TrainingRecordsClient({
   const { showToast, HipaaToast } = useHipaaToast();
 
   const { summary } = bundle;
+
+  const employeeStatusById = useMemo(() => {
+    const map = new Map<string, TrainingStatusFilter>();
+
+    for (const employee of bundle.employees) {
+      if (employee.allTopicsComplete) {
+        map.set(employee.employeeId, "complete");
+        continue;
+      }
+
+      const statuses = Object.values(employee.cells).map((cell) => cell.status);
+      if (statuses.some((s) => s === "overdue")) {
+        map.set(employee.employeeId, "overdue");
+        continue;
+      }
+      if (statuses.some((s) => s === "upcoming")) {
+        map.set(employee.employeeId, "upcoming");
+        continue;
+      }
+
+      const hasAnyStarted = statuses.some((s) => s !== "not_started");
+      map.set(employee.employeeId, hasAnyStarted ? "in_progress" : "not_started");
+    }
+
+    return map;
+  }, [bundle.employees]);
+
+  const countsByFilter = useMemo(() => {
+    const counts: Record<TrainingStatusFilter, number> = {
+      all: bundle.employees.length,
+      complete: 0,
+      overdue: 0,
+      upcoming: 0,
+      in_progress: 0,
+      not_started: 0,
+    };
+
+    for (const employee of bundle.employees) {
+      const status = employeeStatusById.get(employee.employeeId);
+      if (!status) continue;
+      counts[status] += 1;
+    }
+
+    return counts;
+  }, [bundle.employees, employeeStatusById]);
+
+  const visibleEmployees = useMemo(() => {
+    if (filter === "all") return bundle.employees;
+    return bundle.employees.filter(
+      (employee) => employeeStatusById.get(employee.employeeId) === filter
+    );
+  }, [bundle.employees, employeeStatusById, filter]);
 
   function handleTrainingRecorded(count: number, employeeName: string) {
     const multiEmployee = employeeName.includes("employees");
@@ -203,13 +273,33 @@ export function TrainingRecordsClient({
         </Alert>
       ) : null}
 
-      <TrainingMatrix
-        topics={bundle.topics}
-        employees={bundle.employees}
-        canMutate={canMutate}
-        onDownloadCertificate={(id) => void downloadCertificate(id)}
-        downloadingEmployeeId={downloadingEmployeeId}
-      />
+      <div className="flex flex-wrap gap-2">
+        {(Object.keys(FILTER_LABELS) as TrainingStatusFilter[]).map((key) => (
+          <Button
+            key={key}
+            type="button"
+            size="sm"
+            variant={filter === key ? "default" : "outline"}
+            onClick={() => setFilter(key)}
+          >
+            {FILTER_LABELS[key]} ({countsByFilter[key]})
+          </Button>
+        ))}
+      </div>
+
+      {visibleEmployees.length === 0 ? (
+        <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+          No employees match the current filter.
+        </div>
+      ) : (
+        <TrainingMatrix
+          topics={bundle.topics}
+          employees={visibleEmployees}
+          canMutate={canMutate}
+          onDownloadCertificate={(id) => void downloadCertificate(id)}
+          downloadingEmployeeId={downloadingEmployeeId}
+        />
+      )}
 
       <RecordTrainingDialog
         open={dialogOpen}
