@@ -13,10 +13,12 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import { BaaDraftReviewEditor } from "@/components/hipaa/BaaDraftReviewEditor";
 import { HipaaStatCard } from "@/components/hipaa/HipaaStatCard";
 import { hipaaStatUi } from "@/components/hipaa/hipaa-stat-ui";
-import { BaaStatus } from "@/generated/prisma";
+import { BaaDraftReviewStatus, BaaStatus } from "@/generated/prisma";
 import {
+  BAA_DRAFT_REVIEW_LABELS,
   getBaaBadgeClassName,
   getBaaBadgeVariant,
   getBaaStatusLabel,
@@ -81,13 +83,17 @@ type FormState = {
 };
 
 type TemplateDraft = {
+  baaRecordId: string | null;
   vendorName: string;
   vendorEmail: string;
   services: string;
+  governingState: string;
   notes: string;
   documentTitle: string;
   templateBody: string;
   summary: string;
+  reviewStatus: BaaDraftReviewStatus;
+  hasDraftPdf: boolean;
 };
 
 type ToastState = {
@@ -116,14 +122,24 @@ const EMPTY_FORM: FormState = {
 };
 
 const EMPTY_TEMPLATE: TemplateDraft = {
+  baaRecordId: null,
   vendorName: "",
   vendorEmail: "",
   services: "",
+  governingState: "",
   notes: "",
-  documentTitle: "",
+  documentTitle: "Business Associate Agreement",
   templateBody: "",
   summary: "",
+  reviewStatus: BaaDraftReviewStatus.DRAFT,
+  hasDraftPdf: false,
 };
+
+const DRAFT_REVIEW_OPTIONS = [
+  BaaDraftReviewStatus.DRAFT,
+  BaaDraftReviewStatus.IN_REVIEW,
+  BaaDraftReviewStatus.READY_FOR_SIGNATURE,
+] as const;
 
 function toDateInputValue(iso: string | null): string {
   if (!iso) return "";
@@ -207,13 +223,27 @@ function buildFormState(row: BaaRow | null): FormState {
 
 function buildTemplateDraftFromForm(form: FormState): TemplateDraft {
   return {
+    ...EMPTY_TEMPLATE,
     vendorName: form.vendorName,
     vendorEmail: form.vendorEmail,
     services: form.services,
     notes: form.notes,
-    documentTitle: "",
-    templateBody: "",
+  };
+}
+
+function buildTemplateDraftFromRow(row: BaaRow): TemplateDraft {
+  return {
+    baaRecordId: row.id,
+    vendorName: row.vendorName,
+    vendorEmail: row.vendorEmail ?? "",
+    services: row.services,
+    governingState: "",
+    notes: row.notes ?? "",
+    documentTitle: row.draftTitle ?? "Business Associate Agreement",
+    templateBody: row.draftMarkdown ?? "",
     summary: "",
+    reviewStatus: row.draftReviewStatus,
+    hasDraftPdf: row.hasDraftPdf,
   };
 }
 
@@ -451,6 +481,7 @@ export function BaaTable({
           services: templateDraft.services,
           organizationName,
           hipaaEntityType,
+          governingState: templateDraft.governingState,
           notes: templateDraft.notes || null,
         }),
       });
@@ -482,6 +513,118 @@ export function BaaTable({
       showToast("success", "Updated", "Template copied to clipboard.");
     } catch {
       setTemplateError("Could not copy the generated template.");
+    }
+  }
+
+  async function saveTemplateDraft(): Promise<string | null> {
+    if (!templateDraft.templateBody.trim()) {
+      setTemplateError("Generate or paste BAA text before saving.");
+      return null;
+    }
+    setTemplateBusy(true);
+    setTemplateError(null);
+    try {
+      let recordId = templateDraft.baaRecordId;
+      if (!recordId) {
+        const createRes = await fetch("/api/hipaa/baa", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            vendorName: templateDraft.vendorName,
+            vendorEmail: templateDraft.vendorEmail || null,
+            services: templateDraft.services,
+            status: BaaStatus.PENDING,
+            notes: templateDraft.notes || null,
+          }),
+        });
+        const created = (await createRes.json().catch(() => ({}))) as {
+          id?: string;
+          error?: string;
+        };
+        if (!createRes.ok || !created.id) {
+          throw new Error(created.error ?? "Could not create vendor record.");
+        }
+        recordId = created.id;
+      }
+
+      const draftRes = await fetch(`/api/hipaa/baa/${recordId}/draft`, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          vendorName: templateDraft.vendorName,
+          vendorEmail: templateDraft.vendorEmail || null,
+          services: templateDraft.services,
+          notes: templateDraft.notes || null,
+          draftTitle:
+            templateDraft.documentTitle.trim() || "Business Associate Agreement",
+          draftMarkdown: templateDraft.templateBody,
+          draftReviewStatus: templateDraft.reviewStatus,
+        }),
+      });
+      const draftBody = (await draftRes.json().catch(() => ({}))) as {
+        error?: string;
+      };
+      if (!draftRes.ok) {
+        throw new Error(draftBody.error ?? "Could not save BAA draft.");
+      }
+
+      setTemplateDraft((prev) => ({ ...prev, baaRecordId: recordId }));
+      await refetch();
+      showToast("success", "Draft saved", "Your BAA draft is saved for review.");
+      return recordId;
+    } catch (err) {
+      setTemplateError(
+        err instanceof Error ? err.message : "Could not save draft."
+      );
+      return null;
+    } finally {
+      setTemplateBusy(false);
+    }
+  }
+
+  async function openDraftPdf(recordId: string): Promise<void> {
+    const res = await fetch(`/api/hipaa/baa/${recordId}/draft/pdf`);
+    const body = (await res.json().catch(() => ({}))) as {
+      url?: string;
+      error?: string;
+    };
+    if (!res.ok || !body.url) {
+      throw new Error(body.error ?? "Could not open draft PDF.");
+    }
+    window.open(body.url, "_blank", "noopener,noreferrer");
+  }
+
+  async function generateAndShareDraftPdf(): Promise<void> {
+    setTemplateBusy(true);
+    setTemplateError(null);
+    try {
+      const recordId =
+        templateDraft.baaRecordId ?? (await saveTemplateDraft());
+      if (!recordId) return;
+
+      const res = await fetch(`/api/hipaa/baa/${recordId}/draft/pdf`, {
+        method: "POST",
+      });
+      const body = (await res.json().catch(() => ({}))) as {
+        url?: string;
+        error?: string;
+      };
+      if (!res.ok || !body.url) {
+        throw new Error(body.error ?? "Could not generate draft PDF.");
+      }
+      setTemplateDraft((prev) => ({ ...prev, hasDraftPdf: true }));
+      window.open(body.url, "_blank", "noopener,noreferrer");
+      showToast(
+        "success",
+        "PDF ready",
+        "Draft PDF opened in a new tab. Share that link with the counterparty for e-signature."
+      );
+    } catch (err) {
+      setTemplateError(
+        err instanceof Error ? err.message : "Could not generate PDF."
+      );
+    } finally {
+      setTemplateBusy(false);
     }
   }
 
@@ -670,6 +813,19 @@ export function BaaTable({
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex flex-wrap gap-2">
+                            {canMutate ? (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  openTemplateModal(buildTemplateDraftFromRow(row))
+                                }
+                              >
+                                <FileText className="mr-1.5 size-3.5" aria-hidden />
+                                {row.hasDraft ? "Review draft" : "Draft BAA"}
+                              </Button>
+                            ) : null}
                             {canMutate ? (
                               <Button
                                 type="button"
@@ -876,16 +1032,37 @@ export function BaaTable({
       </Dialog>
 
       <Dialog open={templateOpen} onOpenChange={setTemplateOpen}>
-        <DialogContent className="max-h-[90vh] max-w-3xl grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden">
-          <DialogHeader>
-            <DialogTitle>AI-generated BAA template</DialogTitle>
+        <DialogContent
+          className={cn(
+            "flex max-h-[96vh] w-[min(96rem,calc(100vw-1.5rem))] flex-col gap-0 overflow-hidden p-0 sm:max-w-[min(96rem,calc(100vw-1.5rem))]",
+            templateDraft.templateBody
+              ? "h-[min(96vh,920px)]"
+              : "max-w-3xl p-6"
+          )}
+        >
+          <DialogHeader
+            className={cn(
+              "shrink-0 space-y-1",
+              templateDraft.templateBody ? "border-b px-6 py-4" : ""
+            )}
+          >
+            <DialogTitle>BAA draft — edit, review, share</DialogTitle>
             <DialogDescription>
-              Generate a first-pass Business Associate Agreement for a new vendor,
-              then review it before sending for signature.
+              {templateDraft.templateBody
+                ? "Edit on the left; preview on the right. Exported PDFs include fillable name, date, and digital signature fields for each party."
+                : "Generate a first-pass agreement, then review it in the expanded editor with live preview."}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="min-h-0 space-y-4 overflow-y-auto pr-1">
+          <div
+            className={cn(
+              "min-h-0 flex-1",
+              templateDraft.templateBody
+                ? "flex flex-col overflow-hidden"
+                : "space-y-4 overflow-y-auto px-6 pb-2"
+            )}
+          >
+            {!templateDraft.templateBody ? (
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="template-vendor-name">Vendor name</Label>
@@ -929,6 +1106,22 @@ export function BaaTable({
                 />
               </div>
               <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="template-governing-state">
+                  Governing state (legal binding)
+                </Label>
+                <Input
+                  id="template-governing-state"
+                  value={templateDraft.governingState}
+                  onChange={(event) =>
+                    setTemplateDraft((prev) => ({
+                      ...prev,
+                      governingState: event.target.value,
+                    }))
+                  }
+                  placeholder="e.g. California"
+                />
+              </div>
+              <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="template-notes">Context for the draft</Label>
                 <textarea
                   id="template-notes"
@@ -941,12 +1134,13 @@ export function BaaTable({
                   }
                   rows={3}
                   className="flex min-h-24 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                  placeholder="Optional context such as state law requirements, subcontractors, or expected safeguards."
+                  placeholder="Optional: timeline preferences, commercial terms, subcontractors, or safeguards."
                 />
               </div>
             </div>
+            ) : null}
 
-            {templateError ? (
+            {!templateDraft.templateBody && templateError ? (
               <Alert variant="destructive">
                 <AlertTriangle aria-hidden />
                 <AlertTitle>Generation failed</AlertTitle>
@@ -955,38 +1149,146 @@ export function BaaTable({
             ) : null}
 
             {templateDraft.templateBody ? (
-              <div className="space-y-3 rounded-xl border p-4">
-                <div className="space-y-1">
-                  <div className="text-sm font-medium">
-                    {templateDraft.documentTitle || "Business Associate Agreement"}
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                <div className="flex shrink-0 flex-wrap items-end gap-3 border-b bg-muted/20 px-4 py-3">
+                  <div className="min-w-[12rem] flex-1 space-y-1.5">
+                    <Label htmlFor="template-document-title" className="text-xs">
+                      Document title
+                    </Label>
+                    <Input
+                      id="template-document-title"
+                      value={templateDraft.documentTitle}
+                      onChange={(event) =>
+                        setTemplateDraft((prev) => ({
+                          ...prev,
+                          documentTitle: event.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                  <div className="w-full min-w-[10rem] space-y-1.5 sm:w-48">
+                    <Label htmlFor="template-review-status" className="text-xs">
+                      Review status
+                    </Label>
+                    <Select
+                      value={templateDraft.reviewStatus}
+                      onValueChange={(value) =>
+                        setTemplateDraft((prev) => ({
+                          ...prev,
+                          reviewStatus: value as BaaDraftReviewStatus,
+                        }))
+                      }
+                    >
+                      <SelectTrigger id="template-review-status">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {DRAFT_REVIEW_OPTIONS.map((status) => (
+                          <SelectItem key={status} value={status}>
+                            {BAA_DRAFT_REVIEW_LABELS[status]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   {templateDraft.summary ? (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="w-full text-xs text-muted-foreground">
                       {templateDraft.summary}
                     </p>
                   ) : null}
                 </div>
-                <textarea
-                  readOnly
-                  value={templateDraft.templateBody}
-                  rows={16}
-                  className="flex min-h-80 w-full rounded-lg border border-input bg-muted/20 px-3 py-2 font-mono text-xs shadow-xs outline-none"
-                />
+
+                {templateError ? (
+                  <Alert variant="destructive" className="mx-4 mt-3 shrink-0">
+                    <AlertTriangle aria-hidden />
+                    <AlertTitle>Action failed</AlertTitle>
+                    <AlertDescription>{templateError}</AlertDescription>
+                  </Alert>
+                ) : null}
+
+                <div className="min-h-0 flex-1 p-4">
+                  <BaaDraftReviewEditor
+                    markdown={templateDraft.templateBody}
+                    onMarkdownChange={(value) =>
+                      setTemplateDraft((prev) => ({
+                        ...prev,
+                        templateBody: value,
+                      }))
+                    }
+                    className="h-full min-h-[min(68vh,640px)]"
+                  />
+                </div>
               </div>
             ) : null}
           </div>
 
-          <DialogFooter className="border-t border-border pt-4">
+          <DialogFooter
+            className={cn(
+              "flex-wrap gap-2 border-t border-border",
+              templateDraft.templateBody ? "shrink-0 px-6 py-4" : "pt-4"
+            )}
+          >
             <Button
               type="button"
               variant="outline"
               onClick={() => void copyTemplate()}
-              disabled={!templateDraft.templateBody}
+              disabled={!templateDraft.templateBody || templateBusy}
             >
-              Copy template
+              Copy text
             </Button>
-            <Button type="button" onClick={() => void generateTemplate()} disabled={templateBusy}>
-              {templateBusy ? "Generating..." : "Generate template"}
+            {templateDraft.baaRecordId && templateDraft.hasDraftPdf ? (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={templateBusy}
+                onClick={() =>
+                  void openDraftPdf(templateDraft.baaRecordId!).catch((err) =>
+                    setTemplateError(
+                      err instanceof Error ? err.message : "Could not open PDF."
+                    )
+                  )
+                }
+              >
+                Open PDF
+              </Button>
+            ) : null}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void saveTemplateDraft()}
+              disabled={
+                templateBusy ||
+                !templateDraft.templateBody.trim() ||
+                !templateDraft.vendorName.trim() ||
+                !templateDraft.services.trim()
+              }
+            >
+              {templateBusy ? "Saving..." : "Save draft"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void generateAndShareDraftPdf()}
+              disabled={
+                templateBusy ||
+                !templateDraft.templateBody.trim() ||
+                !templateDraft.vendorName.trim() ||
+                !templateDraft.services.trim()
+              }
+            >
+              {templateBusy ? "Working..." : "Export signable PDF"}
+            </Button>
+            <Button
+              type="button"
+              onClick={() => void generateTemplate()}
+              disabled={
+                templateBusy ||
+                !templateDraft.vendorName.trim() ||
+                !templateDraft.services.trim() ||
+                !templateDraft.governingState.trim()
+              }
+            >
+              {templateBusy ? "Generating..." : "Generate with AI"}
             </Button>
           </DialogFooter>
         </DialogContent>

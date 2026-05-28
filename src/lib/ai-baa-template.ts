@@ -6,6 +6,7 @@ export const AiBaaTemplateInputSchema = z.object({
   services: z.string().trim().min(1).max(10_000),
   organizationName: z.string().trim().min(1).max(200),
   hipaaEntityType: z.string().trim().min(1).max(120),
+  governingState: z.string().trim().min(1).max(80),
   notes: z.string().trim().min(1).max(10_000).nullable().optional(),
 });
 

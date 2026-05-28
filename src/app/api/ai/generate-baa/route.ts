@@ -34,6 +34,7 @@ export const POST = withTenant(async (req, _ctx): Promise<Response> => {
         services: parsed.data.services,
         organization_name: parsed.data.organizationName,
         hipaa_entity_type: parsed.data.hipaaEntityType,
+        governing_state: parsed.data.governingState,
         notes: parsed.data.notes ?? null,
       }
     );

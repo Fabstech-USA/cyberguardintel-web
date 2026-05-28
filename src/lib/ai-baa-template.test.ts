@@ -13,6 +13,7 @@ describe("AiBaaTemplateInputSchema", () => {
       services: "SMS appointment reminders for patients",
       organizationName: "Sunrise Clinic",
       hipaaEntityType: "Covered Entity",
+      governingState: "California",
       notes: "Include subcontractor obligations.",
     });
     expect(result.success).toBe(true);
@@ -24,6 +25,18 @@ describe("AiBaaTemplateInputSchema", () => {
       services: "Messaging",
       organizationName: "Sunrise Clinic",
       hipaaEntityType: "Covered Entity",
+      governingState: "Texas",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects missing governing state", () => {
+    const result = AiBaaTemplateInputSchema.safeParse({
+      vendorName: "Twilio",
+      services: "Messaging",
+      organizationName: "Sunrise Clinic",
+      hipaaEntityType: "Covered Entity",
+      governingState: "",
     });
     expect(result.success).toBe(false);
   });

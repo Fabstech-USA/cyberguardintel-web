@@ -124,6 +124,12 @@ enum BaaStatus {
   TERMINATED
 }
 
+enum BaaDraftReviewStatus {
+  DRAFT
+  IN_REVIEW
+  READY_FOR_SIGNATURE
+}
+
 enum PhiFlowDataClassification {
   PHI
   DE_IDENTIFIED
@@ -357,6 +363,11 @@ model BaaRecord {
   signedAt        DateTime?
   expiresAt       DateTime?
   documentS3Key   String?   // Signed BAA PDF stored in S3
+  draftTitle              String?
+  draftMarkdown           String?              @db.Text
+  draftReviewStatus       BaaDraftReviewStatus @default(DRAFT)
+  draftPdfS3Key           String?              // Shareable draft PDF for counterparty e-sign
+  draftUpdatedAt          DateTime?
   notes           String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
