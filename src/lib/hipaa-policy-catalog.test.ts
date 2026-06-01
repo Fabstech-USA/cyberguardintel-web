@@ -14,7 +14,7 @@ import {
 } from "@/lib/hipaa-policy-catalog";
 
 describe("mergePoliciesWithCatalog", () => {
-  it("returns 12 rows with NOT_STARTED when DB empty", () => {
+  it("returns 18 rows with NOT_STARTED when DB empty", () => {
     const merged = mergePoliciesWithCatalog([]);
     expect(merged).toHaveLength(HIPAA_POLICY_TARGET);
     expect(merged.every((r) => r.status === "NOT_STARTED")).toBe(true);

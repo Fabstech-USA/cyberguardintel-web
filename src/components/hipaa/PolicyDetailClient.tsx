@@ -6,6 +6,7 @@ import { PolicyDetailActions } from "@/components/hipaa/PolicyDetailActions";
 import { PolicyEditor } from "@/components/hipaa/PolicyEditor";
 import { PolicyVersionSidebar } from "@/components/hipaa/PolicyVersionSidebar";
 import { formatPolicyVersion } from "@/lib/hipaa-policy-version";
+import { cn } from "@/lib/utils";
 
 type Props = {
   policy: Policy;
@@ -24,6 +25,7 @@ export function PolicyDetailClient({
   const [previewMarkdown, setPreviewMarkdown] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const loadVersion = useCallback(
     async (version: number) => {
@@ -41,6 +43,7 @@ export function PolicyDetailClient({
         };
         setSelectedVersion(version);
         setPreviewMarkdown(data.version.content);
+        setHistoryOpen(true);
       } catch (err) {
         setPreviewError(
           err instanceof Error ? err.message : "Could not load version"
@@ -68,7 +71,12 @@ export function PolicyDetailClient({
         canManagePolicies={canManagePolicies}
       />
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_220px]">
+      <div
+        className={cn(
+          "grid gap-6",
+          historyOpen && "lg:grid-cols-[minmax(0,1fr)_220px]"
+        )}
+      >
         <div className="min-w-0 space-y-2">
           {previewLoading ? (
             <p className="text-muted-foreground text-xs">Loading version…</p>
@@ -89,15 +97,20 @@ export function PolicyDetailClient({
                 : null
             }
             onClearPreview={selectedVersion != null ? clearPreview : undefined}
+            historyOpen={historyOpen}
+            onToggleHistory={() => setHistoryOpen((open) => !open)}
           />
         </div>
 
-        <PolicyVersionSidebar
-          policyId={policy.id}
-          selectedVersion={selectedVersion}
-          onSelectVersion={(v) => void loadVersion(v)}
-          className="lg:sticky lg:top-6 lg:self-start"
-        />
+        {historyOpen ? (
+          <PolicyVersionSidebar
+            policyId={policy.id}
+            selectedVersion={selectedVersion}
+            onSelectVersion={(v) => void loadVersion(v)}
+            onClose={() => setHistoryOpen(false)}
+            className="lg:sticky lg:top-6 lg:self-start"
+          />
+        ) : null}
       </div>
     </>
   );

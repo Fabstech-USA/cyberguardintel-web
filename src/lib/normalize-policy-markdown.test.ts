@@ -29,4 +29,42 @@ Paragraph with spaces between words.
 
     expect(normalizePolicyMarkdown(source)).toBe(source);
   });
+
+  it("fixes legacy metadata fences that render as bold headings", () => {
+    const legacy = `---
+POLICY ID: POL-001
+CFR REFERENCE: 45 CFR 164.308(a)(1)
+SAFEGUARD CATEGORY: Administrative
+---
+
+# Security Management Process Policy
+
+## Purpose
+
+Body text.`;
+
+    const out = normalizePolicyMarkdown(legacy);
+    expect(out.indexOf("# Security Management Process Policy")).toBeLessThan(
+      out.indexOf("## Policy metadata")
+    );
+    expect(out).toContain("**Policy Id:** POL-001");
+    expect(out).toContain("Body text.");
+  });
+
+  it("reorders metadata after title when stored in legacy order", () => {
+    const legacy = `## Policy metadata
+
+- **Policy ID:** POL-002
+
+# Assigned Security Responsibility Policy
+
+## Purpose
+
+Body text.`;
+
+    const out = normalizePolicyMarkdown(legacy);
+    expect(out.indexOf("# Assigned Security Responsibility Policy")).toBeLessThan(
+      out.indexOf("## Policy metadata")
+    );
+  });
 });

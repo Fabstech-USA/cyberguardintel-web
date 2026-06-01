@@ -1,7 +1,9 @@
 "use client";
 
 import { format } from "date-fns";
+import { ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { formatPolicyVersion } from "@/lib/hipaa-policy-version";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +18,7 @@ type Props = {
   policyId: string;
   selectedVersion: number | null;
   onSelectVersion: (version: number) => void;
+  onClose?: () => void;
   className?: string;
 };
 
@@ -23,6 +26,7 @@ export function PolicyVersionSidebar({
   policyId,
   selectedVersion,
   onSelectVersion,
+  onClose,
   className,
 }: Props): React.JSX.Element {
   const [versions, setVersions] = useState<PolicyVersionListItem[]>([]);
@@ -57,11 +61,25 @@ export function PolicyVersionSidebar({
         className
       )}
     >
-      <div>
-        <h2 className="text-sm font-medium">Version history</h2>
-        <p className="text-muted-foreground mt-1 text-xs">
-          Previously approved revisions
-        </p>
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <h2 className="text-sm font-medium">Version history</h2>
+          <p className="text-muted-foreground mt-1 text-xs">
+            Previously approved revisions
+          </p>
+        </div>
+        {onClose ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            onClick={onClose}
+            aria-label="Hide version history"
+            title="Hide version history"
+          >
+            <ChevronRight className="size-4" aria-hidden />
+          </Button>
+        ) : null}
       </div>
 
       {loading ? (
