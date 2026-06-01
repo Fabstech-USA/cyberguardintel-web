@@ -1,4 +1,5 @@
 import type { PolicyType } from "@/generated/prisma";
+import type { AiPolicyContextOverrides } from "@/lib/policy-generation-context";
 
 export type RegenerateStreamEvent =
   | {
@@ -14,17 +15,41 @@ export type RegenerateStreamCallbacks = {
   onFailed?: (policyType: PolicyType, error: string) => void;
 };
 
+export type RegenerateStreamOptions = {
+  context?: AiPolicyContextOverrides;
+  callbacks?: RegenerateStreamCallbacks;
+};
+
 /** Calls POST /api/hipaa/policies/generate-stream for one or more policy types. */
 export async function regeneratePoliciesViaStream(
   policyTypes: PolicyType[],
-  callbacks?: RegenerateStreamCallbacks
+  callbacksOrOptions?: RegenerateStreamCallbacks | RegenerateStreamOptions
 ): Promise<void> {
   if (policyTypes.length === 0) return;
+
+  const isCallbacks =
+    callbacksOrOptions != null &&
+    ("onStarted" in callbacksOrOptions ||
+      "onCompleted" in callbacksOrOptions ||
+      "onFailed" in callbacksOrOptions) &&
+    !("context" in callbacksOrOptions);
+
+  let normalized: RegenerateStreamOptions;
+  if (callbacksOrOptions == null) {
+    normalized = {};
+  } else if (isCallbacks) {
+    normalized = { callbacks: callbacksOrOptions as RegenerateStreamCallbacks };
+  } else {
+    normalized = callbacksOrOptions as RegenerateStreamOptions;
+  }
 
   const res = await fetch("/api/hipaa/policies/generate-stream", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ policyTypes }),
+    body: JSON.stringify({
+      policyTypes,
+      context: normalized.context,
+    }),
   });
 
   if (!res.ok || !res.body) {
@@ -63,11 +88,14 @@ export async function regeneratePoliciesViaStream(
       }
       if (!("policy_type" in evt)) continue;
       if (evt.phase === "started") {
-        callbacks?.onStarted?.(evt.policy_type);
+        normalized.callbacks?.onStarted?.(evt.policy_type);
       } else if (evt.phase === "completed") {
-        callbacks?.onCompleted?.(evt.policy_type);
+        normalized.callbacks?.onCompleted?.(evt.policy_type);
       } else if (evt.phase === "failed") {
-        callbacks?.onFailed?.(evt.policy_type, evt.error ?? "Generation failed");
+        normalized.callbacks?.onFailed?.(
+          evt.policy_type,
+          evt.error ?? "Generation failed"
+        );
       }
     }
   }

@@ -5,17 +5,18 @@ import {
   PolicyType,
 } from "@/generated/prisma";
 
-const { findFirstMock, transactionMock, auditMock, scoreRecalcMock } =
+const { findFirstMock, transactionMock, auditMock, scoreRecalcMock, updateMock } =
   vi.hoisted(() => ({
     findFirstMock: vi.fn(),
     transactionMock: vi.fn(),
     auditMock: vi.fn(),
     scoreRecalcMock: vi.fn(),
+    updateMock: vi.fn(),
   }));
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
-    policy: { findFirst: findFirstMock },
+    policy: { findFirst: findFirstMock, update: updateMock },
     $transaction: transactionMock,
   },
 }));
@@ -26,6 +27,18 @@ vi.mock("@/lib/audit-log", () => ({
 
 vi.mock("@/lib/hipaa-scoring", () => ({
   triggerHipaaScoreRecalculation: scoreRecalcMock,
+}));
+
+vi.mock("@/lib/s3", () => ({
+  putObjectToS3: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@/lib/policy-markdown-pdf", () => ({
+  generatePolicyMarkdownPdf: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+  policyApprovedPdfS3Key: vi
+    .fn()
+    .mockReturnValue("hipaa/policies/org_1/pol_1-v2-approved.pdf"),
+  policyApprovedPdfFileName: vi.fn().mockReturnValue("access-control-v2.pdf"),
 }));
 
 import {
@@ -78,6 +91,13 @@ describe("approveHipaaPolicy", () => {
           policy: { update: updatePolicyMock },
         })
     );
+
+    updateMock.mockResolvedValue({
+      ...updatedPolicy,
+      sourceS3Key: "hipaa/policies/org_1/pol_1-v2-approved.pdf",
+      sourceMimeType: "application/pdf",
+      sourceFileName: "access-control-v2.pdf",
+    });
 
     const result = await approveHipaaPolicy({
       organizationId: "org_1",

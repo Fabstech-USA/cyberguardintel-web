@@ -6,7 +6,13 @@ import {
 } from "@/generated/prisma";
 import { writeAuditLog } from "@/lib/audit-log";
 import { triggerHipaaScoreRecalculation } from "@/lib/hipaa-scoring";
+import {
+  generatePolicyMarkdownPdf,
+  policyApprovedPdfFileName,
+  policyApprovedPdfS3Key,
+} from "@/lib/policy-markdown-pdf";
 import { prisma } from "@/lib/prisma";
+import { putObjectToS3 } from "@/lib/s3";
 
 export type ApproveHipaaPolicyParams = {
   organizationId: string;
@@ -51,10 +57,12 @@ export async function approveHipaaPolicy(
   const now = new Date();
   const approvedVersion = existing.version;
   const newVersion = approvedVersion + 1;
+  const approvedTitle = existing.title;
+  const approvedContent = existing.content;
 
   const snapshotData = {
-    title: existing.title,
-    content: existing.content,
+    title: approvedTitle,
+    content: approvedContent,
     approvedById: clerkUserId,
     approvedAt: now,
   };
@@ -89,6 +97,30 @@ export async function approveHipaaPolicy(
     });
   });
 
+  const sourceS3Key = policyApprovedPdfS3Key(
+    organizationId,
+    policy.id,
+    approvedVersion
+  );
+  const sourceFileName = policyApprovedPdfFileName(
+    existing.type,
+    approvedVersion
+  );
+  const pdfBytes = await generatePolicyMarkdownPdf({
+    title: approvedTitle,
+    markdown: approvedContent,
+  });
+  await putObjectToS3(sourceS3Key, pdfBytes, "application/pdf");
+
+  const policyWithDocument = await prisma.policy.update({
+    where: { id: policy.id },
+    data: {
+      sourceS3Key,
+      sourceMimeType: "application/pdf",
+      sourceFileName,
+    },
+  });
+
   writeAuditLog({
     organizationId,
     actorId: clerkUserId,
@@ -96,15 +128,16 @@ export async function approveHipaaPolicy(
     resourceType: "Policy",
     resourceId: policy.id,
     metadata: {
-      type: policy.type,
+      type: policyWithDocument.type,
       approvedVersion,
       newVersion,
+      sourceFileName,
     },
   });
 
   await triggerHipaaScoreRecalculation(organizationId);
 
-  return { policy, approvedVersion, newVersion };
+  return { policy: policyWithDocument, approvedVersion, newVersion };
 }
 
 export class PolicyApproveError extends Error {

@@ -12,9 +12,7 @@ import { DashboardMetricStrip } from "@/components/dashboard/DashboardMetricStri
 import { NextUpSection } from "@/components/dashboard/NextUpSection";
 import { DashboardReadinessLive } from "@/components/dashboard/DashboardReadinessLive";
 import { SafeguardBreakdownSection } from "@/components/dashboard/SafeguardBreakdownSection";
-
-/** MVP HIPAA policy catalog size — shown as approved / target on the dashboard. */
-const HIPAA_POLICY_TARGET = 12;
+import { HIPAA_POLICY_TARGET } from "@/lib/hipaa-policy-catalog";
 
 export default async function DashboardHomePage(): Promise<React.JSX.Element> {
   const { userId, orgId } = await auth();

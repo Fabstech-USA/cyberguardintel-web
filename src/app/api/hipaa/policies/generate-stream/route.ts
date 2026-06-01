@@ -7,7 +7,9 @@ import {
   AiPolicyOutputSchema,
   buildGeneratePolicyPayload,
   loadOrganizationSnapshotForPolicyAi,
+  mergePolicyGenerationContext,
 } from "@/lib/ai-policy-generation";
+import { AiPolicyContextOverridesSchema } from "@/lib/policy-generation-context";
 import { callAiService } from "@/lib/ai-client";
 import { canManageHipaaPolicies } from "@/lib/hipaa-policy-access";
 import { HIPAA_POLICY_TYPE_ORDER } from "@/lib/hipaa-policy-catalog";
@@ -18,6 +20,7 @@ export const maxDuration = 300;
 
 const BodySchema = z.object({
   policyTypes: z.array(z.nativeEnum(PolicyType)).optional(),
+  context: AiPolicyContextOverridesSchema.optional(),
 });
 
 type StreamEvent =
@@ -89,6 +92,11 @@ export const POST = withTenant(async (req, ctx): Promise<Response> => {
       ? parsedBody.data.policyTypes
       : [...HIPAA_POLICY_TYPE_ORDER];
 
+  const mergedSnapshot = mergePolicyGenerationContext(
+    snapshot,
+    parsedBody.data.context
+  );
+
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream<Uint8Array>({
@@ -103,7 +111,7 @@ export const POST = withTenant(async (req, ctx): Promise<Response> => {
         push({ policy_type: policyType, phase: "started" });
 
         try {
-          const payload = buildGeneratePolicyPayload(snapshot, policyType);
+          const payload = buildGeneratePolicyPayload(mergedSnapshot, policyType);
           const checked = AiGeneratePolicyRequestSchema.safeParse(payload);
           if (!checked.success) {
             push({

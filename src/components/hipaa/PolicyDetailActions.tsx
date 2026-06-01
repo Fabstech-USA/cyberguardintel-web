@@ -165,11 +165,12 @@ export function PolicyDetailActions({
           ) : null}
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
           {showRejectRegenerate ? (
             <Button
               type="button"
               variant="outline"
+              size="sm"
               className="border-destructive/40 text-destructive hover:bg-destructive/10"
               onClick={() => setRejectRegenerateOpen(true)}
             >
@@ -180,6 +181,7 @@ export function PolicyDetailActions({
             <Button
               type="button"
               variant="outline"
+              size="sm"
               onClick={() => setRegenerateOpen(true)}
             >
               Regenerate
@@ -188,6 +190,7 @@ export function PolicyDetailActions({
           {showApprove ? (
             <Button
               type="button"
+              size="sm"
               className="bg-emerald-600 text-white hover:bg-emerald-700"
               onClick={() => setApproveOpen(true)}
             >

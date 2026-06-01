@@ -78,9 +78,10 @@ export function PolicyApproveDialog({
         <DialogHeader>
           <DialogTitle>Approve policy</DialogTitle>
           <DialogDescription>
-            Approving saves v{version} of &ldquo;{title}&rdquo; to version history
-            and advances the working revision to v{version + 1}. Review dates are
-            set to one year from today.
+            Approving saves v{version} of &ldquo;{title}&rdquo; to version history,
+            generates a PDF as the official current document, and advances the
+            working revision to v{version + 1}. Review dates are set to one year
+            from today.
           </DialogDescription>
         </DialogHeader>
 

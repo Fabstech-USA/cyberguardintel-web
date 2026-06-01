@@ -74,18 +74,24 @@ enum EvidenceSource {
 }
 
 enum PolicyType {
-  ACCESS_CONTROL
-  INCIDENT_RESPONSE
+  SECURITY_MANAGEMENT_PROCESS
+  ASSIGNED_SECURITY_RESPONSIBILITY
+  WORKFORCE_SECURITY
+  INFORMATION_ACCESS
   WORKFORCE_TRAINING
-  DEVICE_MEDIA
+  INCIDENT_RESPONSE
   CONTINGENCY_PLAN
-  AUDIT_CONTROLS
-  TRANSMISSION_SECURITY
+  PERIODIC_EVALUATION
+  VENDOR_MANAGEMENT
   FACILITY_ACCESS
   WORKSTATION_USE
-  INFORMATION_ACCESS
+  DEVICE_MEDIA
+  ACCESS_CONTROL
+  AUDIT_CONTROLS
   DATA_CLASSIFICATION
-  VENDOR_MANAGEMENT
+  PERSON_ENTITY_AUTHENTICATION
+  TRANSMISSION_SECURITY
+  POLICIES_PROCEDURES_DOCUMENTATION
 }
 
 enum PolicyStatus {
@@ -122,6 +128,12 @@ enum BaaStatus {
   EXPIRED
   NOT_REQUIRED
   TERMINATED
+}
+
+enum BaaDraftReviewStatus {
+  DRAFT
+  IN_REVIEW
+  READY_FOR_SIGNATURE
 }
 
 enum PhiFlowDataClassification {
@@ -300,6 +312,9 @@ model Policy {
   approvedAt      DateTime?
   effectiveDate   DateTime?
   reviewDate      DateTime?    // Typically 1 year from effectiveDate
+  sourceS3Key     String?      // Original uploaded policy file in S3
+  sourceMimeType  String?
+  sourceFileName  String?
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 
@@ -357,6 +372,11 @@ model BaaRecord {
   signedAt        DateTime?
   expiresAt       DateTime?
   documentS3Key   String?   // Signed BAA PDF stored in S3
+  draftTitle              String?
+  draftMarkdown           String?              @db.Text
+  draftReviewStatus       BaaDraftReviewStatus @default(DRAFT)
+  draftPdfS3Key           String?              // Shareable draft PDF for counterparty e-sign
+  draftUpdatedAt          DateTime?
   notes           String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt

@@ -145,36 +145,121 @@
   }
 }
 
-/* Policy editor / viewer: spacing when typography plugin is not applied on a parent */
+/* Policy editor / viewer: compact, readable document typography */
 @layer components {
+  .policy-markdown {
+    font-feature-settings: "kern" 1, "liga" 1;
+  }
+
+  .policy-markdown .policy-doc-title {
+    margin: 0 0 0.85rem;
+    font-size: 1.35rem;
+    font-weight: 650;
+    line-height: 1.25;
+    letter-spacing: -0.015em;
+    color: var(--foreground);
+  }
+
+  .policy-markdown .policy-meta-heading {
+    margin: 0.25rem 0 0.35rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .policy-markdown .policy-meta-heading + .policy-list {
+    margin: 0 0 1rem;
+    padding: 0.65rem 0.85rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--border);
+    background: color-mix(in oklab, var(--muted) 38%, transparent);
+    font-size: 0.82rem;
+    line-height: 1.45;
+  }
+
+  .policy-markdown .policy-meta-heading + .policy-list .policy-list-item {
+    margin-block: 0.15rem;
+  }
+
+  .policy-markdown .policy-section-heading {
+    margin: 1.15rem 0 0.45rem;
+    padding-bottom: 0.3rem;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--foreground);
+    border-bottom: 1px solid color-mix(in oklab, var(--border) 85%, transparent);
+  }
+
+  .policy-markdown .policy-subheading {
+    margin: 0.75rem 0 0.35rem;
+    font-size: 0.92rem;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  .policy-markdown .policy-paragraph {
+    margin: 0 0 0.55rem;
+    line-height: 1.58;
+  }
+
+  .policy-markdown .policy-list {
+    margin: 0.25rem 0 0.65rem;
+    padding-inline-start: 1.35rem;
+  }
+
+  .policy-markdown .policy-list-ordered {
+    padding-inline-start: 1.5rem;
+  }
+
+  .policy-markdown .policy-list-item {
+    margin-block: 0.2rem;
+    line-height: 1.52;
+  }
+
+  .policy-markdown .policy-list-item > .policy-list {
+    margin-top: 0.25rem;
+    margin-bottom: 0.15rem;
+  }
+
+  .policy-markdown .policy-divider {
+    margin: 0.85rem 0;
+    border: none;
+    border-top: 1px solid color-mix(in oklab, var(--border) 90%, transparent);
+  }
+
   .policy-markdown :where(p, ul, ol, blockquote, pre) {
-    margin-block: 0.75em;
+    margin-block: 0.55em;
   }
 
   .policy-markdown :where(h1, h2, h3, h4) {
-    margin-block: 1.25em 0.5em;
+    margin-block: 1.15em 0.45em;
     font-weight: 600;
     line-height: 1.3;
   }
 
   .policy-markdown :where(h1) {
-    font-size: 1.5rem;
+    font-size: 1.35rem;
   }
 
   .policy-markdown :where(h2) {
-    font-size: 1.25rem;
+    font-size: 1rem;
   }
 
   .policy-markdown :where(h3) {
-    font-size: 1.1rem;
+    font-size: 0.92rem;
   }
 
   .policy-markdown :where(ul, ol) {
-    padding-inline-start: 1.5rem;
+    padding-inline-start: 1.35rem;
   }
 
   .policy-markdown :where(li + li) {
-    margin-block-start: 0.35em;
+    margin-block-start: 0.2em;
   }
 
   .ProseMirror {

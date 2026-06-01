@@ -1,6 +1,10 @@
 import { z } from "zod";
 
-import { BaaStatus, type BaaRecord } from "@/generated/prisma";
+import {
+  BaaDraftReviewStatus,
+  BaaStatus,
+  type BaaRecord,
+} from "@/generated/prisma";
 
 export type BaaBadgeVariant =
   | "default"
@@ -20,6 +24,12 @@ export const BAA_STATUS_LABELS: Record<BaaStatus, string> = {
   [BaaStatus.TERMINATED]: "Terminated",
 };
 
+export const BAA_DRAFT_REVIEW_LABELS: Record<BaaDraftReviewStatus, string> = {
+  [BaaDraftReviewStatus.DRAFT]: "Draft",
+  [BaaDraftReviewStatus.IN_REVIEW]: "In review",
+  [BaaDraftReviewStatus.READY_FOR_SIGNATURE]: "Ready for signature",
+};
+
 export type BaaLike = Pick<
   BaaRecord,
   | "id"
@@ -30,6 +40,11 @@ export type BaaLike = Pick<
   | "signedAt"
   | "expiresAt"
   | "documentS3Key"
+  | "draftTitle"
+  | "draftMarkdown"
+  | "draftReviewStatus"
+  | "draftPdfS3Key"
+  | "draftUpdatedAt"
   | "notes"
   | "createdAt"
   | "updatedAt"
@@ -84,6 +99,19 @@ export const BaaUpdateSchema = z.object(BaaWriteFields).partial().refine(
   (obj) => Object.keys(obj).length > 0,
   { message: "At least one field required" }
 );
+
+export const BaaDraftSaveSchema = z.object({
+  vendorName: z.string().trim().min(1).max(200).optional(),
+  vendorEmail: z.preprocess(
+    emptyStringToNull,
+    z.string().trim().email().max(320).nullable().optional()
+  ),
+  services: z.string().trim().min(1).max(10_000).optional(),
+  draftTitle: z.string().trim().min(1).max(200),
+  draftMarkdown: z.string().trim().min(1).max(48_000),
+  draftReviewStatus: z.nativeEnum(BaaDraftReviewStatus).optional(),
+  notes: NullableTextareaString,
+});
 
 export const BaaTemplateRequestSchema = z.object({
   vendorName: z.string().trim().min(1).max(200),
@@ -282,5 +310,10 @@ export function serializeBaaRecord<T extends BaaLike>(record: T, now: Date) {
     expiryState: getBaaExpiryState(record, now),
     daysUntilExpiry: getDaysUntilExpiry(record.expiresAt, now),
     hasDocument: Boolean(record.documentS3Key),
+    hasDraft: Boolean(record.draftMarkdown?.trim()),
+    hasDraftPdf: Boolean(record.draftPdfS3Key),
+    draftReviewStatusLabel:
+      BAA_DRAFT_REVIEW_LABELS[record.draftReviewStatus],
+    draftUpdatedAt: record.draftUpdatedAt?.toISOString() ?? null,
   };
 }

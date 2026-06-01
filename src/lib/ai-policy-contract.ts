@@ -1,18 +1,16 @@
 import { z } from "zod";
 import { PolicyStatus, PolicyType } from "@/generated/prisma";
-
-export const AiPolicyOrgSnapshotSchema = z.object({
-  org_name: z.string().min(1),
-  industry: z.string().min(1),
-  employee_count: z.number().int().nonnegative(),
-  entity_type: z.string().min(1),
-  tech_stack: z.array(z.string()),
-  phi_systems: z.string(),
-  existing_controls: z.string(),
-});
+import {
+  AiPolicyOptionalContextSchema,
+  AiPolicyOrgSnapshotSchema,
+  type AiPolicyOptionalContext,
+  type AiPolicyOrgSnapshot,
+} from "@/lib/policy-generation-context";
 
 /** Payload shape sent to FastAPI `POST /hipaa/generate-policy`. */
-export const AiGeneratePolicyRequestSchema = AiPolicyOrgSnapshotSchema.extend({
+export const AiGeneratePolicyRequestSchema = AiPolicyOrgSnapshotSchema.merge(
+  AiPolicyOptionalContextSchema
+).extend({
   policy_type: z.nativeEnum(PolicyType),
 });
 
@@ -20,7 +18,9 @@ export type AiGeneratePolicyRequest = z.infer<
   typeof AiGeneratePolicyRequestSchema
 >;
 
-export type AiPolicyOrgSnapshot = z.infer<typeof AiPolicyOrgSnapshotSchema>;
+export type { AiPolicyOrgSnapshot, AiPolicyOptionalContext };
+
+export { AiPolicyOrgSnapshotSchema, AiPolicyOptionalContextSchema };
 
 export const AiPolicySectionSchema = z.object({
   heading: z.string(),
@@ -40,7 +40,7 @@ export const AiPolicyOutputSchema = z.object({
 export type AiPolicyOutput = z.infer<typeof AiPolicyOutputSchema>;
 
 export function buildGeneratePolicyPayload(
-  snapshot: AiPolicyOrgSnapshot,
+  snapshot: AiPolicyOrgSnapshot & Partial<AiPolicyOptionalContext>,
   policyType: PolicyType
 ): AiGeneratePolicyRequest {
   return { ...snapshot, policy_type: policyType };

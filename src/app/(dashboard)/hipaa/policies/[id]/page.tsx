@@ -87,8 +87,19 @@ export default async function HipaaPolicyDetailPage({
           <AlertTitle>AI-generated draft</AlertTitle>
           <AlertDescription>
             This policy was produced automatically and has not been reviewed by
-            your compliance team. Move it to under review when ready, then
-            approve after review.
+            your compliance team. Edit as needed, then approve to publish a PDF
+            as the current version.
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      {policy.sourceS3Key && !policy.aiGenerated ? (
+        <Alert>
+          <AlertTitle>Uploaded policy — approved</AlertTitle>
+          <AlertDescription>
+            This policy was imported from your file and is the current approved
+            version. Use <strong>Open source file</strong> to download the
+            original document.
           </AlertDescription>
         </Alert>
       ) : null}
