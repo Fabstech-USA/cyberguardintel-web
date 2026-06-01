@@ -1,12 +1,15 @@
 "use client";
 
 import { format } from "date-fns";
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles, Upload } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { PolicyStatus, PolicyType } from "@/generated/prisma";
 import { PolicyGenerationProgress } from "@/components/hipaa/PolicyGenerationProgress";
+import { PolicyGenerateDialog } from "@/components/hipaa/PolicyGenerateDialog";
+import { PolicyUploadDialog } from "@/components/hipaa/PolicyUploadDialog";
 import { regeneratePoliciesViaStream } from "@/lib/regenerate-policy-client";
+import type { AiPolicyContextOverrides } from "@/lib/policy-generation-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -94,6 +97,37 @@ export function PolicyLibraryClient() {
   const [batchRunning, setBatchRunning] = useState(false);
   const [batchLabel, setBatchLabel] = useState<string | null>(null);
   const [generatingType, setGeneratingType] = useState<PolicyType | null>(null);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [uploadPolicyType, setUploadPolicyType] = useState<PolicyType | null>(
+    null
+  );
+  const [uploadReplaceApproved, setUploadReplaceApproved] = useState(false);
+  const [generateOpen, setGenerateOpen] = useState(false);
+  const [generatePolicyType, setGeneratePolicyType] = useState<PolicyType>(
+    PolicyType.SECURITY_MANAGEMENT_PROCESS
+  );
+
+  function openUploadDialog(
+    policyType?: PolicyType,
+    replaceApproved = false
+  ): void {
+    setUploadPolicyType(policyType ?? null);
+    setUploadReplaceApproved(replaceApproved);
+    setUploadOpen(true);
+  }
+
+  function openGenerateDialog(policyType: PolicyType): void {
+    setGeneratePolicyType(policyType);
+    setGenerateOpen(true);
+  }
+
+  async function generateSinglePolicy(
+    policyType: PolicyType,
+    context: AiPolicyContextOverrides
+  ): Promise<void> {
+    const title = getPolicyDisplayTitle(policyType);
+    await runNdjsonStream([policyType], `Generating ${title}`, context);
+  }
 
   const load = useCallback(async () => {
     setLoadError(null);
@@ -153,7 +187,8 @@ export function PolicyLibraryClient() {
 
   const runNdjsonStream = async (
     policyTypes: PolicyType[],
-    label: string
+    label: string,
+    context?: AiPolicyContextOverrides
   ) => {
     if (policyTypes.length === 0) return;
     setBatchRunning(true);
@@ -164,17 +199,20 @@ export function PolicyLibraryClient() {
     let completed = 0;
     try {
       await regeneratePoliciesViaStream(policyTypes, {
-        onStarted: (policyType) => setGeneratingType(policyType),
-        onCompleted: () => {
-          completed += 1;
-          setBatchDone(completed);
-          setGeneratingType(null);
-        },
-        onFailed: (policyType, error) => {
-          completed += 1;
-          setBatchDone(completed);
-          setGeneratingType(null);
-          setLoadError(`${getPolicyDisplayTitle(policyType)}: ${error}`);
+        context,
+        callbacks: {
+          onStarted: (policyType) => setGeneratingType(policyType),
+          onCompleted: () => {
+            completed += 1;
+            setBatchDone(completed);
+            setGeneratingType(null);
+          },
+          onFailed: (policyType, error) => {
+            completed += 1;
+            setBatchDone(completed);
+            setGeneratingType(null);
+            setLoadError(`${getPolicyDisplayTitle(policyType)}: ${error}`);
+          },
         },
       });
       await load();
@@ -203,31 +241,48 @@ export function PolicyLibraryClient() {
             Policy library
           </h1>
           <p className="text-muted-foreground max-w-2xl text-sm leading-relaxed">
-            All {HIPAA_POLICY_TARGET} HIPAA-required policies. AI-drafted
-            against reviewed templates — approve each before it goes live.
+            Track all {HIPAA_POLICY_TARGET} HIPAA-required policies. Generate
+            AI drafts to review and approve, or upload policies you already
+            have — uploaded files become your approved current version.
           </p>
         </div>
-        {data?.canManagePolicies && missingCount > 0 && !allNotStarted ? (
-          <Button
-            type="button"
-            className="shrink-0 bg-emerald-600 text-white hover:bg-emerald-700"
-            disabled={batchRunning}
-            onClick={() =>
-              void runNdjsonStream(
-                missingPolicyTypes,
-                generateBatchProgressLabel
-              )
-            }
-          >
-            {batchRunning ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
-                Generating…
-              </>
-            ) : (
-              generateBatchLabel
-            )}
-          </Button>
+        {data?.canManagePolicies ? (
+          <div className="flex shrink-0 flex-wrap gap-2">
+            {missingCount > 0 && !allNotStarted ? (
+              <Button
+                type="button"
+                className="bg-emerald-600 text-white hover:bg-emerald-700"
+                disabled={batchRunning}
+                onClick={() =>
+                  void runNdjsonStream(
+                    missingPolicyTypes,
+                    generateBatchProgressLabel
+                  )
+                }
+              >
+                {batchRunning ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+                    Generating…
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-4 w-4" aria-hidden />
+                    {generateBatchLabel}
+                  </>
+                )}
+              </Button>
+            ) : null}
+            <Button
+              type="button"
+              variant="outline"
+              disabled={batchRunning}
+              onClick={() => openUploadDialog()}
+            >
+              <Upload className="mr-2 h-4 w-4" aria-hidden />
+              Upload policy
+            </Button>
+          </div>
         ) : null}
       </div>
 
@@ -321,26 +376,40 @@ export function PolicyLibraryClient() {
             We&apos;ll queue AI drafts against your org profile. Review each
             policy before approval.
           </p>
-          <Button
-            type="button"
-            className="bg-emerald-600 text-white hover:bg-emerald-700"
-            disabled={batchRunning}
-            onClick={() =>
-              void runNdjsonStream(
-                [...HIPAA_POLICY_TYPE_ORDER],
-                "Generating all policies"
-              )
-            }
-          >
-            {batchRunning ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
-                Generating…
-              </>
-            ) : (
-              "Generate all"
-            )}
-          </Button>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <Button
+              type="button"
+              className="bg-emerald-600 text-white hover:bg-emerald-700"
+              disabled={batchRunning}
+              onClick={() =>
+                void runNdjsonStream(
+                  [...HIPAA_POLICY_TYPE_ORDER],
+                  "Generating all policies"
+                )
+              }
+            >
+              {batchRunning ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+                  Generating…
+                </>
+              ) : (
+                <>
+                  <Sparkles className="mr-2 h-4 w-4" aria-hidden />
+                  Generate all
+                </>
+              )}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={batchRunning}
+              onClick={() => openUploadDialog()}
+            >
+              <Upload className="mr-2 h-4 w-4" aria-hidden />
+              Upload a policy
+            </Button>
+          </div>
         </div>
       ) : null}
 
@@ -441,36 +510,62 @@ export function PolicyLibraryClient() {
                   </td>
                   <td className="px-4 py-3 text-right align-top">
                     {row.id ? (
-                      <Link
-                        href={`/hipaa/policies/${row.id}`}
-                        className="text-emerald-500 hover:text-emerald-400 text-xs font-medium"
-                      >
-                        Open →
-                      </Link>
+                      <div className="flex flex-col items-end gap-1">
+                        <Link
+                          href={`/hipaa/policies/${row.id}`}
+                          className="text-emerald-500 hover:text-emerald-400 text-xs font-medium"
+                        >
+                          Open →
+                        </Link>
+                        {data.canManagePolicies &&
+                        (row.status === PolicyStatus.DRAFT ||
+                          row.status === PolicyStatus.APPROVED) ? (
+                          <button
+                            type="button"
+                            disabled={batchRunning}
+                            className="text-muted-foreground hover:text-foreground inline-flex cursor-pointer items-center gap-1 text-xs font-medium disabled:opacity-50"
+                            onClick={() =>
+                              openUploadDialog(
+                                row.type,
+                                row.status === PolicyStatus.APPROVED
+                              )
+                            }
+                          >
+                            <Upload className="h-3 w-3" aria-hidden />
+                            Upload
+                          </button>
+                        ) : null}
+                      </div>
                     ) : data.canManagePolicies ? (
-                      <button
-                        type="button"
-                        disabled={batchRunning}
-                        className="text-emerald-500 hover:text-emerald-400 inline-flex cursor-pointer items-center justify-end gap-1 text-xs font-medium disabled:opacity-50"
-                        onClick={() =>
-                          void runNdjsonStream(
-                            [row.type],
-                            `Generating ${row.displayTitle}`
-                          )
-                        }
-                      >
-                        {isGenerating ? (
-                          <>
-                            <Loader2
-                              className="h-3 w-3 animate-spin"
-                              aria-hidden
-                            />
-                            Generating…
-                          </>
-                        ) : (
-                          "Generate →"
-                        )}
-                      </button>
+                      <div className="inline-flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          disabled={batchRunning}
+                          className="text-emerald-500 hover:text-emerald-400 inline-flex cursor-pointer items-center gap-1 text-xs font-medium disabled:opacity-50"
+                          onClick={() => openGenerateDialog(row.type)}
+                        >
+                          {isGenerating ? (
+                            <>
+                              <Loader2
+                                className="h-3 w-3 animate-spin"
+                                aria-hidden
+                              />
+                              Generating…
+                            </>
+                          ) : (
+                            "Generate"
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={batchRunning}
+                          className="text-muted-foreground hover:text-foreground inline-flex cursor-pointer items-center gap-1 text-xs font-medium disabled:opacity-50"
+                          onClick={() => openUploadDialog(row.type)}
+                        >
+                          <Upload className="h-3 w-3" aria-hidden />
+                          Upload
+                        </button>
+                      </div>
                     ) : (
                       <span className="text-muted-foreground text-xs">—</span>
                     )}
@@ -482,6 +577,21 @@ export function PolicyLibraryClient() {
           </tbody>
         </table>
       </div>
+
+      <PolicyUploadDialog
+        open={uploadOpen}
+        onOpenChange={setUploadOpen}
+        initialPolicyType={uploadPolicyType}
+        replaceApproved={uploadReplaceApproved}
+        onUploaded={() => void load()}
+      />
+
+      <PolicyGenerateDialog
+        open={generateOpen}
+        onOpenChange={setGenerateOpen}
+        policyType={generatePolicyType}
+        onGenerate={(context) => generateSinglePolicy(generatePolicyType, context)}
+      />
     </div>
   );
 }

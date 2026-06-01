@@ -312,6 +312,9 @@ model Policy {
   approvedAt      DateTime?
   effectiveDate   DateTime?
   reviewDate      DateTime?    // Typically 1 year from effectiveDate
+  sourceS3Key     String?      // Original uploaded policy file in S3
+  sourceMimeType  String?
+  sourceFileName  String?
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 

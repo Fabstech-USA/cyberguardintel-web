@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { History, Pencil } from "lucide-react";
+import { ExternalLink, History, Pencil } from "lucide-react";
 import type { Policy } from "@/generated/prisma";
 import { PolicyStatus } from "@/generated/prisma";
 import { MarkdownSplitEditor } from "@/components/hipaa/MarkdownSplitEditor";
@@ -41,8 +41,10 @@ export function PolicyEditor({
   const [content, setContent] = useState(initialPolicy.content);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sourceOpening, setSourceOpening] = useState(false);
 
   const viewingHistory = previewMarkdown != null;
+  const hasSourceFile = Boolean(policy.sourceS3Key);
   const displayMarkdown = viewingHistory ? previewMarkdown : policy.content;
 
   const editable =
@@ -94,6 +96,27 @@ export function PolicyEditor({
     setError(null);
   }
 
+  async function openSourceFile(): Promise<void> {
+    if (!policy.sourceS3Key) return;
+    setSourceOpening(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/hipaa/policies/${policy.id}/document`);
+      const body = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        url?: string;
+      };
+      if (!res.ok || !body.url) {
+        throw new Error(body.error ?? "Could not load source file.");
+      }
+      window.open(body.url, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not load source file.");
+    } finally {
+      setSourceOpening(false);
+    }
+  }
+
   return (
     <article className="border-border bg-background flex flex-col gap-4 rounded-xl border p-4 sm:p-6">
       <div className="flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-start sm:justify-between">
@@ -114,14 +137,36 @@ export function PolicyEditor({
             </p>
           ) : (
             <p className="text-muted-foreground text-xs">
-              {formatPolicyVersion(policy.version)} · Saving edits keeps the same
-              version. Approving saves a snapshot and advances the version
-              number.
+              {formatPolicyVersion(policy.version)}
+              {" · "}
+              {policy.aiGenerated
+                ? policy.sourceS3Key
+                  ? "Approved PDF on file"
+                  : "AI-generated draft"
+                : hasSourceFile
+                  ? "Uploaded document"
+                  : "Manual draft"}
+              {" · "}
+              Saving edits keeps the same version. Approving saves a snapshot
+              and advances the version number.
             </p>
           )}
         </div>
 
         <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+          {hasSourceFile ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={sourceOpening}
+              onClick={() => void openSourceFile()}
+            >
+              <ExternalLink className="size-4" aria-hidden />
+              {sourceOpening ? "Opening…" : "Open source file"}
+            </Button>
+          ) : null}
+
           {onToggleHistory ? (
             <Button
               type="button"

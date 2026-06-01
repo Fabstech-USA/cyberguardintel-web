@@ -5,8 +5,13 @@ import {
 } from "@/generated/prisma";
 import { prisma } from "@/lib/prisma";
 import type { AiPolicyOrgSnapshot } from "@/lib/ai-policy-contract";
+import type { HipaaSubjectType } from "@/lib/policy-generation-context";
 
 export * from "@/lib/ai-policy-contract";
+export {
+  mergePolicyGenerationContext,
+  type AiPolicyContextOverrides,
+} from "@/lib/policy-generation-context";
 
 const INDUSTRY_LABELS: Record<Industry, string> = {
   HEALTHCARE: "Healthcare",
@@ -97,4 +102,31 @@ export async function loadOrganizationSnapshotForPolicyAi(
     phi_systems: phiSystemsStr,
     existing_controls: existingControlsStr,
   };
+}
+
+export async function loadPolicyGenerationFormContext(
+  organizationId: string
+): Promise<{
+  snapshot: AiPolicyOrgSnapshot;
+  hipaaSubjectType: HipaaSubjectType | null;
+} | null> {
+  const [snapshot, organization] = await Promise.all([
+    loadOrganizationSnapshotForPolicyAi(organizationId),
+    prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { hipaaSubjectType: true },
+    }),
+  ]);
+
+  if (!snapshot || !organization) return null;
+
+  const raw = organization.hipaaSubjectType?.toLowerCase() ?? null;
+  const hipaaSubjectType =
+    raw === "covered_entity" ||
+    raw === "business_associate" ||
+    raw === "both"
+      ? raw
+      : null;
+
+  return { snapshot, hipaaSubjectType };
 }

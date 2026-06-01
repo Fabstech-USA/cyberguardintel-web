@@ -1,3 +1,4 @@
+import { addYears } from "date-fns";
 import {
   FrameworkSlug,
   PolicyStatus,
@@ -7,6 +8,7 @@ import {
 import { appendCitationsToContent, type AiPolicyOutput } from "@/lib/ai-policy-contract";
 import { normalizePolicyMarkdown } from "@/lib/normalize-policy-markdown";
 import { writeAuditLog } from "@/lib/audit-log";
+import { triggerHipaaScoreRecalculation } from "@/lib/hipaa-scoring";
 import { prisma } from "@/lib/prisma";
 
 export async function upsertHipaaPolicyDraftFromAi(params: {
@@ -149,6 +151,143 @@ export async function upsertHipaaPolicyDraftManual(params: {
       aiGenerated,
     },
   });
+
+  return row;
+}
+
+export async function upsertHipaaPolicyFromUpload(params: {
+  organizationId: string;
+  clerkUserId: string;
+  policyType: PolicyType;
+  title: string;
+  content: string;
+  sourceS3Key: string;
+  sourceMimeType: string;
+  sourceFileName: string;
+}): Promise<Policy> {
+  const {
+    organizationId,
+    clerkUserId,
+    policyType,
+    title,
+    content,
+    sourceS3Key,
+    sourceMimeType,
+    sourceFileName,
+  } = params;
+
+  const normalizedContent = normalizePolicyMarkdown(content);
+  const now = new Date();
+  const reviewDate = addYears(now, 1);
+
+  const existing = await prisma.policy.findUnique({
+    where: {
+      organizationId_frameworkSlug_type: {
+        organizationId,
+        frameworkSlug: FrameworkSlug.HIPAA,
+        type: policyType,
+      },
+    },
+  });
+
+  const row = await prisma.$transaction(async (tx) => {
+    if (existing) {
+      const snapshotAt = existing.approvedAt ?? now;
+      const snapshotBy = existing.approvedById ?? clerkUserId;
+
+      await tx.policyVersion.upsert({
+        where: {
+          policyId_version: {
+            policyId: existing.id,
+            version: existing.version,
+          },
+        },
+        create: {
+          policyId: existing.id,
+          version: existing.version,
+          title: existing.title,
+          content: existing.content,
+          approvedById: snapshotBy,
+          approvedAt: snapshotAt,
+        },
+        update: {
+          title: existing.title,
+          content: existing.content,
+          approvedById: snapshotBy,
+          approvedAt: snapshotAt,
+        },
+      });
+
+      return tx.policy.update({
+        where: { id: existing.id },
+        data: {
+          title,
+          content: normalizedContent,
+          aiGenerated: false,
+          status: PolicyStatus.APPROVED,
+          version: { increment: 1 },
+          approvedById: clerkUserId,
+          approvedAt: now,
+          effectiveDate: now,
+          reviewDate,
+          sourceS3Key,
+          sourceMimeType,
+          sourceFileName,
+        },
+      });
+    }
+
+    const created = await tx.policy.create({
+      data: {
+        organizationId,
+        frameworkSlug: FrameworkSlug.HIPAA,
+        type: policyType,
+        title,
+        content: normalizedContent,
+        aiGenerated: false,
+        status: PolicyStatus.APPROVED,
+        version: 1,
+        approvedById: clerkUserId,
+        approvedAt: now,
+        effectiveDate: now,
+        reviewDate,
+        sourceS3Key,
+        sourceMimeType,
+        sourceFileName,
+      },
+    });
+
+    await tx.policyVersion.create({
+      data: {
+        policyId: created.id,
+        version: 1,
+        title,
+        content: normalizedContent,
+        approvedById: clerkUserId,
+        approvedAt: now,
+      },
+    });
+
+    return created;
+  });
+
+  writeAuditLog({
+    organizationId,
+    actorId: clerkUserId,
+    action: existing ? "policy.uploaded" : "policy.created",
+    resourceType: "Policy",
+    resourceId: row.id,
+    metadata: {
+      type: row.type,
+      version: row.version,
+      aiGenerated: false,
+      sourceFileName,
+      replacedExisting: Boolean(existing),
+      autoApproved: true,
+    },
+  });
+
+  await triggerHipaaScoreRecalculation(organizationId);
 
   return row;
 }
