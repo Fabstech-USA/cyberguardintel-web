@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import type { Prisma } from "@/generated/prisma";
 import { writeAuditLog } from "@/lib/audit-log";
 import { encryptCredentials } from "@/lib/crypto";
 import {
@@ -95,7 +96,7 @@ export const POST = withTenant(async (req, ctx: TenantContext) => {
     JSON.stringify(storeCredentials ? credentials : {})
   );
   const integrationConfig = isDemoIntegrationType(type)
-    ? getDemoIntegrationConfig(type)
+    ? (getDemoIntegrationConfig(type) as Prisma.InputJsonValue)
     : undefined;
 
   const integration = await prisma.integration.upsert({

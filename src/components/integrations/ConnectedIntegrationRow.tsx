@@ -68,59 +68,66 @@ export function ConnectedIntegrationRow({
 }: ConnectedIntegrationRowProps) {
   const isError = integration.status === "ERROR";
   const reconnectHref = entry ? getConnectHref(entry) : null;
+  const detailHref = `/integrations/${integration.id}`;
 
   return (
     <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 border-b px-4 py-3 last:border-b-0 sm:grid-cols-[auto_minmax(0,1fr)_88px_72px_72px]">
-      <IntegrationIcon
-        target={toIconTargetFromType(
-          integration.type,
-          integration.displayName,
-          entry
-        )}
-        size="md"
-        className="self-start sm:self-center"
-      />
+      <Link
+        href={detailHref}
+        className="contents"
+        aria-label={`Open ${integration.displayName} details`}
+      >
+        <IntegrationIcon
+          target={toIconTargetFromType(
+            integration.type,
+            integration.displayName,
+            entry
+          )}
+          size="md"
+          className="self-start sm:self-center"
+        />
 
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-semibold text-foreground">
-            {integration.displayName}
-          </span>
-          <IntegrationStatusBadge status={integration.status} />
-        </div>
-        <p className="mt-0.5 truncate text-[11.5px] text-muted-foreground">
-          {entry?.description ?? integration.type}
-        </p>
-      </div>
-
-      <div className="col-start-2 row-start-2 text-[11.5px] sm:col-start-3 sm:row-start-1 sm:text-xs">
-        {syncing ? (
-          <span className="text-muted-foreground">Syncing…</span>
-        ) : isError ? (
-          <span className="font-medium text-destructive">
-            {integration.errorMessage ?? "Sync failed"}
-          </span>
-        ) : (
-          <span className="text-muted-foreground">
-            {integration.lastSyncAt
-              ? formatSyncAgo(integration.lastSyncAt)
-              : "Never synced"}
-          </span>
-        )}
-      </div>
-
-      <div className="hidden text-xs sm:block">
-        {isError ? (
-          <span className="text-muted-foreground">—</span>
-        ) : (
-          <span className="tabular-nums">
-            <span className="font-semibold text-foreground">
-              {integration.evidenceCount}
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-semibold text-foreground hover:underline">
+              {integration.displayName}
             </span>
-            <span className="text-muted-foreground"> items</span>
-          </span>
-        )}
-      </div>
+            <IntegrationStatusBadge status={integration.status} />
+          </div>
+          <p className="mt-0.5 truncate text-[11.5px] text-muted-foreground">
+            {entry?.description ?? integration.type}
+          </p>
+        </div>
+
+        <div className="col-start-2 row-start-2 text-[11.5px] sm:col-start-3 sm:row-start-1 sm:text-xs">
+          {syncing ? (
+            <span className="text-muted-foreground">Syncing…</span>
+          ) : isError ? (
+            <span className="font-medium text-destructive">
+              {integration.errorMessage ?? "Sync failed"}
+            </span>
+          ) : (
+            <span className="text-muted-foreground">
+              {integration.lastSyncAt
+                ? formatSyncAgo(integration.lastSyncAt)
+                : "Never synced"}
+            </span>
+          )}
+        </div>
+
+        <div className="hidden text-xs sm:block">
+          {isError ? (
+            <span className="text-muted-foreground">—</span>
+          ) : (
+            <span className="tabular-nums">
+              <span className="font-semibold text-foreground">
+                {integration.evidenceCount}
+              </span>
+              <span className="text-muted-foreground"> items</span>
+            </span>
+          )}
+        </div>
+      </Link>
 
       <div className="col-start-3 row-start-1 justify-self-end sm:col-start-5">
         {isError && reconnectHref ? (
@@ -138,7 +145,11 @@ export function ConnectedIntegrationRow({
             size="sm"
             className="h-8 px-3 text-[11.5px] text-muted-foreground"
             disabled={syncing}
-            onClick={() => onSync(integration.id)}
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onSync(integration.id);
+            }}
           >
             {syncing ? "Syncing…" : "Sync"}
           </Button>

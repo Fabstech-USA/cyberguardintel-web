@@ -7,6 +7,8 @@ import type { FreshnessTier } from "@/lib/evidence-freshness";
 export type EvidenceListFilters = {
   organizationId: string;
   source?: string;
+  /** Prefer over `source` when filtering to a specific connected integration. */
+  integrationId?: string;
   controlRef?: string;
   freshness?: FreshnessTier;
   collectedFrom?: Date;
@@ -49,7 +51,12 @@ export function buildEvidenceWhere(
     { organizationId: filters.organizationId, isValid: true },
   ];
 
-  if (filters.source === "manual") {
+  if (filters.integrationId) {
+    andParts.push({
+      sourceType: EvidenceSource.INTEGRATION,
+      integrationId: filters.integrationId,
+    });
+  } else if (filters.source === "manual") {
     andParts.push({ sourceType: EvidenceSource.MANUAL });
   } else if (filters.source === "ai_generated") {
     andParts.push({ sourceType: EvidenceSource.AI_GENERATED });

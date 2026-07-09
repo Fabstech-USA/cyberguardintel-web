@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import { AlertTriangle, RefreshCw, Search, Upload } from "lucide-react";
@@ -75,7 +76,12 @@ function buildQueryParams(
 }
 
 export function EvidenceBrowserClient() {
-  const [filters, setFilters] = useState<FiltersState>(DEFAULT_FILTERS);
+  const searchParams = useSearchParams();
+  const initialSource = searchParams.get("source") ?? "all";
+  const [filters, setFilters] = useState<FiltersState>(() => ({
+    ...DEFAULT_FILTERS,
+    source: initialSource || "all",
+  }));
   const [items, setItems] = useState<EvidenceListItem[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [pageCursors, setPageCursors] = useState<Array<string | null>>([null]);

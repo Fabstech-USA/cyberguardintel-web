@@ -49,6 +49,23 @@ describe("evidence-list-filters", () => {
       ],
     });
   });
+
+  it("buildEvidenceWhere prefers integrationId over source type", () => {
+    const where = buildEvidenceWhere({
+      organizationId: "org_1",
+      integrationId: "int_aws",
+      source: "aws",
+    });
+    expect(where).toEqual({
+      AND: [
+        { organizationId: "org_1", isValid: true },
+        {
+          sourceType: EvidenceSource.INTEGRATION,
+          integrationId: "int_aws",
+        },
+      ],
+    });
+  });
 });
 
 describe("getEvidenceSourceBadge", () => {

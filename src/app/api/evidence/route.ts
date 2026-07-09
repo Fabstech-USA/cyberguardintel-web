@@ -7,6 +7,7 @@ import { withTenant } from "@/lib/tenant";
 
 const listQuerySchema = z.object({
   source: z.string().optional(),
+  integrationId: z.string().optional(),
   controlRef: z.string().optional(),
   freshness: z.enum(["fresh", "expiring", "stale"]).optional(),
   from: z.string().optional(),
@@ -26,6 +27,7 @@ export const GET = withTenant(async (req, ctx) => {
   const url = new URL(req.url);
   const parsed = listQuerySchema.safeParse({
     source: url.searchParams.get("source") ?? undefined,
+    integrationId: url.searchParams.get("integrationId") ?? undefined,
     controlRef: url.searchParams.get("controlRef") ?? undefined,
     freshness: url.searchParams.get("freshness") ?? undefined,
     from: url.searchParams.get("from") ?? undefined,
@@ -42,6 +44,7 @@ export const GET = withTenant(async (req, ctx) => {
   const result = await listEvidence({
     organizationId: ctx.organizationId,
     source: parsed.data.source,
+    integrationId: parsed.data.integrationId,
     controlRef: parsed.data.controlRef,
     freshness: parsed.data.freshness as FreshnessTier | undefined,
     collectedFrom: parseDate(parsed.data.from),
