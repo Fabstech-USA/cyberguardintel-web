@@ -5,6 +5,7 @@ import {
   canConfirmDisconnect,
   computeSuccessRate,
   extractSafeConfig,
+  formatTimeUntil,
   getNextScheduledSyncAt,
   jobDurationMs,
 } from "@/lib/integration-detail";
@@ -65,6 +66,21 @@ describe("integration-detail helpers", () => {
     expect(before.toISOString()).toBe("2026-07-09T02:00:00.000Z");
     const after = getNextScheduledSyncAt(new Date("2026-07-09T03:00:00.000Z"));
     expect(after.toISOString()).toBe("2026-07-10T02:00:00.000Z");
+  });
+
+  it("formats time until next sync", () => {
+    expect(
+      formatTimeUntil(
+        "2026-07-09T05:30:00.000Z",
+        new Date("2026-07-09T03:00:00.000Z")
+      )
+    ).toBe("2h 30m");
+    expect(
+      formatTimeUntil(
+        "2026-07-09T01:00:00.000Z",
+        new Date("2026-07-09T03:00:00.000Z")
+      )
+    ).toBe("soon");
   });
 
   it("computes job duration", () => {

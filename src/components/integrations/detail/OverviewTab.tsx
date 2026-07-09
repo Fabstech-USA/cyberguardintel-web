@@ -1,8 +1,11 @@
 "use client";
 
+import { useState } from "react";
+
 import type { IntegrationOverviewDto } from "@/lib/integration-detail-queries";
 import {
   formatRelativeShort,
+  formatTimeUntil,
 } from "@/lib/integration-detail";
 import { cn } from "@/lib/utils";
 
@@ -11,22 +14,12 @@ type OverviewTabProps = {
 };
 
 export function OverviewTab({ overview }: OverviewTabProps) {
+  const [now] = useState(() => new Date());
   const max = Math.max(
     1,
     ...overview.activity.map((day) => day.evidenceAdded)
   );
-
-  const nextLabel = (() => {
-    const ms = new Date(overview.nextSyncAt).getTime() - Date.now();
-    if (ms <= 0) return "soon";
-    const hours = Math.floor(ms / 3_600_000);
-    const minutes = Math.floor((ms % 3_600_000) / 60_000);
-    if (hours >= 24) {
-      const days = Math.floor(hours / 24);
-      return `${days}d ${hours % 24}h`;
-    }
-    return `${hours}h ${minutes}m`;
-  })();
+  const nextLabel = formatTimeUntil(overview.nextSyncAt, now);
 
   return (
     <div className="space-y-4">
@@ -39,7 +32,7 @@ export function OverviewTab({ overview }: OverviewTabProps) {
           },
           {
             label: "Last sync",
-            value: formatRelativeShort(overview.lastSyncAt),
+            value: formatRelativeShort(overview.lastSyncAt, now),
             meta: `Next: ${nextLabel}`,
           },
           {

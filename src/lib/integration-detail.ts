@@ -245,6 +245,19 @@ export function formatRelativeShort(iso: string | null, now = new Date()): strin
   return `${days}d`;
 }
 
+/** Pure relative countdown; pass `now` from the caller (avoid Date.now in render). */
+export function formatTimeUntil(iso: string, now: Date): string {
+  const ms = new Date(iso).getTime() - now.getTime();
+  if (ms <= 0) return "soon";
+  const hours = Math.floor(ms / 3_600_000);
+  const minutes = Math.floor((ms % 3_600_000) / 60_000);
+  if (hours >= 24) {
+    const days = Math.floor(hours / 24);
+    return `${days}d ${hours % 24}h`;
+  }
+  return `${hours}h ${minutes}m`;
+}
+
 export function canConfirmDisconnect(text: string): boolean {
   return text === "DISCONNECT";
 }
