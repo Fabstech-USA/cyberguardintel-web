@@ -9,6 +9,7 @@ import { ConnectedIntegrationRow } from "@/components/integrations/ConnectedInte
 import { IntegrationCard } from "@/components/shared/IntegrationCard";
 import { IntegrationDetailDrawer } from "@/components/integrations/IntegrationDetailDrawer";
 import { PlanLimitBanner } from "@/components/integrations/PlanLimitBanner";
+import { useHipaaToast } from "@/components/hipaa/use-hipaa-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { IntegrationPublicDto } from "@/lib/integration-api";
@@ -16,14 +17,20 @@ import {
   countCatalogByCategory,
   filterCatalog,
   getCatalogEntry,
+  getVisibleIntegrationCatalog,
   groupAvailableByCategory,
-  INTEGRATION_CATALOG,
   INTEGRATION_CATEGORIES,
   matchesCatalogSearch,
   type IntegrationCatalogEntry,
   type IntegrationCategoryFilter,
 } from "@/lib/integration-catalog";
 import { ENTERPRISE_SALES_EMAIL } from "@/lib/plans";
+import {
+  enqueueIntegrationSync,
+  fetchIntegrations,
+  formatSyncSuccessMessage,
+  pollSyncJob,
+} from "@/lib/integration-sync-client";
 import { cn } from "@/lib/utils";
 
 type IntegrationsClientProps = {
@@ -71,6 +78,8 @@ export function IntegrationsClient({
 }: IntegrationsClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { showToast, HipaaToast } = useHipaaToast();
+  const [integrations, setIntegrations] = useState(connectedIntegrations);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<IntegrationCategoryFilter>("all");
   const [drawerEntry, setDrawerEntry] = useState<IntegrationCatalogEntry | null>(
@@ -81,6 +90,18 @@ export function IntegrationsClient({
   const [syncingAll, setSyncingAll] = useState(false);
   const [availabilityFilter, setAvailabilityFilter] =
     useState<AvailabilityFilter>("all");
+
+  const visibleCatalog = useMemo(() => getVisibleIntegrationCatalog(), []);
+
+  useEffect(() => {
+    setIntegrations(connectedIntegrations);
+  }, [connectedIntegrations]);
+
+  const refreshIntegrationsList = useCallback(async () => {
+    const next = await fetchIntegrations();
+    setIntegrations(next);
+    router.refresh();
+  }, [router]);
 
   useEffect(() => {
     const connected = searchParams.get("connected");
@@ -97,10 +118,10 @@ export function IntegrationsClient({
 
   const activeConnected = useMemo(
     () =>
-      connectedIntegrations.filter((integration) =>
+      integrations.filter((integration) =>
         CONNECTED_STATUSES.includes(integration.status)
       ),
-    [connectedIntegrations]
+    [integrations]
   );
 
   const connectedTypes = useMemo(
@@ -109,8 +130,8 @@ export function IntegrationsClient({
   );
 
   const filteredCatalog = useMemo(
-    () => filterCatalog(INTEGRATION_CATALOG, { search, category }),
-    [search, category]
+    () => filterCatalog(visibleCatalog, { search, category }),
+    [visibleCatalog, search, category]
   );
 
   const connectedRows = useMemo(() => {
@@ -136,21 +157,21 @@ export function IntegrationsClient({
   );
 
   const unconnectedMatchingCategory = useMemo(() => {
-    return INTEGRATION_CATALOG.filter(
+    return visibleCatalog.filter(
       (entry) =>
         !connectedTypes.has(entry.id) &&
         matchesCatalogSearch(entry, search) &&
         (category === "all" || entry.category === category)
     );
-  }, [connectedTypes, search, category]);
+  }, [connectedTypes, search, category, visibleCatalog]);
 
   const allFilterCount = useMemo(
     () =>
-      INTEGRATION_CATALOG.filter(
+      visibleCatalog.filter(
         (entry) =>
           !connectedTypes.has(entry.id) && matchesCatalogSearch(entry, search)
       ).length,
-    [connectedTypes, search]
+    [connectedTypes, search, visibleCatalog]
   );
 
   const statusCounts = useMemo(
@@ -168,14 +189,14 @@ export function IntegrationsClient({
     availabilityFilter === "all" && category === "all";
 
   const catalogCounts = useMemo(() => {
-    const pool = INTEGRATION_CATALOG.filter(
+    const pool = visibleCatalog.filter(
       (entry) =>
         !connectedTypes.has(entry.id) &&
         matchesCatalogSearch(entry, search) &&
         matchesAvailabilityFilter(entry, availabilityFilter)
     );
     return countCatalogByCategory(pool);
-  }, [connectedTypes, search, availabilityFilter]);
+  }, [connectedTypes, search, availabilityFilter, visibleCatalog]);
 
   const availableEntries = useMemo(() => {
     return unconnectedCatalog.filter((entry) =>
@@ -194,7 +215,7 @@ export function IntegrationsClient({
     (integration) => integration.status === "ERROR"
   ).length;
   const totalEvidence = activeConnected.reduce(
-    (sum, integration) => sum + integration.lastSyncCount,
+    (sum, integration) => sum + integration.evidenceCount,
     0
   );
 
@@ -202,17 +223,33 @@ export function IntegrationsClient({
     async (id: string) => {
       setSyncingId(id);
       try {
-        const response = await fetch(`/api/integrations/sync/${id}`, {
-          method: "POST",
-        });
-        if (response.ok) {
-          router.refresh();
+        const { jobId } = await enqueueIntegrationSync(id);
+        const result = await pollSyncJob(jobId);
+        await refreshIntegrationsList();
+
+        const integration =
+          result.integration ?? integrations.find((row) => row.id === id) ?? null;
+
+        if (result.ok) {
+          showToast(
+            "success",
+            "Sync complete",
+            formatSyncSuccessMessage(integration, result.job.evidenceAdded)
+          );
+        } else {
+          showToast("error", "Sync failed", result.message);
         }
+      } catch (error) {
+        showToast(
+          "error",
+          "Sync failed",
+          error instanceof Error ? error.message : "Could not complete sync"
+        );
       } finally {
         setSyncingId(null);
       }
     },
-    [router]
+    [integrations, refreshIntegrationsList, showToast]
   );
 
   const syncAll = useCallback(async () => {
@@ -223,16 +260,50 @@ export function IntegrationsClient({
 
     setSyncingAll(true);
     try {
-      await Promise.all(
-        syncable.map((integration) =>
-          fetch(`/api/integrations/sync/${integration.id}`, { method: "POST" })
-        )
+      const enqueued = await Promise.all(
+        syncable.map((integration) => enqueueIntegrationSync(integration.id))
       );
-      router.refresh();
+      const results = await Promise.all(
+        enqueued.map((entry) => pollSyncJob(entry.jobId))
+      );
+      await refreshIntegrationsList();
+
+      const failed = results.filter((result) => !result.ok);
+      const added = results
+        .filter((result) => result.ok)
+        .reduce((sum, result) => sum + result.job.evidenceAdded, 0);
+
+      if (failed.length === 0) {
+        showToast(
+          "success",
+          "Sync complete",
+          added > 0
+            ? `All integrations synced — ${added} new evidence ${added === 1 ? "item" : "items"}.`
+            : "All integrations synced successfully."
+        );
+      } else if (failed.length === results.length) {
+        showToast(
+          "error",
+          "Sync failed",
+          failed[0]?.message ?? "All syncs failed"
+        );
+      } else {
+        showToast(
+          "error",
+          "Sync partially failed",
+          `${failed.length} of ${results.length} integrations failed to sync.`
+        );
+      }
+    } catch (error) {
+      showToast(
+        "error",
+        "Sync failed",
+        error instanceof Error ? error.message : "Could not complete sync"
+      );
     } finally {
       setSyncingAll(false);
     }
-  }, [activeConnected, router]);
+  }, [activeConnected, refreshIntegrationsList, showToast]);
 
   return (
     <main className="flex w-full flex-1 flex-col gap-5 p-8">
@@ -272,7 +343,7 @@ export function IntegrationsClient({
         <Input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          placeholder={`Search ${INTEGRATION_CATALOG.length} integrations by name, description, or HIPAA control (e.g. 164.312(b))`}
+          placeholder={`Search ${visibleCatalog.length} integrations by name, description, or HIPAA control (e.g. 164.312(b))`}
           className="pl-9"
         />
       </div>
@@ -325,8 +396,8 @@ export function IntegrationsClient({
 
       {connectedRows.length > 0 ? (
         <section>
-          <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-sm font-medium">
+          <div className="mb-2.5 flex items-center justify-between px-0.5">
+            <h2 className="text-sm font-semibold tracking-tight">
               Connected{" "}
               <span className="font-normal text-muted-foreground">
                 {connectedRows.length}
@@ -335,14 +406,14 @@ export function IntegrationsClient({
             <Button
               variant="link"
               size="sm"
-              className="h-auto px-0 text-xs text-muted-foreground"
+              className="h-auto px-0 text-xs font-normal text-muted-foreground hover:text-foreground"
               disabled={syncingAll}
               onClick={() => void syncAll()}
             >
               Sync all
             </Button>
           </div>
-          <div className="overflow-hidden rounded-lg border">
+          <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
             {connectedRows.map(({ integration, entry }) => (
               <ConnectedIntegrationRow
                 key={integration.id}
@@ -410,6 +481,7 @@ export function IntegrationsClient({
           if (!open) setDrawerEntry(null);
         }}
       />
+      <HipaaToast />
     </main>
   );
 }

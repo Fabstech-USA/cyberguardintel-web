@@ -1,17 +1,23 @@
-import { withTenant } from '@/lib/tenant'
+import { NextResponse } from "next/server";
 
-type RouteCtx = { params: Promise<{ id: string }> }
+import { getEvidenceById } from "@/lib/evidence-queries";
+import { withTenant, type TenantContext } from "@/lib/tenant";
 
-export async function GET(req: Request, { params }: RouteCtx) {
-  await params
-  return withTenant(async (_r, _ctx) => {
-    return Response.json({ ok: true })
-  })(req)
-}
+type RouteCtx = { params: Promise<{ id: string }> };
 
-export async function POST(req: Request, { params }: RouteCtx) {
-  await params
-  return withTenant(async (_r, _ctx) => {
-    return Response.json({ ok: true })
-  })(req)
+export async function GET(req: Request, { params }: RouteCtx): Promise<Response> {
+  const { id } = await params;
+
+  return withTenant(async (_request, ctx: TenantContext) => {
+    const evidence = await getEvidenceById({
+      organizationId: ctx.organizationId,
+      evidenceId: id,
+    });
+
+    if (!evidence) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ evidence });
+  })(req);
 }

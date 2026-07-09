@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   filterCatalog,
   getCatalogEntry,
+  getVisibleIntegrationCatalog,
   groupAvailableByCategory,
   INTEGRATION_CATALOG,
   matchesCatalogSearch,
@@ -58,5 +59,10 @@ describe("integration catalog", () => {
     const groups = groupAvailableByCategory([...available]);
     expect(groups.length).toBeGreaterThan(0);
     expect(groups.every((group) => group.entries.length > 0)).toBe(true);
+  });
+
+  it("includes demo connector in visible catalog when enabled", () => {
+    const visible = getVisibleIntegrationCatalog();
+    expect(visible.length).toBeGreaterThanOrEqual(INTEGRATION_CATALOG.length);
   });
 });

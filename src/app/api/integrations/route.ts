@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 
 import { writeAuditLog } from "@/lib/audit-log";
 import { encryptCredentials } from "@/lib/crypto";
+import {
+  getDemoIntegrationConfig,
+  isDemoIamIntegrationType,
+  isDemoIntegrationType,
+  isDemoIntegrationsEnabled,
+} from "@/lib/demo-integrations";
 import { toIntegrationPublicDto } from "@/lib/integration-api";
 import { getCatalogEntry } from "@/lib/integration-catalog";
 import { IntegrationLimitError } from "@/lib/integration-limits";
@@ -21,6 +27,13 @@ export const GET = withTenant(async (_req, ctx: TenantContext) => {
   const integrations = await prisma.integration.findMany({
     where: { organizationId: ctx.organizationId },
     orderBy: { createdAt: "desc" },
+    include: {
+      _count: {
+        select: {
+          evidence: { where: { isValid: true } },
+        },
+      },
+    },
   });
 
   return NextResponse.json({
@@ -47,6 +60,10 @@ export const POST = withTenant(async (req, ctx: TenantContext) => {
     return NextResponse.json({ error: "Unknown integration type" }, { status: 400 });
   }
 
+  if (isDemoIntegrationType(type) && !isDemoIntegrationsEnabled()) {
+    return NextResponse.json({ error: "Demo integrations are not enabled" }, { status: 403 });
+  }
+
   const org = await getOrganizationPlan(ctx.organizationId);
   if (!org) {
     return NextResponse.json({ error: "Organization not found" }, { status: 404 });
@@ -71,7 +88,16 @@ export const POST = withTenant(async (req, ctx: TenantContext) => {
     throw error;
   }
 
-  const encryptedCreds = encryptCredentials(JSON.stringify(credentials));
+  const storeCredentials =
+    !isDemoIntegrationType(type) ||
+    isDemoIamIntegrationType(type);
+  const encryptedCreds = encryptCredentials(
+    JSON.stringify(storeCredentials ? credentials : {})
+  );
+  const integrationConfig = isDemoIntegrationType(type)
+    ? getDemoIntegrationConfig(type)
+    : undefined;
+
   const integration = await prisma.integration.upsert({
     where: {
       organizationId_type: {
@@ -84,12 +110,14 @@ export const POST = withTenant(async (req, ctx: TenantContext) => {
       type,
       displayName: displayName ?? catalogEntry.name,
       encryptedCreds,
+      config: integrationConfig,
       status: "ACTIVE",
       errorMessage: null,
     },
     update: {
       displayName: displayName ?? catalogEntry.name,
       encryptedCreds,
+      ...(integrationConfig ? { config: integrationConfig } : {}),
       status: "ACTIVE",
       errorMessage: null,
     },

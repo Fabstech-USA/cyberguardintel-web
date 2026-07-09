@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -8,12 +9,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  isDemoIamIntegrationType,
+  isDemoIntegrationType,
+  isDemoOAuthIntegrationType,
+} from "@/lib/demo-integrations";
+import {
   getCatalogEntry,
   getCategoryLabel,
   getConnectHref,
   isOAuthAuthMethod,
 } from "@/lib/integration-catalog";
 import { getCredentialFields } from "@/lib/integration-credential-fields";
+import { getIntegrationIconPath } from "@/lib/integration-icons";
 
 export default function ConnectIntegrationPage() {
   const params = useParams<{ type: string }>();
@@ -21,12 +28,18 @@ export default function ConnectIntegrationPage() {
   const type = params.type;
   const entry = getCatalogEntry(type);
   const fields = getCredentialFields(type);
+  const isDemo = isDemoIntegrationType(type);
+  const isDemoOAuth = isDemoOAuthIntegrationType(type);
+  const isDemoIam = isDemoIamIntegrationType(type);
+  const iconId = entry?.iconId ?? entry?.id ?? type;
+  const iconPath = getIntegrationIconPath(iconId);
 
   const [values, setValues] = useState<Record<string, string>>(() =>
     Object.fromEntries(fields.map((f) => [f.key, f.defaultValue ?? ""]))
   );
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [oauthStep, setOauthStep] = useState<"idle" | "authorizing">("idle");
 
   if (!entry) {
     return (
@@ -35,6 +48,108 @@ export default function ConnectIntegrationPage() {
         <Link href="/integrations" className="text-sm text-primary underline">
           Back to integrations
         </Link>
+      </main>
+    );
+  }
+
+  async function connectIntegration(credentials: Record<string, string>) {
+    setSubmitting(true);
+    setError(null);
+
+    const response = await fetch("/api/integrations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type, credentials }),
+    });
+
+    if (!response.ok) {
+      const payload = (await response.json()) as {
+        error?: string;
+        limit?: number;
+        used?: number;
+      };
+      if (payload.error === "integration_limit_reached") {
+        setError(
+          `Integration limit reached (${payload.used}/${payload.limit}). Upgrade your plan to connect more.`
+        );
+      } else {
+        setError(payload.error ?? "Failed to connect integration");
+      }
+      setSubmitting(false);
+      setOauthStep("idle");
+      return;
+    }
+
+    router.push(`/integrations?connected=${type}`);
+    router.refresh();
+  }
+
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    await connectIntegration(isDemo && !isDemoIam ? {} : values);
+  }
+
+  async function handleDemoOAuthConnect() {
+    setOauthStep("authorizing");
+    await new Promise((resolve) => setTimeout(resolve, 1400));
+    await connectIntegration({});
+  }
+
+  if (isDemoOAuth) {
+    return (
+      <main className="flex w-full flex-1 flex-col gap-4 p-8">
+        <h1 className="text-2xl font-semibold">Connect {entry.name}</h1>
+        <p className="text-sm text-muted-foreground">
+          {getCategoryLabel(entry.category)} · {entry.authMethod}
+        </p>
+
+        <div className="flex max-w-md flex-col gap-4 rounded-md border p-6">
+          <p className="text-sm">{entry.description}</p>
+
+          <div className="rounded-md border bg-muted/30 p-4">
+            <p className="text-xs font-medium text-muted-foreground">
+              Permissions requested
+            </p>
+            <ul className="mt-2 space-y-1 text-sm text-foreground">
+              <li>Read directory users and group membership</li>
+              <li>Read admin role assignments</li>
+              <li>Read Drive sharing and security settings</li>
+            </ul>
+          </div>
+
+          {error ? <p className="text-sm text-destructive">{error}</p> : null}
+
+          <Button
+            type="button"
+            disabled={submitting}
+            className="h-11 gap-2 bg-white text-[#3c4043] shadow-sm ring-1 ring-[#dadce0] hover:bg-[#f8f9fa]"
+            onClick={() => void handleDemoOAuthConnect()}
+          >
+            {iconPath ? (
+              <Image
+                src={iconPath}
+                alt=""
+                width={20}
+                height={20}
+                className="size-5"
+              />
+            ) : null}
+            {oauthStep === "authorizing"
+              ? "Authorizing with Google…"
+              : "Connect with Google"}
+          </Button>
+
+          <p className="text-center text-[11px] text-muted-foreground">
+            You will be redirected to Google to sign in and approve access.
+          </p>
+
+          <Link
+            href="/integrations"
+            className="text-center text-sm text-muted-foreground underline"
+          >
+            Cancel
+          </Link>
+        </div>
       </main>
     );
   }
@@ -65,41 +180,6 @@ export default function ConnectIntegrationPage() {
     );
   }
 
-  async function handleSubmit(event: React.FormEvent) {
-    event.preventDefault();
-    setSubmitting(true);
-    setError(null);
-
-    const response = await fetch("/api/integrations", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        type,
-        credentials: values,
-      }),
-    });
-
-    if (!response.ok) {
-      const payload = (await response.json()) as {
-        error?: string;
-        limit?: number;
-        used?: number;
-      };
-      if (payload.error === "integration_limit_reached") {
-        setError(
-          `Integration limit reached (${payload.used}/${payload.limit}). Upgrade your plan to connect more.`
-        );
-      } else {
-        setError(payload.error ?? "Failed to connect integration");
-      }
-      setSubmitting(false);
-      return;
-    }
-
-    router.push(`/integrations?connected=${type}`);
-    router.refresh();
-  }
-
   return (
     <main className="flex w-full flex-1 flex-col gap-4 p-8">
       <h1 className="text-2xl font-semibold">Connect {entry.name}</h1>
@@ -117,6 +197,13 @@ export default function ConnectIntegrationPage() {
           className="flex max-w-md flex-col gap-4 rounded-md border p-6"
         >
           <p className="text-sm">{entry.description}</p>
+
+          {isDemoIam ? (
+            <p className="text-xs text-muted-foreground">
+              Enter your IAM access keys. Credentials are encrypted at rest and
+              used only for read-only evidence collection.
+            </p>
+          ) : null}
 
           {fields.map((field) => (
             <div key={field.key} className="space-y-2">

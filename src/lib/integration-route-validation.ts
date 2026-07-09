@@ -2,17 +2,21 @@ import { IntegrationStatus } from "@/generated/prisma";
 import { z } from "zod";
 
 import {
+  isDemoIamIntegrationType,
+  isDemoIntegrationType,
+  isDemoIntegrationsEnabled,
+} from "@/lib/demo-integrations";
+import {
   getCatalogEntry,
   isOAuthAuthMethod,
 } from "@/lib/integration-catalog";
 
+const credentialsSchema = z.record(z.string(), z.string());
+
 export const ConnectIntegrationSchema = z.object({
   type: z.string().min(1),
   displayName: z.string().min(1).optional(),
-  credentials: z.record(z.string(), z.string()).refine(
-    (value) => Object.keys(value).length > 0,
-    "credentials must not be empty"
-  ),
+  credentials: credentialsSchema,
 });
 
 export const UpdateIntegrationStatusSchema = z.object({
@@ -27,7 +31,19 @@ export function validateConnectIntegrationBody(body: unknown):
     return { success: false, error: "Validation failed" };
   }
 
-  const entry = getCatalogEntry(parsed.data.type);
+  const { type, credentials } = parsed.data;
+
+  if (isDemoIntegrationType(type)) {
+    if (!isDemoIntegrationsEnabled()) {
+      return { success: false, error: "Demo integrations are not enabled" };
+    }
+    if (isDemoIamIntegrationType(type) && Object.keys(credentials).length === 0) {
+      return { success: false, error: "credentials must not be empty" };
+    }
+    return { success: true, data: parsed.data };
+  }
+
+  const entry = getCatalogEntry(type);
   if (!entry) {
     return { success: false, error: "Unknown integration type" };
   }
@@ -39,6 +55,9 @@ export function validateConnectIntegrationBody(body: unknown):
       success: false,
       error: "This integration uses OAuth and cannot be connected via API key",
     };
+  }
+  if (Object.keys(credentials).length === 0) {
+    return { success: false, error: "credentials must not be empty" };
   }
 
   return { success: true, data: parsed.data };

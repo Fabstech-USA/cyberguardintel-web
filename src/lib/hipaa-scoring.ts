@@ -183,6 +183,10 @@ export async function triggerHipaaScoreRecalculation(
   organizationId: string
 ): Promise<number> {
   const score = await recalculateHipaaScore(organizationId);
-  revalidatePath("/dashboard");
+  try {
+    revalidatePath("/dashboard");
+  } catch {
+    // No-op outside a Next.js request (BullMQ worker, tsx scripts).
+  }
   return score;
 }

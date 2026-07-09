@@ -1,4 +1,3 @@
-import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 
 import type { IntegrationStatus } from "@/generated/prisma";
@@ -21,17 +20,37 @@ function IntegrationStatusBadge({ status }: { status: IntegrationStatus }) {
   return (
     <span
       className={cn(
-        "inline-flex h-5 shrink-0 items-center rounded-full px-2 text-[10.5px] font-medium",
+        "inline-flex h-5 shrink-0 items-center gap-1 rounded-full px-2 text-[10.5px] font-medium",
         status === "ACTIVE" &&
-          "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+          "bg-emerald-500/12 text-emerald-800 dark:text-emerald-400",
         status === "PAUSED" &&
-          "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-        status === "ERROR" && "bg-destructive/10 text-destructive"
+          "bg-amber-500/12 text-amber-800 dark:text-amber-400",
+        status === "ERROR" && "bg-red-500/10 text-red-700 dark:text-red-400"
       )}
     >
+      <span
+        className={cn(
+          "size-1.5 rounded-full",
+          status === "ACTIVE" && "bg-emerald-600 dark:bg-emerald-400",
+          status === "PAUSED" && "bg-amber-600 dark:bg-amber-400",
+          status === "ERROR" && "bg-red-600 dark:bg-red-400"
+        )}
+        aria-hidden
+      />
       {statusLabel(status)}
     </span>
   );
+}
+
+function formatSyncAgo(iso: string): string {
+  const ms = Date.now() - new Date(iso).getTime();
+  if (ms < 60_000) return "just now";
+  const minutes = Math.floor(ms / 60_000);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
 }
 
 type ConnectedIntegrationRowProps = {
@@ -51,59 +70,64 @@ export function ConnectedIntegrationRow({
   const reconnectHref = entry ? getConnectHref(entry) : null;
 
   return (
-    <div className="grid grid-cols-[24px_1fr_auto] items-center gap-3 border-b px-3.5 py-2.5 last:border-b-0 sm:grid-cols-[24px_minmax(0,1fr)_100px_72px_64px]">
+    <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 border-b px-4 py-3 last:border-b-0 sm:grid-cols-[auto_minmax(0,1fr)_88px_72px_72px]">
       <IntegrationIcon
         target={toIconTargetFromType(
           integration.type,
           integration.displayName,
           entry
         )}
-        size="sm"
+        size="md"
+        className="self-start sm:self-center"
       />
 
       <div className="min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="truncate text-sm font-medium">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-semibold text-foreground">
             {integration.displayName}
           </span>
           <IntegrationStatusBadge status={integration.status} />
         </div>
-        <p className="truncate text-[11px] text-muted-foreground">
+        <p className="mt-0.5 truncate text-[11.5px] text-muted-foreground">
           {entry?.description ?? integration.type}
         </p>
       </div>
 
-      <div className="hidden text-xs sm:block">
-        {isError ? (
-          <span className="text-destructive">
+      <div className="col-start-2 row-start-2 text-[11.5px] sm:col-start-3 sm:row-start-1 sm:text-xs">
+        {syncing ? (
+          <span className="text-muted-foreground">Syncing…</span>
+        ) : isError ? (
+          <span className="font-medium text-destructive">
             {integration.errorMessage ?? "Sync failed"}
           </span>
         ) : (
           <span className="text-muted-foreground">
             {integration.lastSyncAt
-              ? `${formatDistanceToNow(new Date(integration.lastSyncAt))} ago`
+              ? formatSyncAgo(integration.lastSyncAt)
               : "Never synced"}
           </span>
         )}
       </div>
 
-      <div className="hidden text-sm sm:block">
+      <div className="hidden text-xs sm:block">
         {isError ? (
           <span className="text-muted-foreground">—</span>
         ) : (
-          <span>
-            {integration.lastSyncCount}
-            <span className="text-[10.5px] text-muted-foreground"> items</span>
+          <span className="tabular-nums">
+            <span className="font-semibold text-foreground">
+              {integration.evidenceCount}
+            </span>
+            <span className="text-muted-foreground"> items</span>
           </span>
         )}
       </div>
 
-      <div className="justify-self-end">
+      <div className="col-start-3 row-start-1 justify-self-end sm:col-start-5">
         {isError && reconnectHref ? (
           <Button
-            variant="link"
+            variant="outline"
             size="sm"
-            className="h-7 px-0 text-[11px] text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
+            className="h-8 border-emerald-600 px-3 text-[11.5px] text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 dark:border-emerald-500 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
             asChild
           >
             <Link href={reconnectHref}>Reconnect</Link>
@@ -112,11 +136,11 @@ export function ConnectedIntegrationRow({
           <Button
             variant="outline"
             size="sm"
-            className="h-7 text-[11px]"
-            disabled={syncing || integration.status === "PAUSED"}
+            className="h-8 px-3 text-[11.5px] text-muted-foreground"
+            disabled={syncing}
             onClick={() => onSync(integration.id)}
           >
-            Sync
+            {syncing ? "Syncing…" : "Sync"}
           </Button>
         )}
       </div>

@@ -25,6 +25,13 @@ export default async function IntegrationsPage() {
   const integrations = await prisma.integration.findMany({
     where: { organizationId: organization.id },
     orderBy: { createdAt: "desc" },
+    include: {
+      _count: {
+        select: {
+          evidence: { where: { isValid: true } },
+        },
+      },
+    },
   });
 
   return (

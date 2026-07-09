@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { DEMO_AWS_ID } from "@/lib/demo-integrations";
 import { getCredentialFields } from "@/lib/integration-credential-fields";
 
 describe("integration credential fields", () => {
@@ -26,5 +27,17 @@ describe("integration credential fields", () => {
   it("falls back to generic key/secret fields", () => {
     const fields = getCredentialFields("unknown-type");
     expect(fields.map((f) => f.key)).toEqual(["api_key", "api_secret"]);
+  });
+
+  it("defines demo AWS fields with prefill defaults", () => {
+    const fields = getCredentialFields(DEMO_AWS_ID);
+    expect(fields.map((f) => f.key)).toEqual([
+      "access_key_id",
+      "secret_access_key",
+      "region",
+    ]);
+    expect(fields.find((f) => f.key === "access_key_id")?.defaultValue).toBe(
+      "AKIAIOSFODNN7EXAMPLE"
+    );
   });
 });

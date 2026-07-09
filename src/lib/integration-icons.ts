@@ -25,7 +25,7 @@ export function toIconTarget(
   entry: IntegrationCatalogEntry
 ): IntegrationIconTarget {
   return {
-    id: entry.id,
+    id: entry.iconId ?? entry.id,
     name: entry.name,
     letter: entry.letter,
     color: entry.color,
@@ -39,7 +39,7 @@ export function toIconTargetFromType(
   entry?: IntegrationCatalogEntry
 ): IntegrationIconTarget {
   return {
-    id: type,
+    id: entry?.iconId ?? entry?.id ?? type,
     name: displayName,
     letter: entry?.letter ?? displayName[0] ?? "?",
     color: entry?.color ?? "#111",

@@ -1,3 +1,10 @@
+import {
+  DEMO_AWS_ID,
+  DEMO_GOOGLE_WORKSPACE_ID,
+  DEMO_REPLACES_CATALOG_IDS,
+  isDemoIntegrationsEnabled,
+} from "@/lib/demo-integrations";
+
 export type IntegrationCategory =
   | "cloud"
   | "identity"
@@ -29,6 +36,8 @@ export type IntegrationCatalogEntry = {
   authMethod: IntegrationAuthMethod;
   permissions: string[];
   connectable: boolean;
+  /** Brand icon id when different from catalog id (demo stubs). */
+  iconId?: string;
 };
 
 export type IntegrationCategoryFilter = IntegrationCategory | "all";
@@ -122,6 +131,36 @@ export const INTEGRATION_CATALOG: readonly IntegrationCatalogEntry[] = [
   defineEntry({ id: "doxy", name: "Doxy.me", category: "healthcare", letter: "D", color: "#18B0A5", bg: "#E1F5EE", description: "Telehealth sessions, BAA", controls: ["164.312(e)(1)"], authMethod: "API Key" }),
 ] as const;
 
+const DEMO_AWS_CATALOG_ENTRY: IntegrationCatalogEntry = {
+  id: DEMO_AWS_ID,
+  name: "AWS",
+  category: "cloud",
+  letter: "A",
+  color: "#FF9900",
+  bg: "#FFF4E0",
+  description: "IAM, CloudTrail, S3, GuardDuty",
+  controls: ["164.312(a)(1)", "164.312(b)", "164.312(c)(1)", "164.312(e)(1)"],
+  authMethod: "IAM",
+  connectable: true,
+  iconId: "aws",
+  permissions: DEFAULT_PERMISSIONS("AWS"),
+};
+
+const DEMO_GOOGLE_WORKSPACE_CATALOG_ENTRY: IntegrationCatalogEntry = {
+  id: DEMO_GOOGLE_WORKSPACE_ID,
+  name: "Google Workspace",
+  category: "productivity",
+  letter: "G",
+  color: "#4285F4",
+  bg: "#E6F1FB",
+  description: "MFA status, admin roles, sharing controls",
+  controls: ["164.312(a)(1)", "164.308(a)(3)"],
+  authMethod: "OAuth 2.0",
+  connectable: true,
+  iconId: "google-workspace",
+  permissions: DEFAULT_PERMISSIONS("Google Workspace"),
+};
+
 export const INTEGRATION_CATEGORIES: readonly {
   id: IntegrationCategoryFilter;
   label: string;
@@ -155,7 +194,23 @@ export function getCategoryLabel(category: IntegrationCategory): string {
 }
 
 export function getCatalogEntry(id: string): IntegrationCatalogEntry | undefined {
+  if (isDemoIntegrationsEnabled()) {
+    if (id === DEMO_AWS_ID) return DEMO_AWS_CATALOG_ENTRY;
+    if (id === DEMO_GOOGLE_WORKSPACE_ID) return DEMO_GOOGLE_WORKSPACE_CATALOG_ENTRY;
+  }
   return INTEGRATION_CATALOG.find((entry) => entry.id === id);
+}
+
+/** Catalog entries visible in the integrations UI (includes gated demo stubs). */
+export function getVisibleIntegrationCatalog(): IntegrationCatalogEntry[] {
+  if (!isDemoIntegrationsEnabled()) {
+    return [...INTEGRATION_CATALOG];
+  }
+  return [
+    ...INTEGRATION_CATALOG.filter((entry) => !DEMO_REPLACES_CATALOG_IDS.has(entry.id)),
+    DEMO_AWS_CATALOG_ENTRY,
+    DEMO_GOOGLE_WORKSPACE_CATALOG_ENTRY,
+  ];
 }
 
 export type CatalogFilterOptions = {
@@ -228,6 +283,9 @@ export function groupAvailableByCategory(
 }
 
 export function getConnectHref(entry: IntegrationCatalogEntry): string {
+  if (entry.id === DEMO_GOOGLE_WORKSPACE_ID) {
+    return `/integrations/connect/${entry.id}`;
+  }
   if (isOAuthAuthMethod(entry.authMethod)) {
     return `/api/integrations/${entry.id}/auth`;
   }

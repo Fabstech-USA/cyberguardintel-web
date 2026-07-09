@@ -3,6 +3,11 @@
  * credential form (non-OAuth). Keys match what the Python connectors expect.
  */
 
+import {
+  DEMO_AWS_ID,
+  DEMO_AWS_PREFILL,
+} from "@/lib/demo-integrations";
+
 export type CredentialField = {
   key: string;
   label: string;
@@ -36,6 +41,26 @@ export const CREDENTIAL_FIELDS: Record<string, CredentialField[]> = {
 };
 
 export function getCredentialFields(type: string): CredentialField[] {
+  if (type === DEMO_AWS_ID) {
+    return [
+      {
+        key: "access_key_id",
+        label: "Access key ID",
+        defaultValue: DEMO_AWS_PREFILL.access_key_id,
+      },
+      {
+        key: "secret_access_key",
+        label: "Secret access key",
+        inputType: "password",
+        defaultValue: DEMO_AWS_PREFILL.secret_access_key,
+      },
+      {
+        key: "region",
+        label: "Region",
+        defaultValue: DEMO_AWS_PREFILL.region,
+      },
+    ];
+  }
   return (
     CREDENTIAL_FIELDS[type] ?? [
       { key: "api_key", label: "API key / token" },
