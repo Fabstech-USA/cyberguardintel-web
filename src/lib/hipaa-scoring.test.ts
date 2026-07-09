@@ -248,4 +248,19 @@ describe("triggerHipaaScoreRecalculation", () => {
     await triggerHipaaScoreRecalculation("org_1");
     expect(revalidatePath).toHaveBeenCalledWith("/dashboard");
   });
+
+  it("still returns score when revalidatePath is unavailable", async () => {
+    vi.mocked(revalidatePath).mockImplementation(() => {
+      throw new Error("static generation store missing");
+    });
+    orgControlFindManyMock.mockResolvedValue([
+      {
+        id: "oc_1",
+        ownerId: null,
+        evidence: [],
+      },
+    ]);
+
+    await expect(triggerHipaaScoreRecalculation("org_1")).resolves.toBe(0);
+  });
 });

@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { GetCallerIdentityCommand, STSClient } from "@aws-sdk/client-sts";
@@ -87,7 +88,8 @@ export async function getSignedUploadUrl(
 export async function putObjectToS3(
   key: string,
   body: Uint8Array,
-  contentType = "application/pdf"
+  contentType = "application/pdf",
+  metadata?: Record<string, string>
 ): Promise<void> {
   const kmsKeyId = await getSseKmsKeyId();
   const command = new PutObjectCommand({
@@ -97,8 +99,29 @@ export async function putObjectToS3(
     ContentType: contentType,
     ServerSideEncryption: "aws:kms",
     SSEKMSKeyId: kmsKeyId,
+    ...(metadata ? { Metadata: metadata } : {}),
   });
   await getS3Client().send(command);
+}
+
+export async function uploadEvidenceFile(params: {
+  orgId: string;
+  controlId: string;
+  fileName: string;
+  content: Buffer;
+  mimeType: string;
+}): Promise<{ s3Key: string; fileHash: string }> {
+  const fileHash = createHash("sha256").update(params.content).digest("hex");
+  const safeName = params.fileName.replace(/[^a-zA-Z0-9._-]+/g, "_");
+  const s3Key = `orgs/${params.orgId}/controls/${params.controlId}/${fileHash}-${safeName}`;
+
+  await putObjectToS3(s3Key, params.content, params.mimeType, {
+    "org-id": params.orgId,
+    "control-id": params.controlId,
+    sha256: fileHash,
+  });
+
+  return { s3Key, fileHash };
 }
 
 export async function getSignedDownloadUrl(key: string): Promise<SignedUrl> {
@@ -109,5 +132,29 @@ export async function getSignedDownloadUrl(key: string): Promise<SignedUrl> {
   return getSignedUrl(getS3Client(), command, {
     expiresIn: SIGNED_URL_EXPIRES_IN_SECONDS,
   });
+}
+
+export async function getObjectFromS3(key: string): Promise<{
+  body: Buffer;
+  contentType: string | undefined;
+  metadata: Record<string, string> | undefined;
+}> {
+  const response = await getS3Client().send(
+    new GetObjectCommand({
+      Bucket: getS3Bucket(),
+      Key: key,
+    })
+  );
+
+  if (!response.Body) {
+    throw new Error("S3 object body is empty");
+  }
+
+  const bytes = await response.Body.transformToByteArray();
+  return {
+    body: Buffer.from(bytes),
+    contentType: response.ContentType,
+    metadata: response.Metadata,
+  };
 }
 

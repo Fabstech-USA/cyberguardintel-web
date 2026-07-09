@@ -1,0 +1,46 @@
+# Evidence collection worker for Railway (BullMQ consumer).
+# Deploy as a separate Railway service from cyberguardintel-web.
+# The Next.js app stays on Vercel; this process only processes the queue.
+
+FROM node:20-bookworm-slim AS deps
+
+WORKDIR /app
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY package.json package-lock.json ./
+COPY prisma ./prisma
+COPY prisma.config.ts ./
+
+# Provide a dummy DATABASE_URL so prisma generate can load prisma.config.ts at build time.
+# Runtime uses the real DATABASE_URL from Railway.
+ENV DATABASE_URL="postgresql://build:build@127.0.0.1:5432/build?schema=public"
+
+RUN npm ci
+
+FROM node:20-bookworm-slim
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV DATABASE_URL="postgresql://build:build@127.0.0.1:5432/build?schema=public"
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY package.json package-lock.json ./
+COPY prisma ./prisma
+COPY prisma.config.ts ./
+COPY tsconfig.json ./
+COPY src ./src
+
+RUN npx prisma generate
+
+# Clear dummy URL so a missing Railway secret fails loudly at boot instead of connecting to localhost.
+ENV DATABASE_URL=
+
+CMD ["npm", "run", "worker"]
