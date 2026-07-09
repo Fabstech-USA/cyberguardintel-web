@@ -1,0 +1,14 @@
+# Railway service config for the BullMQ evidence collection worker.
+# Create a new Railway service from this repo and leave this file as the
+# service config (or set Dockerfile path to Dockerfile.worker in the UI).
+#
+# Do not use this for the Next.js web app — that stays on Vercel.
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile.worker"
+
+[deploy]
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+# No public HTTP port required — this process only talks to Redis, Postgres, S3, and the AI service.

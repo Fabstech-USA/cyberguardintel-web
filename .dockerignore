@@ -1,0 +1,34 @@
+# Dependencies & build artifacts
+node_modules
+.next
+out
+dist
+coverage
+.turbo
+*.tsbuildinfo
+
+# Env & secrets (Railway injects env vars)
+.env
+.env.*
+!.env.example
+
+# Git / IDE
+.git
+.github
+.cursor
+.vscode
+.idea
+
+# Tests & docs not needed at runtime
+**/*.test.ts
+**/*.test.tsx
+src/**/__tests__
+
+# Local / OS
+npm-debug.log*
+yarn-error.log*
+.DS_Store
+*.pem
+
+# Mockups & misc
+public/integrations/icons/manifest.json.bak
