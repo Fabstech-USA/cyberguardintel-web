@@ -32,7 +32,7 @@ describe("evidence-list-filters", () => {
         { organizationId: "org_1", isValid: true },
         {
           sourceType: EvidenceSource.INTEGRATION,
-          integration: { type: "aws" },
+          integration: { type: { in: ["aws", "demo-aws"] } },
         },
         {
           OR: [
@@ -45,6 +45,24 @@ describe("evidence-list-filters", () => {
               },
             },
           ],
+        },
+      ],
+    });
+  });
+
+  it("buildEvidenceWhere includes demo google-workspace type for Google chip", () => {
+    const where = buildEvidenceWhere({
+      organizationId: "org_1",
+      source: "google-workspace",
+    });
+    expect(where).toEqual({
+      AND: [
+        { organizationId: "org_1", isValid: true },
+        {
+          sourceType: EvidenceSource.INTEGRATION,
+          integration: {
+            type: { in: ["google-workspace", "demo-google-workspace"] },
+          },
         },
       ],
     });

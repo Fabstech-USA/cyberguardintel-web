@@ -7,6 +7,37 @@ export type PlanPeriodMapping = {
 
 type PriceEnv = Record<string, string | undefined>;
 
+const SELF_SERVE_PLANS = ["STARTER", "GROWTH", "BUSINESS"] as const;
+export type SelfServePlan = (typeof SELF_SERVE_PLANS)[number];
+
+export function isSelfServePlan(plan: string): plan is SelfServePlan {
+  return (SELF_SERVE_PLANS as readonly string[]).includes(plan);
+}
+
+/** Resolve Stripe Price ID for a self-serve plan + billing period. */
+export function getPriceIdForPlan(
+  plan: SelfServePlan,
+  period: BillingPeriod,
+  env: PriceEnv = process.env
+): string | null {
+  const key =
+    plan === "STARTER"
+      ? period === "ANNUAL"
+        ? "STRIPE_STARTER_ANNUAL_PRICE_ID"
+        : "STRIPE_STARTER_MONTHLY_PRICE_ID"
+      : plan === "GROWTH"
+        ? period === "ANNUAL"
+          ? "STRIPE_GROWTH_ANNUAL_PRICE_ID"
+          : "STRIPE_GROWTH_MONTHLY_PRICE_ID"
+        : period === "ANNUAL"
+          ? "STRIPE_BUSINESS_ANNUAL_PRICE_ID"
+          : "STRIPE_BUSINESS_MONTHLY_PRICE_ID";
+
+  const priceId = env[key];
+  if (!priceId || priceId === "price_...") return null;
+  return priceId;
+}
+
 /** Build price-id → plan/period map from env. Missing IDs are omitted. */
 export function buildPriceToPlanMap(
   env: PriceEnv = process.env

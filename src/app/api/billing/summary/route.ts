@@ -15,6 +15,7 @@ export const GET = withTenant(async (_req, ctx) => {
       planPeriod: true,
       trialEndsAt: true,
       stripeCustomerId: true,
+      stripeSubId: true,
     },
   });
 
@@ -32,6 +33,7 @@ export const GET = withTenant(async (_req, ctx) => {
     planPeriod: org.planPeriod,
     trialEndsAt: org.trialEndsAt,
     stripeCustomerId: org.stripeCustomerId,
+    hasSubscription: Boolean(org.stripeSubId),
     integrationsUsed,
     integrationsLimit: getIntegrationLimit(org.plan),
     frameworksUsed,

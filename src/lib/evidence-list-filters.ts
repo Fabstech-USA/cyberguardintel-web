@@ -2,6 +2,10 @@ import {
   EvidenceSource,
   type Prisma,
 } from "@/generated/prisma";
+import {
+  DEMO_AWS_ID,
+  DEMO_GOOGLE_WORKSPACE_ID,
+} from "@/lib/demo-integrations";
 import type { FreshnessTier } from "@/lib/evidence-freshness";
 
 export type EvidenceListFilters = {
@@ -24,6 +28,18 @@ type EvidenceCursor = {
   collectedAt: string;
   id: string;
 };
+
+/**
+ * Map UI source chip keys to integration `type` values stored in the DB.
+ * Demo connectors use `demo-*` ids while chips/badges use the real catalog keys.
+ */
+export function integrationTypesForSourceFilter(source: string): string[] {
+  if (source === "aws") return ["aws", DEMO_AWS_ID];
+  if (source === "google-workspace" || source === "google") {
+    return ["google-workspace", DEMO_GOOGLE_WORKSPACE_ID];
+  }
+  return [source];
+}
 
 export function encodeEvidenceCursor(cursor: EvidenceCursor): string {
   return Buffer.from(JSON.stringify(cursor), "utf8").toString("base64url");
@@ -62,10 +78,11 @@ export function buildEvidenceWhere(
     andParts.push({ sourceType: EvidenceSource.MANUAL });
   } else if (filters.source === "ai_generated") {
     andParts.push({ sourceType: EvidenceSource.AI_GENERATED });
-  } else if (filters.source) {
+  } else if (filters.source && filters.source !== "all") {
+    const types = integrationTypesForSourceFilter(filters.source);
     andParts.push({
       sourceType: EvidenceSource.INTEGRATION,
-      integration: { type: filters.source },
+      integration: { type: { in: types } },
     });
   }
 

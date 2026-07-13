@@ -166,8 +166,7 @@ export function SecuritySettings() {
       <Card className="space-y-3 p-6">
         <h2 className="text-lg font-semibold">Session timeout</h2>
         <p className="text-sm text-muted-foreground">
-          Preferred idle timeout for this organization. Absolute session lifetime
-          is still controlled in the Clerk Dashboard.
+          Preferred idle timeout for this organization.
         </p>
         <div className="max-w-xs space-y-2">
           <Label htmlFor="session-timeout">Timeout</Label>
