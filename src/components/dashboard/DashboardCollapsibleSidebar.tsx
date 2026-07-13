@@ -35,7 +35,11 @@ const items: NavItem[] = [
     label: "HIPAA",
     icon: Shield,
     isActive: (p) =>
-      p === "/dashboard" || p === "/hipaa" || p.startsWith("/hipaa/"),
+      p === "/dashboard" ||
+      p === "/hipaa" ||
+      p.startsWith("/hipaa/") ||
+      p === "/audit" ||
+      p.startsWith("/audit/"),
   },
   {
     id: "soc2",

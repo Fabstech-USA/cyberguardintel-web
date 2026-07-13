@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { PlanLimitUpgradePrompt } from "@/components/integrations/PlanLimitUpgradePrompt";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +23,11 @@ import {
 import { getCredentialFields } from "@/lib/integration-credential-fields";
 import { getIntegrationIconPath } from "@/lib/integration-icons";
 
+type LimitErrorState = {
+  used?: number;
+  limit?: number;
+};
+
 export default function ConnectIntegrationPage() {
   const params = useParams<{ type: string }>();
   const router = useRouter();
@@ -38,6 +44,7 @@ export default function ConnectIntegrationPage() {
     Object.fromEntries(fields.map((f) => [f.key, f.defaultValue ?? ""]))
   );
   const [error, setError] = useState<string | null>(null);
+  const [limitError, setLimitError] = useState<LimitErrorState | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [oauthStep, setOauthStep] = useState<"idle" | "authorizing">("idle");
 
@@ -55,6 +62,7 @@ export default function ConnectIntegrationPage() {
   async function connectIntegration(credentials: Record<string, string>) {
     setSubmitting(true);
     setError(null);
+    setLimitError(null);
 
     const response = await fetch("/api/integrations", {
       method: "POST",
@@ -69,9 +77,7 @@ export default function ConnectIntegrationPage() {
         used?: number;
       };
       if (payload.error === "integration_limit_reached") {
-        setError(
-          `Integration limit reached (${payload.used}/${payload.limit}). Upgrade your plan to connect more.`
-        );
+        setLimitError({ used: payload.used, limit: payload.limit });
       } else {
         setError(payload.error ?? "Failed to connect integration");
       }
@@ -117,6 +123,12 @@ export default function ConnectIntegrationPage() {
             </ul>
           </div>
 
+          {limitError ? (
+            <PlanLimitUpgradePrompt
+              used={limitError.used}
+              limit={limitError.limit}
+            />
+          ) : null}
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
           <Button
@@ -225,6 +237,12 @@ export default function ConnectIntegrationPage() {
             </div>
           ))}
 
+          {limitError ? (
+            <PlanLimitUpgradePrompt
+              used={limitError.used}
+              limit={limitError.limit}
+            />
+          ) : null}
           {error ? (
             <p className="text-sm text-destructive">{error}</p>
           ) : null}

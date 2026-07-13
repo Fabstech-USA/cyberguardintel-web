@@ -32,7 +32,7 @@ describe("evidence-list-filters", () => {
         { organizationId: "org_1", isValid: true },
         {
           sourceType: EvidenceSource.INTEGRATION,
-          integration: { type: "aws" },
+          integration: { type: { in: ["aws", "demo-aws"] } },
         },
         {
           OR: [
@@ -50,6 +50,24 @@ describe("evidence-list-filters", () => {
     });
   });
 
+  it("buildEvidenceWhere includes demo google-workspace type for Google chip", () => {
+    const where = buildEvidenceWhere({
+      organizationId: "org_1",
+      source: "google-workspace",
+    });
+    expect(where).toEqual({
+      AND: [
+        { organizationId: "org_1", isValid: true },
+        {
+          sourceType: EvidenceSource.INTEGRATION,
+          integration: {
+            type: { in: ["google-workspace", "demo-google-workspace"] },
+          },
+        },
+      ],
+    });
+  });
+
   it("buildEvidenceWhere prefers integrationId over source type", () => {
     const where = buildEvidenceWhere({
       organizationId: "org_1",
@@ -62,6 +80,26 @@ describe("evidence-list-filters", () => {
         {
           sourceType: EvidenceSource.INTEGRATION,
           integrationId: "int_aws",
+        },
+      ],
+    });
+  });
+
+  it("buildEvidenceWhere filters by controlRefs list", () => {
+    const where = buildEvidenceWhere({
+      organizationId: "org_1",
+      controlRefs: ["164.308(a)(1)", "164.312(a)(1)"],
+      controlRef: "ignored-when-refs-present",
+    });
+    expect(where).toEqual({
+      AND: [
+        { organizationId: "org_1", isValid: true },
+        {
+          orgControl: {
+            frameworkControl: {
+              controlRef: { in: ["164.308(a)(1)", "164.312(a)(1)"] },
+            },
+          },
         },
       ],
     });

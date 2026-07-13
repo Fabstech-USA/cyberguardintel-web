@@ -130,7 +130,7 @@ export default async function Soc2ComingSoonPage(): Promise<React.JSX.Element> {
                 className="mt-2 w-full bg-brand text-brand-foreground hover:bg-brand-hover active:bg-brand-active sm:w-auto"
                 asChild
               >
-                <Link href="/settings">
+                <Link href="/settings/billing">
                   Compare plans
                   <ArrowRight className="ml-1 h-4 w-4" aria-hidden="true" />
                 </Link>

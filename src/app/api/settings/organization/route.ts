@@ -12,6 +12,13 @@ const HipaaSubjectTypeSchema = z
   .nullable()
   .optional();
 
+const SessionTimeoutMinutesSchema = z.union([
+  z.literal(15),
+  z.literal(30),
+  z.literal(60),
+  z.literal(480),
+]);
+
 const PatchOrganizationSchema = z.object({
   name: z.string().min(2).max(100).optional(),
   billingEmail: z.string().email().optional(),
@@ -19,6 +26,7 @@ const PatchOrganizationSchema = z.object({
   industry: z.nativeEnum(Industry).optional(),
   hipaaSubjectType: HipaaSubjectTypeSchema,
   techStack: z.array(z.string().min(1).max(60)).max(50).optional(),
+  sessionTimeoutMinutes: SessionTimeoutMinutesSchema.optional(),
 });
 
 const DeleteOrganizationSchema = z.object({
@@ -45,6 +53,7 @@ export const GET = withTenant(async (_req, ctx): Promise<Response> => {
       plan: true,
       planPeriod: true,
       trialEndsAt: true,
+      sessionTimeoutMinutes: true,
     },
   });
 
@@ -79,6 +88,7 @@ export const PATCH = withTenant(async (req, ctx): Promise<Response> => {
       industry: true,
       hipaaSubjectType: true,
       techStack: true,
+      sessionTimeoutMinutes: true,
     },
   });
 
@@ -100,6 +110,9 @@ export const PATCH = withTenant(async (req, ctx): Promise<Response> => {
       ? { hipaaSubjectType: data.hipaaSubjectType }
       : {}),
     ...(data.techStack !== undefined ? { techStack: data.techStack } : {}),
+    ...(data.sessionTimeoutMinutes !== undefined
+      ? { sessionTimeoutMinutes: data.sessionTimeoutMinutes }
+      : {}),
   };
 
   const updated = await prisma.organization.update({
@@ -114,6 +127,7 @@ export const PATCH = withTenant(async (req, ctx): Promise<Response> => {
       industry: true,
       hipaaSubjectType: true,
       techStack: true,
+      sessionTimeoutMinutes: true,
     },
   });
 

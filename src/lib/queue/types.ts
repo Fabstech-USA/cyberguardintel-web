@@ -2,6 +2,10 @@ export const QUEUE_NAME = "evidence-collection";
 
 export const COLLECT_JOB_NAME = "collect";
 
+export const AUDIT_EXPORT_QUEUE_NAME = "audit-export";
+
+export const AUDIT_PACKAGE_JOB_NAME = "package";
+
 export type CollectionJobType = "FULL" | "INCREMENTAL";
 
 export type CollectionJobPayload = {
@@ -9,6 +13,15 @@ export type CollectionJobPayload = {
   organizationId: string;
   integrationId: string;
   jobType: CollectionJobType;
+};
+
+export type AuditExportJobPayload = {
+  auditExportJobId: string;
+  organizationId: string;
+  from: string;
+  to: string;
+  controlRefs: string[];
+  sections: string[];
 };
 
 export type CollectedEvidenceItem = {

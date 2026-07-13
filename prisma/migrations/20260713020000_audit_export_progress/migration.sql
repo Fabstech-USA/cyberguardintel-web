@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "AuditExportJob" ADD COLUMN IF NOT EXISTS "sections" TEXT[] DEFAULT ARRAY[]::TEXT[];
+ALTER TABLE "AuditExportJob" ADD COLUMN IF NOT EXISTS "progressSteps" JSONB;
+ALTER TABLE "AuditExportJob" ADD COLUMN IF NOT EXISTS "currentStep" TEXT;

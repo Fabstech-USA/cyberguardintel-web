@@ -9,6 +9,7 @@ import { ConnectedIntegrationRow } from "@/components/integrations/ConnectedInte
 import { IntegrationCard } from "@/components/shared/IntegrationCard";
 import { IntegrationDetailDrawer } from "@/components/integrations/IntegrationDetailDrawer";
 import { PlanLimitBanner } from "@/components/integrations/PlanLimitBanner";
+import { PlanLimitUpgradePrompt } from "@/components/integrations/PlanLimitUpgradePrompt";
 import { useHipaaToast } from "@/components/hipaa/use-hipaa-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,6 +43,11 @@ type IntegrationsClientProps = {
 const CONNECTED_STATUSES: IntegrationStatus[] = ["ACTIVE", "PAUSED", "ERROR"];
 
 type AvailabilityFilter = "all" | "connectable" | "coming-soon";
+
+type LimitBannerState = {
+  used?: number;
+  limit?: number;
+};
 
 const STATUS_FILTERS: {
   id: Exclude<AvailabilityFilter, "all">;
@@ -86,6 +92,7 @@ export function IntegrationsClient({
     null
   );
   const [bannerMessage, setBannerMessage] = useState<string | null>(null);
+  const [limitBanner, setLimitBanner] = useState<LimitBannerState | null>(null);
   const [syncingId, setSyncingId] = useState<string | null>(null);
   const [syncingAll, setSyncingAll] = useState(false);
   const [availabilityFilter, setAvailabilityFilter] =
@@ -108,11 +115,20 @@ export function IntegrationsClient({
     const error = searchParams.get("error");
     if (connected) {
       const entry = getCatalogEntry(connected);
+      setLimitBanner(null);
       setBannerMessage(
         entry ? `${entry.name} connected successfully.` : "Integration connected."
       );
     } else if (error === "integration_limit_reached") {
-      setBannerMessage("Integration limit reached. Upgrade your plan to connect more.");
+      setBannerMessage(null);
+      const usedParam = searchParams.get("used");
+      const limitParam = searchParams.get("limit");
+      const used = usedParam != null ? Number(usedParam) : undefined;
+      const limit = limitParam != null ? Number(limitParam) : undefined;
+      setLimitBanner({
+        used: Number.isFinite(used) ? used : undefined,
+        limit: Number.isFinite(limit) ? limit : undefined,
+      });
     }
   }, [searchParams]);
 
@@ -328,6 +344,13 @@ export function IntegrationsClient({
         <div className="rounded-md border border-emerald-600/30 bg-emerald-50 px-3 py-2 text-sm text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-200">
           {bannerMessage}
         </div>
+      ) : null}
+
+      {limitBanner ? (
+        <PlanLimitUpgradePrompt
+          used={limitBanner.used}
+          limit={limitBanner.limit}
+        />
       ) : null}
 
       <PlanLimitBanner

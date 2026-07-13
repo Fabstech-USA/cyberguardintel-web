@@ -85,9 +85,13 @@ export async function GET(req: Request, { params }: RouteCtx): Promise<Response>
         await assertIntegrationCapacity(ctx.organizationId, org.plan);
       } catch (error) {
         if (error instanceof IntegrationLimitError) {
-          return redirectWithCookieClear(
-            "/integrations?error=integration_limit_reached"
-          );
+          const params = new URLSearchParams({
+            error: error.code,
+            used: String(error.used),
+            limit: String(error.limit),
+            plan: error.plan,
+          });
+          return redirectWithCookieClear(`/integrations?${params.toString()}`);
         }
         throw error;
       }

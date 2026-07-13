@@ -2,39 +2,73 @@ import "@/lib/load-env";
 
 import { Worker } from "bullmq";
 
+import { processAuditExportJob } from "@/lib/queue/audit-export-processor";
 import { getRedisConnectionOptions } from "@/lib/queue/connection";
 import { processCollectionJob } from "@/lib/queue/processor";
-import { type CollectionJobPayload, QUEUE_NAME } from "@/lib/queue/types";
+import {
+  AUDIT_EXPORT_QUEUE_NAME,
+  QUEUE_NAME,
+  type AuditExportJobPayload,
+  type CollectionJobPayload,
+} from "@/lib/queue/types";
 
-const worker = new Worker<CollectionJobPayload>(
+const connection = getRedisConnectionOptions();
+
+const collectionWorker = new Worker<CollectionJobPayload>(
   QUEUE_NAME,
   async (job) => processCollectionJob(job.data),
   {
-    connection: getRedisConnectionOptions(),
+    connection,
     concurrency: 2,
   }
 );
 
-worker.on("completed", (job, result) => {
+const auditExportWorker = new Worker<AuditExportJobPayload>(
+  AUDIT_EXPORT_QUEUE_NAME,
+  async (job) => processAuditExportJob(job.data),
+  {
+    connection,
+    concurrency: 2,
+  }
+);
+
+collectionWorker.on("completed", (job, result) => {
   console.log(
-    `[worker] Job ${job.id} completed:`,
+    `[worker] Collection job ${job.id} completed:`,
     result?.status ?? "done",
     `evidenceAdded=${result?.evidenceAdded ?? 0}`
   );
 });
 
-worker.on("failed", (job, err) => {
-  console.error(`[worker] Job ${job?.id} failed:`, err.message);
+collectionWorker.on("failed", (job, err) => {
+  console.error(`[worker] Collection job ${job?.id} failed:`, err.message);
 });
 
-console.log(`Evidence collection worker listening on queue "${QUEUE_NAME}"`);
-
-process.on("SIGINT", async () => {
-  await worker.close();
-  process.exit(0);
+auditExportWorker.on("completed", (job, result) => {
+  console.log(
+    `[worker] Audit export job ${job.id} completed:`,
+    result?.status ?? "done",
+    result?.s3Key ? `s3Key=${result.s3Key}` : ""
+  );
 });
 
-process.on("SIGTERM", async () => {
-  await worker.close();
+auditExportWorker.on("failed", (job, err) => {
+  console.error(`[worker] Audit export job ${job?.id} failed:`, err.message);
+});
+
+console.log(
+  `Workers listening on queues "${QUEUE_NAME}" and "${AUDIT_EXPORT_QUEUE_NAME}"`
+);
+
+async function shutdown(): Promise<void> {
+  await Promise.all([collectionWorker.close(), auditExportWorker.close()]);
   process.exit(0);
+}
+
+process.on("SIGINT", () => {
+  void shutdown();
+});
+
+process.on("SIGTERM", () => {
+  void shutdown();
 });

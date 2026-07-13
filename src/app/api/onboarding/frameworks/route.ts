@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { ensureOrgControlsForFramework } from "@/lib/ensure-org-framework-controls";
+import { FrameworkLimitError } from "@/lib/framework-limits";
+import { assertFrameworkCapacity } from "@/lib/framework-limits-server";
 import { withTenant } from "@/lib/tenant";
 import { prisma } from "@/lib/prisma";
 import { writeAuditLog } from "@/lib/audit-log";
@@ -21,9 +23,46 @@ export const POST = withTenant(async (req, ctx) => {
     );
   }
 
+  const org = await prisma.organization.findUnique({
+    where: { id: ctx.organizationId },
+    select: { plan: true },
+  });
+  if (!org) {
+    return NextResponse.json({ error: "Organization not found" }, { status: 404 });
+  }
+
   const frameworks = await prisma.framework.findMany({
     where: { slug: { in: parsed.data.frameworkSlugs } },
   });
+
+  const existing = await prisma.orgFramework.findMany({
+    where: {
+      organizationId: ctx.organizationId,
+      frameworkId: { in: frameworks.map((fw) => fw.id) },
+    },
+    select: { frameworkId: true },
+  });
+  const existingIds = new Set(existing.map((row) => row.frameworkId));
+  const newFrameworks = frameworks.filter((fw) => !existingIds.has(fw.id));
+
+  try {
+    await assertFrameworkCapacity(ctx.organizationId, org.plan, {
+      additionalCount: newFrameworks.length,
+    });
+  } catch (error) {
+    if (error instanceof FrameworkLimitError) {
+      return NextResponse.json(
+        {
+          error: error.code,
+          used: error.used,
+          limit: error.limit,
+          plan: error.plan,
+        },
+        { status: 403 }
+      );
+    }
+    throw error;
+  }
 
   for (const fw of frameworks) {
     await prisma.orgFramework.upsert({

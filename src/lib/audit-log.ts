@@ -40,6 +40,7 @@ export async function writeAuditLogAwait(entry: AuditEntry): Promise<void> {
 // baa.created        baa.signed         baa.expired
 // risk_assessment.created  risk_assessment.approved
 // training.recorded
+// audit_package.requested  audit_package.emailed
 // integration.connected  integration.disconnected  integration.synced
 // org.member_invited  org.member_removed
 // org.provisioned_webhook  org.member_added_webhook  (Clerk sync; actorId system)
