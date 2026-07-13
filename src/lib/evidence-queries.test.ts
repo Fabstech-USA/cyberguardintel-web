@@ -66,6 +66,26 @@ describe("evidence-list-filters", () => {
       ],
     });
   });
+
+  it("buildEvidenceWhere filters by controlRefs list", () => {
+    const where = buildEvidenceWhere({
+      organizationId: "org_1",
+      controlRefs: ["164.308(a)(1)", "164.312(a)(1)"],
+      controlRef: "ignored-when-refs-present",
+    });
+    expect(where).toEqual({
+      AND: [
+        { organizationId: "org_1", isValid: true },
+        {
+          orgControl: {
+            frameworkControl: {
+              controlRef: { in: ["164.308(a)(1)", "164.312(a)(1)"] },
+            },
+          },
+        },
+      ],
+    });
+  });
 });
 
 describe("getEvidenceSourceBadge", () => {

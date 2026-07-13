@@ -36,14 +36,14 @@ export async function GET(req: Request, { params }: RouteCtx): Promise<Response>
       });
     } catch (error) {
       if (error instanceof IntegrationLimitError) {
-        return NextResponse.json(
-          {
-            error: error.code,
-            used: error.used,
-            limit: error.limit,
-            plan: error.plan,
-          },
-          { status: 403 }
+        const params = new URLSearchParams({
+          error: error.code,
+          used: String(error.used),
+          limit: String(error.limit),
+          plan: error.plan,
+        });
+        return NextResponse.redirect(
+          new URL(`/integrations?${params.toString()}`, req.url)
         );
       }
       throw error;

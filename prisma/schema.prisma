@@ -158,6 +158,7 @@ model Organization {
   stripeSubId     String?      @unique
   onboardingStep  Int?         @default(0) // null = onboarding complete
   trialEndsAt     DateTime?
+  sessionTimeoutMinutes Int     @default(30)
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 
@@ -174,6 +175,7 @@ model Organization {
   phiSystems      PhiSystem[]
   phiFlowEdges    PhiFlowEdge[]
   collectionJobs  CollectionJob[]
+  auditExportJobs AuditExportJob[]
 }
 
 model OrgMember {
@@ -499,6 +501,28 @@ model CollectionJob {
 
   organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   integration     Integration  @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  @@index([organizationId, status])
+}
+
+// --- AUDIT PACKAGE EXPORT JOBS ---
+model AuditExportJob {
+  id              String    @id @default(cuid())
+  organizationId  String
+  bullmqJobId     String?
+  status          JobStatus @default(QUEUED)
+  fromDate        DateTime
+  toDate          DateTime
+  controlRefs     String[]
+  sections        String[]  @default([])
+  progressSteps   Json?
+  currentStep     String?
+  s3Key           String?
+  errorMessage    String?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime  @default(now())
+
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   @@index([organizationId, status])
 }
 

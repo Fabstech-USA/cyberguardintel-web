@@ -59,7 +59,9 @@ const items: Item[] = [
     label: "Audit package",
     isActive: (p) =>
       p === "/hipaa/audit-package" ||
-      p.startsWith("/hipaa/audit-package/"),
+      p.startsWith("/hipaa/audit-package/") ||
+      p === "/audit" ||
+      p.startsWith("/audit/"),
   },
 ];
 

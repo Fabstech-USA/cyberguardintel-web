@@ -10,6 +10,8 @@ export type EvidenceListFilters = {
   /** Prefer over `source` when filtering to a specific connected integration. */
   integrationId?: string;
   controlRef?: string;
+  /** When set (non-empty), filter evidence to any of these control refs. */
+  controlRefs?: string[];
   freshness?: FreshnessTier;
   collectedFrom?: Date;
   collectedTo?: Date;
@@ -67,7 +69,13 @@ export function buildEvidenceWhere(
     });
   }
 
-  if (filters.controlRef) {
+  if (filters.controlRefs && filters.controlRefs.length > 0) {
+    andParts.push({
+      orgControl: {
+        frameworkControl: { controlRef: { in: filters.controlRefs } },
+      },
+    });
+  } else if (filters.controlRef) {
     andParts.push({
       orgControl: {
         frameworkControl: { controlRef: filters.controlRef },
