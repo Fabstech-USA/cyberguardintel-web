@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { putObjectToS3 } from "@/lib/s3";
 import { canMutateBaa } from "@/lib/baa";
 import { withTenant } from "@/lib/tenant";
+import { MAX_UPLOAD_LABEL, uploadTooLarge } from "@/lib/upload-limits";
 
 function sanitizeFileName(fileName: string): string {
   return fileName
@@ -45,9 +46,22 @@ export const POST = withTenant(async (req, ctx) => {
     return NextResponse.json({ error: "Missing file upload" }, { status: 400 });
   }
 
+  if (uploadTooLarge(file)) {
+    return NextResponse.json(
+      { error: `File exceeds the ${MAX_UPLOAD_LABEL} upload limit` },
+      { status: 413 }
+    );
+  }
+
   const bytes = new Uint8Array(await file.arrayBuffer());
   if (bytes.length === 0) {
     return NextResponse.json({ error: "Uploaded file is empty" }, { status: 400 });
+  }
+  if (uploadTooLarge(file, bytes.length)) {
+    return NextResponse.json(
+      { error: `File exceeds the ${MAX_UPLOAD_LABEL} upload limit` },
+      { status: 413 }
+    );
   }
   const safeName = sanitizeFileName(fileName || "signed-baa.pdf");
   const key = `hipaa/baa/${ctx.organizationId}/${crypto.randomUUID()}-${safeName || "signed-baa.pdf"}`;

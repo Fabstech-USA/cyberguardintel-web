@@ -12,6 +12,15 @@ const bodySchema = z.object({
   to: z.string().email(),
 });
 
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
 export const POST = withTenant(async (req, ctx) => {
   let json: unknown;
   try {
@@ -50,6 +59,7 @@ export const POST = withTenant(async (req, ctx) => {
 
   const signedUrl = await getSignedDownloadUrl(job.s3Key);
   const orgName = org?.name ?? "Your organization";
+  const orgNameHtml = escapeHtml(orgName);
   const fromLabel = job.fromDate.toISOString().slice(0, 10);
   const toLabel = job.toDate.toISOString().slice(0, 10);
 
@@ -58,7 +68,7 @@ export const POST = withTenant(async (req, ctx) => {
     subject: `${orgName} — HIPAA audit package`,
     html: `
       <p>Hello,</p>
-      <p><strong>${orgName}</strong> has shared a HIPAA audit package for the period
+      <p><strong>${orgNameHtml}</strong> has shared a HIPAA audit package for the period
       <strong>${fromLabel}</strong> to <strong>${toLabel}</strong>.</p>
       <p><a href="${signedUrl}">Download the audit package (ZIP)</a></p>
       <p>This is a read-only signed URL that expires in approximately 15 minutes.

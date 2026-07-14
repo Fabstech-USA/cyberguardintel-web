@@ -78,6 +78,7 @@ export async function GET(req: Request, { params }: RouteCtx): Promise<Response>
       headers: {
         "Content-Type": contentType,
         "Content-Disposition": `attachment; filename="${safeTitle || "evidence"}"`,
+        "X-Content-Type-Options": "nosniff",
         "X-Evidence-Hash": computed,
       },
     });

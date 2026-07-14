@@ -487,6 +487,16 @@ export const POST = withTenant(async (req, ctx): Promise<Response> => {
   }
 
   const role = parsed.data.role as OrgRole;
+
+  // Mirrors canActorChangeMemberRole: only an Owner may grant the Owner role,
+  // whether by changing an existing member or by inviting a new one.
+  if (role === "OWNER" && ctx.orgRole !== "OWNER") {
+    return NextResponse.json(
+      { error: "Only the organization Owner can invite members as Owner." },
+      { status: 403 }
+    );
+  }
+
   const clerkRole = mapOrgRoleToClerkRole(role);
 
   const clerk = await clerkClient();
@@ -521,11 +531,10 @@ export const POST = withTenant(async (req, ctx): Promise<Response> => {
     );
     const clerkOrgQuota = getClerkOrgQuotaInfo(clerkOrg);
 
-    const message =
-      err instanceof Error ? err.message : "Failed to invite members.";
+    console.error("Clerk invitation failed:", err);
     return NextResponse.json(
       {
-        error: message,
+        error: "Failed to invite members. Check the organization's member limit and try again.",
         invitationRows,
         invitations: invitationRows.map((i) => ({
           id: i.id,
@@ -647,9 +656,11 @@ export const PATCH = withTenant(async (req, ctx): Promise<Response> => {
       role: clerkRole,
     });
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Clerk rejected the role change.";
-    return NextResponse.json({ error: message }, { status: 422 });
+    console.error("Clerk role change failed:", err);
+    return NextResponse.json(
+      { error: "The role change was rejected. Please try again." },
+      { status: 422 }
+    );
   }
 
   const updated = await prisma.orgMember.update({

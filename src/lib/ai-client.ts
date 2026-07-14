@@ -12,6 +12,19 @@ export async function callAiService<T>(
     throw new Error("AI service env vars not set");
   }
 
+  // Request bodies carry decrypted integration credentials and PHI-adjacent
+  // context. Refuse plain HTTP except for loopback and Railway private networking.
+  const parsedUrl = new URL(baseUrl);
+  const isPrivateHost =
+    parsedUrl.hostname === "localhost" ||
+    parsedUrl.hostname === "127.0.0.1" ||
+    parsedUrl.hostname.endsWith(".railway.internal");
+  if (parsedUrl.protocol !== "https:" && !isPrivateHost) {
+    throw new Error(
+      "AI_SERVICE_URL must use https:// (or a private/loopback host) — request bodies contain credentials"
+    );
+  }
+
   const origin = baseUrl.replace(/\/$/, "");
   const url = `${origin}${path.startsWith("/") ? path : `/${path}`}`;
 
