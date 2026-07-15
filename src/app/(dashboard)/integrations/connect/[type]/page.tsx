@@ -6,9 +6,19 @@ import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { PlanLimitUpgradePrompt } from "@/components/integrations/PlanLimitUpgradePrompt";
+import { EvidenceCollectedBulletin } from "@/components/integrations/EvidenceCollectedBulletin";
+import { CredentialSetupGuidePanel } from "@/components/integrations/CredentialSetupGuidePanel";
+import { HelpTip } from "@/components/shared/HelpTip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   isDemoIamIntegrationType,
   isDemoIntegrationType,
@@ -21,6 +31,8 @@ import {
   isOAuthAuthMethod,
 } from "@/lib/integration-catalog";
 import { getCredentialFields } from "@/lib/integration-credential-fields";
+import { getCredentialSetupGuideOrDefault } from "@/lib/integration-credential-guides";
+import { getEvidenceCollected } from "@/lib/integration-evidence";
 import { getIntegrationIconPath } from "@/lib/integration-icons";
 
 type LimitErrorState = {
@@ -58,6 +70,12 @@ export default function ConnectIntegrationPage() {
       </main>
     );
   }
+
+  const evidenceItems = getEvidenceCollected(entry.id, entry.description);
+  const credentialGuide = getCredentialSetupGuideOrDefault(
+    type,
+    fields.length > 0 && !isOAuthAuthMethod(entry.authMethod)
+  );
 
   async function connectIntegration(credentials: Record<string, string>) {
     setSubmitting(true);
@@ -111,6 +129,8 @@ export default function ConnectIntegrationPage() {
 
         <div className="flex max-w-md flex-col gap-4 rounded-md border p-6">
           <p className="text-sm">{entry.description}</p>
+
+          <EvidenceCollectedBulletin items={evidenceItems} />
 
           <div className="rounded-md border bg-muted/30 p-4">
             <p className="text-xs font-medium text-muted-foreground">
@@ -175,6 +195,7 @@ export default function ConnectIntegrationPage() {
         </p>
         <div className="flex max-w-md flex-col gap-3 rounded-md border p-6">
           <p className="text-sm">{entry.description}</p>
+          <EvidenceCollectedBulletin items={evidenceItems} />
           {entry.connectable ? (
             <Button asChild>
               <Link href={getConnectHref(entry)}>
@@ -210,7 +231,20 @@ export default function ConnectIntegrationPage() {
         >
           <p className="text-sm">{entry.description}</p>
 
-          {isDemoIam ? (
+          <EvidenceCollectedBulletin items={evidenceItems} />
+
+          {credentialGuide ? (
+            <CredentialSetupGuidePanel guide={credentialGuide} />
+          ) : null}
+
+          {fields.length > 0 ? (
+            <div className="flex items-center gap-1.5 text-sm font-medium">
+              Credentials
+              <HelpTip content="Use a read-only IAM user or API token so we can collect compliance evidence without changing your systems. Credentials are encrypted at rest." />
+            </div>
+          ) : null}
+
+          {isDemoIam && !credentialGuide ? (
             <p className="text-xs text-muted-foreground">
               Enter your IAM access keys. Credentials are encrypted at rest and
               used only for read-only evidence collection.
@@ -220,20 +254,44 @@ export default function ConnectIntegrationPage() {
           {fields.map((field) => (
             <div key={field.key} className="space-y-2">
               <Label htmlFor={`cred-${field.key}`}>{field.label}</Label>
-              <Input
-                id={`cred-${field.key}`}
-                type={field.inputType ?? "text"}
-                value={values[field.key] ?? ""}
-                placeholder={field.placeholder}
-                onChange={(event) =>
-                  setValues((prev) => ({
-                    ...prev,
-                    [field.key]: event.target.value,
-                  }))
-                }
-                required
-                autoComplete="off"
-              />
+              {field.options && field.options.length > 0 ? (
+                <Select
+                  value={values[field.key] ?? field.defaultValue ?? ""}
+                  onValueChange={(value) =>
+                    setValues((prev) => ({
+                      ...prev,
+                      [field.key]: value,
+                    }))
+                  }
+                  required
+                >
+                  <SelectTrigger id={`cred-${field.key}`} className="w-full">
+                    <SelectValue placeholder={`Select ${field.label.toLowerCase()}`} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {field.options.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  id={`cred-${field.key}`}
+                  type={field.inputType ?? "text"}
+                  value={values[field.key] ?? ""}
+                  placeholder={field.placeholder}
+                  onChange={(event) =>
+                    setValues((prev) => ({
+                      ...prev,
+                      [field.key]: event.target.value,
+                    }))
+                  }
+                  required
+                  autoComplete="off"
+                />
+              )}
             </div>
           ))}
 

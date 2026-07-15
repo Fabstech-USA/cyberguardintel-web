@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { RiskAssessment } from "@/generated/prisma";
+import { HelpTip } from "@/components/shared/HelpTip";
 import { Card, CardContent } from "@/components/ui/card";
 import { type WizardControlId } from "@/lib/risk-assessment-controls";
 import { Step1OrgProfile } from "./risk-assessment-wizard/Step1OrgProfile";
@@ -112,8 +113,9 @@ export function RiskAssessmentWizard({
       <CardContent className="space-y-6 p-6 sm:p-8">
         <div className="space-y-3">
           <div className="space-y-1">
-            <h1 className="text-2xl font-semibold tracking-tight">
+            <h1 className="inline-flex items-center gap-1.5 text-2xl font-semibold tracking-tight">
               New risk assessment
+              <HelpTip content="This walkthrough builds a HIPAA risk analysis from your answers. Only mark controls you truly run today—unchecked items become documented gaps." />
             </h1>
             <p className="text-sm text-muted-foreground">
               Step through the five-question flow. You can edit any answer

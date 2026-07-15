@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import type { PhiMapBundle } from "@/lib/phi-map-server";
 import { PhiFlowDataClassification } from "@/generated/prisma";
 import { PHI_MAP_SYSTEM_TYPES } from "@/lib/phi-map";
+import { HelpTip } from "@/components/shared/HelpTip";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -843,7 +844,13 @@ function SystemFormDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="phi-types">PHI fields (comma-separated)</Label>
+            <Label
+              htmlFor="phi-types"
+              className="inline-flex items-center gap-1.5"
+            >
+              PHI fields (comma-separated)
+              <HelpTip content="List the kinds of patient data this system holds (e.g. demographics, diagnoses, medications)." />
+            </Label>
             <Input
               id="phi-types"
               value={phiTypesStr}
@@ -851,7 +858,12 @@ function SystemFormDialog({
               placeholder="demographics, diagnoses, medications"
             />
           </div>
-          <div className="grid grid-cols-2 gap-2 text-sm">
+          <div className="space-y-2">
+            <p className="inline-flex items-center gap-1.5 text-sm font-medium">
+              PHI lifecycle
+              <HelpTip content="Describe what this system does with patient data—contains, creates, transmits, stores, or destroys it." />
+            </p>
+            <div className="grid grid-cols-2 gap-2 text-sm">
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -908,6 +920,7 @@ function SystemFormDialog({
               />
               Destroys PHI
             </label>
+            </div>
           </div>
           {err ? <p className="text-sm text-destructive">{err}</p> : null}
           <DialogFooter>
@@ -1174,7 +1187,10 @@ function FlowFormDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>BAA (optional)</Label>
+            <Label className="inline-flex items-center gap-1.5">
+              BAA (optional)
+              <HelpTip content="Link a BAA when this flow goes to an external vendor that can access PHI." />
+            </Label>
             <Select value={baaId} onValueChange={setBaaId}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="None" />

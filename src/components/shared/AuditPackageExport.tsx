@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import type { DateRange } from "react-day-picker";
 
+import { HelpTip } from "@/components/shared/HelpTip";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -486,7 +487,10 @@ export function AuditPackageWizard() {
 
           <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
             <div className="rounded-xl border bg-background p-4 shadow-xs">
-              <p className="mb-1 text-[13px] font-medium">Include in package</p>
+              <p className="mb-1 inline-flex items-center gap-1.5 text-[13px] font-medium">
+                Include in package
+                <HelpTip content="Check what to bundle for an auditor. The date range below limits which evidence files are included in the ZIP." />
+              </p>
               <ul className="m-0 list-none p-0">
                 {AUDIT_PACKAGE_SECTION_IDS.map((id) => {
                   const section = readiness.find((s) => s.id === id);
@@ -543,8 +547,9 @@ export function AuditPackageWizard() {
 
               <div className="mt-3.5 grid grid-cols-1 gap-2.5 border-t border-border/60 pt-3.5 sm:grid-cols-2">
                 <div>
-                  <Label className="mb-1 text-[11.5px] font-medium text-muted-foreground">
+                  <Label className="mb-1 inline-flex items-center gap-1.5 text-[11.5px] font-medium text-muted-foreground">
                     Evidence from
+                    <HelpTip content="Only evidence collected on or after this date is included in the export ZIP." />
                   </Label>
                   <Popover open={fromOpen} onOpenChange={setFromOpen}>
                     <PopoverTrigger asChild>

@@ -4,6 +4,7 @@ import { createOAuthState } from "@/lib/integrations/google-workspace";
 import {
   buildOAuthAuthorizationUrl,
   getOAuthProvider,
+  OAuthConfigError,
   OAUTH_STATE_COOKIE,
 } from "@/lib/integrations/oauth-providers";
 import { IntegrationLimitError } from "@/lib/integration-limits";
@@ -49,16 +50,29 @@ export async function GET(req: Request, { params }: RouteCtx): Promise<Response>
       throw error;
     }
 
-    const state = createOAuthState(ctx.organizationId);
-    const authUrl = buildOAuthAuthorizationUrl(provider, state);
-    const response = NextResponse.redirect(authUrl);
-    response.cookies.set(OAUTH_STATE_COOKIE, state, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 10,
-    });
-    return response;
+    try {
+      const state = createOAuthState(ctx.organizationId);
+      const authUrl = buildOAuthAuthorizationUrl(provider, state);
+      const response = NextResponse.redirect(authUrl);
+      response.cookies.set(OAUTH_STATE_COOKIE, state, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 60 * 10,
+      });
+      return response;
+    } catch (error) {
+      if (error instanceof OAuthConfigError) {
+        const params = new URLSearchParams({
+          error: "oauth_not_configured",
+          provider: provider.displayName,
+        });
+        return NextResponse.redirect(
+          new URL(`/integrations?${params.toString()}`, req.url)
+        );
+      }
+      throw error;
+    }
   })(req);
 }

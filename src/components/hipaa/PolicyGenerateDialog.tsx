@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Loader2, Sparkles } from "lucide-react";
 import { Industry, PolicyType } from "@/generated/prisma";
+import { HelpTip } from "@/components/shared/HelpTip";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -286,7 +287,13 @@ export function PolicyGenerateDialog({
                     />
                   </div>
                   <div className="space-y-2 sm:col-span-2">
-                    <Label htmlFor="pg-phi-systems">PHI systems in scope</Label>
+                    <Label
+                      htmlFor="pg-phi-systems"
+                      className="inline-flex items-center gap-1.5"
+                    >
+                      PHI systems in scope
+                      <HelpTip content="List the systems that store or process patient data so generated policies match your real environment." />
+                    </Label>
                     <textarea
                       id="pg-phi-systems"
                       value={form.phi_systems}
@@ -312,7 +319,13 @@ export function PolicyGenerateDialog({
                     />
                   </div>
                   <div className="space-y-2 sm:col-span-2">
-                    <Label htmlFor="pg-controls">Existing controls</Label>
+                    <Label
+                      htmlFor="pg-controls"
+                      className="inline-flex items-center gap-1.5"
+                    >
+                      Existing controls
+                      <HelpTip content="Describe protections you already have (MFA, encryption, backups, etc.) so drafts reflect what you actually run today." />
+                    </Label>
                     <textarea
                       id="pg-controls"
                       value={form.existing_controls}

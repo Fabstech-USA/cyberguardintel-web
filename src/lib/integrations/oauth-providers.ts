@@ -6,6 +6,19 @@
 
 export const OAUTH_STATE_COOKIE = "integration_oauth_state";
 
+/** Thrown when a provider's CLIENT_ID / CLIENT_SECRET env vars are missing. */
+export class OAuthConfigError extends Error {
+  readonly envVar: string;
+  readonly providerDisplayName: string;
+
+  constructor(envVar: string, providerDisplayName: string) {
+    super(`${envVar} is not configured`);
+    this.name = "OAuthConfigError";
+    this.envVar = envVar;
+    this.providerDisplayName = providerDisplayName;
+  }
+}
+
 export type OAuthTokenPayload = {
   access_token: string;
   refresh_token?: string;
@@ -150,7 +163,7 @@ export function getOAuthProvider(type: string): OAuthProviderConfig | undefined 
 export function getOAuthClientId(provider: OAuthProviderConfig): string {
   const clientId = process.env[provider.clientIdEnv];
   if (!clientId) {
-    throw new Error(`${provider.clientIdEnv} is not configured`);
+    throw new OAuthConfigError(provider.clientIdEnv, provider.displayName);
   }
   return clientId;
 }
@@ -158,7 +171,7 @@ export function getOAuthClientId(provider: OAuthProviderConfig): string {
 export function getOAuthClientSecret(provider: OAuthProviderConfig): string {
   const clientSecret = process.env[provider.clientSecretEnv];
   if (!clientSecret) {
-    throw new Error(`${provider.clientSecretEnv} is not configured`);
+    throw new OAuthConfigError(provider.clientSecretEnv, provider.displayName);
   }
   return clientSecret;
 }

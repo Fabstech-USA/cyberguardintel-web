@@ -7,6 +7,7 @@ import { FileText } from "lucide-react";
 import { EvidenceFreshnessPill } from "@/components/evidence/EvidenceFreshnessPill";
 import { EvidenceHashCell } from "@/components/evidence/EvidenceHashCell";
 import { EvidenceSourceBadge } from "@/components/evidence/EvidenceSourceBadge";
+import { HelpTip } from "@/components/shared/HelpTip";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -64,7 +65,15 @@ export function EvidenceTable({
               <th className="w-[30%] px-3 py-2">Evidence</th>
               <th className="w-[12%] px-3 py-2">Source</th>
               <th className="w-[14%] px-3 py-2">Control</th>
-              <th className="w-[10%] px-3 py-2">Freshness</th>
+              <th className="w-[10%] px-3 py-2">
+                <span className="inline-flex items-center gap-1">
+                  Freshness
+                  <HelpTip
+                    label="About freshness"
+                    content="Freshness tracks whether evidence is still within its collection window. Stale means the window expired—auditors may flag it."
+                  />
+                </span>
+              </th>
               <th className="w-[12%] px-3 py-2">Collected</th>
               <th className="w-[12%] px-3 py-2">Integrity</th>
               <th className="w-[10%] px-3 py-2">Actions</th>

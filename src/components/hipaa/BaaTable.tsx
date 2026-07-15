@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { BaaDraftReviewEditor } from "@/components/hipaa/BaaDraftReviewEditor";
 import { HipaaStatCard } from "@/components/hipaa/HipaaStatCard";
 import { hipaaStatUi } from "@/components/hipaa/hipaa-stat-ui";
+import { HelpTip } from "@/components/shared/HelpTip";
 import { BaaDraftReviewStatus, BaaStatus } from "@/generated/prisma";
 import {
   BAA_DRAFT_REVIEW_LABELS,
@@ -661,7 +662,13 @@ export function BaaTable({
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">BAA tracker</h1>
+          <h1 className="inline-flex items-center gap-1.5 text-2xl font-semibold tracking-tight">
+            BAA tracker
+            <HelpTip
+              label="About BAAs"
+              content="A BAA (Business Associate Agreement) is the required contract when a vendor can access patient data (PHI). Mark Not required only if they never handle PHI."
+            />
+          </h1>
           <p className={cn("max-w-3xl", hipaaStatUi.pageDesc)}>
             Keep every vendor with PHI access in one place so expiring agreements
             are visible before an audit finds them.
@@ -923,7 +930,10 @@ export function BaaTable({
               />
             </div>
             <div className="space-y-2">
-              <Label>Status</Label>
+              <Label className="inline-flex items-center gap-1.5">
+                Status
+                <HelpTip content="Pending means awaiting signature. Signed means you have an executed BAA. Not required only if this vendor never handles PHI." />
+              </Label>
               <Select
                 value={form.status}
                 onValueChange={(value) =>
