@@ -43,6 +43,66 @@ type StreamEvent =
       error: string;
     };
 
+const RETRYABLE_STATUS = /\b(429|503|504)\b/;
+const MAX_AI_ATTEMPTS = 4;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isNonRetryableAiError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  const msg = err.message.toLowerCase();
+  return (
+    msg.includes("credit balance is too low") ||
+    msg.includes("purchase credits") ||
+    msg.includes("plans & billing") ||
+    /\bfailed:\s*402\b/.test(msg) ||
+    /\bfailed:\s*400\b/.test(msg) ||
+    /\bfailed:\s*401\b/.test(msg) ||
+    /\bfailed:\s*403\b/.test(msg)
+  );
+}
+
+function isRetryableAiError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  if (isNonRetryableAiError(err)) return false;
+  const msg = err.message;
+  if (RETRYABLE_STATUS.test(msg)) return true;
+  const lower = msg.toLowerCase();
+  return (
+    lower.includes("rate limit") ||
+    lower.includes("overloaded") ||
+    lower.includes("temporar")
+  );
+}
+
+async function callAiServiceWithRetry(
+  path: string,
+  payload: unknown
+): Promise<unknown> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= MAX_AI_ATTEMPTS; attempt++) {
+    try {
+      return await callAiService<unknown>(path, payload);
+    } catch (err) {
+      lastError = err;
+      if (!isRetryableAiError(err) || attempt === MAX_AI_ATTEMPTS) {
+        throw err;
+      }
+      const delayMs = Math.min(30_000, 1500 * 2 ** (attempt - 1));
+      console.warn(
+        `AI ${path} attempt ${attempt}/${MAX_AI_ATTEMPTS} failed; retrying in ${delayMs}ms`,
+        err instanceof Error ? err.message : err
+      );
+      await sleep(delayMs);
+    }
+  }
+  throw lastError instanceof Error
+    ? lastError
+    : new Error("AI service unavailable");
+}
+
 /**
  * Sequential AI generation + DB upsert with NDJSON progress events (one JSON object per line).
  * Vercel/serverless max duration applies — see `maxDuration` above.
@@ -124,17 +184,26 @@ export const POST = withTenant(async (req, ctx): Promise<Response> => {
 
           let raw: unknown;
           try {
-            raw = await callAiService<unknown>(
+            raw = await callAiServiceWithRetry(
               "/hipaa/generate-policy",
               checked.data
             );
           } catch (err) {
+            const message =
+              err instanceof Error ? err.message : "AI service unavailable";
             push({
               policy_type: policyType,
               phase: "failed",
-              error:
-                err instanceof Error ? err.message : "AI service unavailable",
+              error: message,
             });
+            // Billing / auth failures will fail every remaining policy — stop early.
+            if (isNonRetryableAiError(err)) {
+              push({
+                phase: "error",
+                error: message,
+              });
+              break;
+            }
             continue;
           }
 
@@ -159,6 +228,9 @@ export const POST = withTenant(async (req, ctx): Promise<Response> => {
             phase: "completed",
             policyId: saved.id,
           });
+
+          // Brief pause between policies to reduce Anthropic rate-limit pressure.
+          await sleep(750);
         } catch (e) {
           push({
             policy_type: policyType,

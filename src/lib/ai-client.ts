@@ -42,7 +42,7 @@ export async function callAiService<T>(
     let bodyPreview = "";
     try {
       const t = await res.text();
-      bodyPreview = t.replace(/\s+/g, " ").trim().slice(0, 120);
+      bodyPreview = t.replace(/\s+/g, " ").trim().slice(0, 400);
     } catch {
       /* ignore */
     }
