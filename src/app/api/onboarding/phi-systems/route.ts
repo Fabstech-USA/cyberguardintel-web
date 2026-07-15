@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { writeAuditLog } from "@/lib/audit-log";
 import { withTenant } from "@/lib/tenant";
 import { prisma } from "@/lib/prisma";
-import { writeAuditLog } from "@/lib/audit-log";
+import { addPhiSystemsToOrgTechStack } from "@/lib/tech-stack-server";
 
 // Keep the preset list authoritative on the server so the client can't
 // sneak in arbitrary system types. "other" is a generic catch-all with no
@@ -77,6 +78,11 @@ export const POST = withTenant(async (req, ctx) => {
     resourceId: ctx.organizationId,
     metadata: { systems },
   });
+
+  await addPhiSystemsToOrgTechStack(
+    ctx.organizationId,
+    systems.map((onboardingSlug) => ({ onboardingSlug }))
+  );
 
   return NextResponse.json({ ok: true });
 });

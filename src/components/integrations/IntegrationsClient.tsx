@@ -92,6 +92,7 @@ export function IntegrationsClient({
     null
   );
   const [bannerMessage, setBannerMessage] = useState<string | null>(null);
+  const [bannerTone, setBannerTone] = useState<"success" | "error">("success");
   const [limitBanner, setLimitBanner] = useState<LimitBannerState | null>(null);
   const [syncingId, setSyncingId] = useState<string | null>(null);
   const [syncingAll, setSyncingAll] = useState(false);
@@ -116,6 +117,7 @@ export function IntegrationsClient({
     if (connected) {
       const entry = getCatalogEntry(connected);
       setLimitBanner(null);
+      setBannerTone("success");
       setBannerMessage(
         entry ? `${entry.name} connected successfully.` : "Integration connected."
       );
@@ -129,6 +131,13 @@ export function IntegrationsClient({
         used: Number.isFinite(used) ? used : undefined,
         limit: Number.isFinite(limit) ? limit : undefined,
       });
+    } else if (error === "oauth_not_configured") {
+      setLimitBanner(null);
+      const provider = searchParams.get("provider") ?? "This integration";
+      setBannerTone("error");
+      setBannerMessage(
+        `${provider} OAuth is not configured in this environment. Add the provider CLIENT_ID and CLIENT_SECRET to .env.local (see .env.example), then restart the dev server.`
+      );
     }
   }, [searchParams]);
 
@@ -341,7 +350,14 @@ export function IntegrationsClient({
       </div>
 
       {bannerMessage ? (
-        <div className="rounded-md border border-emerald-600/30 bg-emerald-50 px-3 py-2 text-sm text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-200">
+        <div
+          className={cn(
+            "rounded-md border px-3 py-2 text-sm",
+            bannerTone === "error"
+              ? "border-amber-600/30 bg-amber-50 text-amber-950 dark:bg-amber-500/10 dark:text-amber-100"
+              : "border-emerald-600/30 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-200"
+          )}
+        >
           {bannerMessage}
         </div>
       ) : null}

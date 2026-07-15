@@ -6,6 +6,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import type { AiPolicyOrgSnapshot } from "@/lib/ai-policy-contract";
 import type { HipaaSubjectType } from "@/lib/policy-generation-context";
+import { getMergedOrgTechStack } from "@/lib/tech-stack-server";
 
 export * from "@/lib/ai-policy-contract";
 export {
@@ -40,7 +41,7 @@ const IMPLEMENTED_STATUSES: ControlStatus[] = [
 export async function loadOrganizationSnapshotForPolicyAi(
   organizationId: string
 ): Promise<AiPolicyOrgSnapshot | null> {
-  const [organization, phiSystems, orgControls] = await Promise.all([
+  const [organization, phiSystems, orgControls, techStack] = await Promise.all([
     prisma.organization.findUnique({
       where: { id: organizationId },
       select: {
@@ -48,7 +49,6 @@ export async function loadOrganizationSnapshotForPolicyAi(
         industry: true,
         employeeCount: true,
         hipaaSubjectType: true,
-        techStack: true,
       },
     }),
     prisma.phiSystem.findMany({
@@ -65,6 +65,7 @@ export async function loadOrganizationSnapshotForPolicyAi(
         frameworkControl: { select: { controlRef: true, title: true } },
       },
     }),
+    getMergedOrgTechStack(organizationId),
   ]);
 
   if (!organization) return null;
@@ -97,8 +98,7 @@ export async function loadOrganizationSnapshotForPolicyAi(
     industry: INDUSTRY_LABELS[organization.industry],
     employee_count: organization.employeeCount ?? 0,
     entity_type: entityLabel,
-    tech_stack:
-      organization.techStack.length > 0 ? [...organization.techStack] : [],
+    tech_stack: techStack.length > 0 ? [...techStack] : [],
     phi_systems: phiSystemsStr,
     existing_controls: existingControlsStr,
   };

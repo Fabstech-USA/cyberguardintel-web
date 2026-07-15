@@ -10,6 +10,7 @@ import { EvidenceSearchCommand } from "@/components/evidence/EvidenceSearchComma
 import { EvidenceTable } from "@/components/evidence/EvidenceTable";
 import { HipaaStatCard } from "@/components/hipaa/HipaaStatCard";
 import { hipaaStatUi } from "@/components/hipaa/hipaa-stat-ui";
+import { HelpTip } from "@/components/shared/HelpTip";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -333,22 +334,28 @@ export function EvidenceBrowserClient() {
               </SelectContent>
             </Select>
 
-            <Select
-              value={filters.freshness}
-              onValueChange={(value) =>
-                setFilters((prev) => ({ ...prev, freshness: value }))
-              }
-            >
-              <SelectTrigger className="w-full sm:w-[160px]">
-                <SelectValue placeholder="Freshness" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All freshness</SelectItem>
-                <SelectItem value="fresh">Fresh</SelectItem>
-                <SelectItem value="expiring">Expiring</SelectItem>
-                <SelectItem value="stale">Stale</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex w-full items-center gap-1.5 sm:w-auto">
+              <Select
+                value={filters.freshness}
+                onValueChange={(value) =>
+                  setFilters((prev) => ({ ...prev, freshness: value }))
+                }
+              >
+                <SelectTrigger className="w-full sm:w-[160px]">
+                  <SelectValue placeholder="Freshness" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All freshness</SelectItem>
+                  <SelectItem value="fresh">Fresh</SelectItem>
+                  <SelectItem value="expiring">Expiring</SelectItem>
+                  <SelectItem value="stale">Stale</SelectItem>
+                </SelectContent>
+              </Select>
+              <HelpTip
+                label="About freshness"
+                content="Freshness tracks whether evidence is still within its collection window. Stale means the window expired. Auditors may flag it, so re-collect or upload a current version."
+              />
+            </div>
 
             <Input
               type="date"

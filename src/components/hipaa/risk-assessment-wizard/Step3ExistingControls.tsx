@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { HelpTip } from "@/components/shared/HelpTip";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -28,8 +29,9 @@ export function Step3ExistingControls({
         <p className="text-sm text-muted-foreground">
           Step 3 of 5 - Existing controls
         </p>
-        <h2 className="text-xl font-semibold tracking-tight">
+        <h2 className="inline-flex items-center gap-1.5 text-xl font-semibold tracking-tight">
           What safeguards do you already have in place?
+          <HelpTip content="Only check controls you truly run today. Unchecked items are treated as gaps in the risk analysis." />
         </h2>
         <p className="text-sm text-muted-foreground">
           Select everything currently implemented. Controls you don&apos;t

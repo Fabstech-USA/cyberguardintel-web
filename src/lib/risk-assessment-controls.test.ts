@@ -3,6 +3,7 @@ import catalog from "../../prisma/data/hipaa-security-rule-controls-3.json";
 import {
   WIZARD_CONTROLS,
   WIZARD_CONTROL_IDS,
+  formatWizardSafeguardsForAi,
   getWizardControl,
   getWizardControlByRef,
 } from "./risk-assessment-controls";
@@ -55,5 +56,29 @@ describe("WIZARD_CONTROLS", () => {
   it("getWizardControlByRef returns the matching control or undefined", () => {
     expect(getWizardControlByRef("164.312(d)")?.id).toBe("mfa");
     expect(getWizardControlByRef("999.999")).toBeUndefined();
+  });
+});
+
+describe("formatWizardSafeguardsForAi", () => {
+  it("lists all as not confirmed when none are selected", () => {
+    const text = formatWizardSafeguardsForAi([]);
+    expect(text).toContain("Safeguards confirmed by organization (0/9): None");
+    expect(text).toContain("Safeguards not confirmed (9/9):");
+    expect(text).toContain("Multi-factor authentication enforced");
+  });
+
+  it("lists confirmed and not confirmed when some are selected", () => {
+    const text = formatWizardSafeguardsForAi(["mfa", "baa_signed"]);
+    expect(text).toContain("Safeguards confirmed by organization (2/9):");
+    expect(text).toContain("Multi-factor authentication enforced (164.312(d))");
+    expect(text).toContain("BAAs signed with all vendors");
+    expect(text).toContain("Safeguards not confirmed (7/9):");
+    expect(text).toContain("Encryption at rest");
+  });
+
+  it("lists none not-confirmed when all nine are selected", () => {
+    const text = formatWizardSafeguardsForAi([...WIZARD_CONTROL_IDS]);
+    expect(text).toContain("Safeguards confirmed by organization (9/9):");
+    expect(text).toContain("Safeguards not confirmed (0/9): None");
   });
 });

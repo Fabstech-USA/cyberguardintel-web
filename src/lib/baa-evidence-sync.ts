@@ -4,11 +4,11 @@ import {
   FrameworkSlug,
   type BaaRecord,
 } from "@/generated/prisma";
+import { BAA_EVIDENCE_CONTROL_REF } from "@/lib/baa-control-ref";
 import { computeExpiresAt, triggerHipaaScoreRecalculation } from "@/lib/hipaa-scoring";
 import { prisma } from "@/lib/prisma";
 
-/** HIPAA control for executed BAAs with vendors (wizard + Security Rule catalog). */
-export const BAA_EVIDENCE_CONTROL_REF = "164.314(a)(2)(i)-(iii)";
+export { BAA_EVIDENCE_CONTROL_REF } from "@/lib/baa-control-ref";
 
 type BaaEvidenceInput = Pick<
   BaaRecord,

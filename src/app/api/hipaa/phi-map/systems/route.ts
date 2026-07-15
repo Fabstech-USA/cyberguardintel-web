@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { writeAuditLog } from "@/lib/audit-log";
 import { PhiSystemCreateSchema, canMutatePhiMap } from "@/lib/phi-map";
 import { prisma } from "@/lib/prisma";
+import { addPhiSystemsToOrgTechStack } from "@/lib/tech-stack-server";
 import { withTenant } from "@/lib/tenant";
 
 export const POST = withTenant(async (req, ctx) => {
@@ -55,6 +56,10 @@ export const POST = withTenant(async (req, ctx) => {
     resourceType: "PhiSystem",
     resourceId: created.id,
   });
+
+  await addPhiSystemsToOrgTechStack(ctx.organizationId, [
+    { name: created.name, systemType: created.systemType },
+  ]);
 
   return NextResponse.json(created, { status: 201 });
 });

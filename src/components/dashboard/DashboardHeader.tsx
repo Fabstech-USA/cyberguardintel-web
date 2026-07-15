@@ -41,6 +41,8 @@ function ReadOnlyOrganizationName(): React.JSX.Element {
       title={organization.name}
     >
       {organization.imageUrl ? (
+        // Clerk org avatars are arbitrary remote URLs; next/image needs remotePatterns.
+        // eslint-disable-next-line @next/next/no-img-element -- external Clerk CDN avatar
         <img
           src={organization.imageUrl}
           alt=""

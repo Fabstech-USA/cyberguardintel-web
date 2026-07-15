@@ -13,9 +13,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { IntegrationCatalogEntry } from "@/lib/integration-catalog";
-import { getCategoryLabel, getConnectHref } from "@/lib/integration-catalog";
+import {
+  getCategoryLabel,
+  getConnectHref,
+  isOAuthAuthMethod,
+} from "@/lib/integration-catalog";
+import { getCredentialSetupGuideOrDefault } from "@/lib/integration-credential-guides";
+import { getEvidenceCollected } from "@/lib/integration-evidence";
 import { toIconTarget } from "@/lib/integration-icons";
 import { cn } from "@/lib/utils";
+import { CredentialSetupGuidePanel } from "@/components/integrations/CredentialSetupGuidePanel";
+import { EvidenceCollectedBulletin } from "@/components/integrations/EvidenceCollectedBulletin";
 
 type IntegrationDetailDrawerProps = {
   entry: IntegrationCatalogEntry | null;
@@ -33,6 +41,11 @@ export function IntegrationDetailDrawer({
   }
 
   const connectHref = getConnectHref(entry);
+  const evidenceItems = getEvidenceCollected(entry.id, entry.description);
+  const credentialGuide =
+    entry.connectable && !isOAuthAuthMethod(entry.authMethod)
+      ? getCredentialSetupGuideOrDefault(entry.id, true)
+      : null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -61,6 +74,12 @@ export function IntegrationDetailDrawer({
             </p>
             <p className="text-sm leading-relaxed">{entry.description}</p>
           </section>
+
+          <EvidenceCollectedBulletin items={evidenceItems} />
+
+          {credentialGuide ? (
+            <CredentialSetupGuidePanel guide={credentialGuide} />
+          ) : null}
 
           <section>
             <p className="mb-1.5 text-[10.5px] font-medium tracking-wide text-muted-foreground uppercase">

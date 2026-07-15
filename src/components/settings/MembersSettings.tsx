@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { MoreHorizontal, ShieldCheck, TriangleAlert, Plus } from "lucide-react";
 import { format, isValid, parseISO } from "date-fns";
 
+import { HelpTip } from "@/components/shared/HelpTip";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -375,7 +376,10 @@ export function MembersSettings(): React.JSX.Element {
           </p>
         </div>
         <div className="grid gap-2 md:col-span-3">
-          <Label>Role</Label>
+          <Label className="inline-flex items-center gap-1.5">
+            Role
+            <HelpTip content="Auditor is read-only access for external reviewers (e.g. a CPA firm). Admins can manage members, integrations, and policies. Members can view and contribute." />
+          </Label>
           <Select
             value={inviteRole}
             onValueChange={(v) => setInviteRole(v as OrgRole)}

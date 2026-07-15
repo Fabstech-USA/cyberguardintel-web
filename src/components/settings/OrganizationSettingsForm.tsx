@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Industry, OrgRole } from "@/generated/prisma";
+import { formatTechStackLabel } from "@/lib/tech-stack";
 
 type HipaaSubjectType = "covered_entity" | "business_associate" | "both" | null;
 type TeamSize =
@@ -461,7 +462,9 @@ export function OrganizationSettingsForm(): React.JSX.Element {
           <div>
             <h3 className="text-base font-semibold">Technology stack</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Your selections inform which integrations and policies we prioritize.
+              Tools your organization uses, including connected integrations
+              and systems from your PHI map. Adding either updates this list
+              automatically; removing them does not.
             </p>
           </div>
 
@@ -470,14 +473,17 @@ export function OrganizationSettingsForm(): React.JSX.Element {
             onClick={() => router.push("/integrations")}
             disabled={saving || deleting}
           >
-            Update stack
+            Manage integrations
           </Button>
         </div>
 
         <Separator className="my-4" />
 
         {techStack.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No stack selected.</p>
+          <p className="text-sm text-muted-foreground">
+            No stack yet. Connect integrations or complete onboarding to build
+            this list.
+          </p>
         ) : (
           <div className="flex flex-wrap gap-2">
             {techStack.map((s) => (
@@ -485,7 +491,7 @@ export function OrganizationSettingsForm(): React.JSX.Element {
                 key={s}
                 className="rounded-full border border-border bg-muted px-3 py-1 text-sm text-foreground"
               >
-                {s}
+                {formatTechStackLabel(s)}
               </span>
             ))}
           </div>

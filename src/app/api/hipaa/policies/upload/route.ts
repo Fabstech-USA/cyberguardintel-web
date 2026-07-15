@@ -12,6 +12,7 @@ import {
 } from "@/lib/policy-upload";
 import { putObjectToS3 } from "@/lib/s3";
 import { withTenant } from "@/lib/tenant";
+import { MAX_UPLOAD_LABEL, uploadTooLarge } from "@/lib/upload-limits";
 
 export const maxDuration = 60;
 
@@ -65,7 +66,20 @@ export const POST = withTenant(async (req, ctx): Promise<Response> => {
     );
   }
 
+  if (uploadTooLarge(uploadFile)) {
+    return NextResponse.json(
+      { error: `File exceeds the ${MAX_UPLOAD_LABEL} upload limit` },
+      { status: 413 }
+    );
+  }
+
   const bytes = new Uint8Array(await uploadFile.arrayBuffer());
+  if (uploadTooLarge(uploadFile, bytes.length)) {
+    return NextResponse.json(
+      { error: `File exceeds the ${MAX_UPLOAD_LABEL} upload limit` },
+      { status: 413 }
+    );
+  }
 
   let content: string;
   try {

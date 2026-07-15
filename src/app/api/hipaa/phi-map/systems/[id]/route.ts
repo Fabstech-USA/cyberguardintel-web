@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { writeAuditLog } from "@/lib/audit-log";
 import { PhiSystemUpdateSchema, canMutatePhiMap } from "@/lib/phi-map";
 import { prisma } from "@/lib/prisma";
+import { addPhiSystemsToOrgTechStack } from "@/lib/tech-stack-server";
 import { withTenant, type TenantContext } from "@/lib/tenant";
 
 type RouteCtx = { params: Promise<{ id: string }> };
@@ -84,6 +85,12 @@ export async function PATCH(req: Request, { params }: RouteCtx): Promise<Respons
       resourceType: "PhiSystem",
       resourceId: id,
     });
+
+    if (d.name !== undefined || d.systemType !== undefined) {
+      await addPhiSystemsToOrgTechStack(ctx.organizationId, [
+        { name: updated.name, systemType: updated.systemType },
+      ]);
+    }
 
     return NextResponse.json(updated);
   })(req);

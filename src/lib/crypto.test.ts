@@ -30,7 +30,7 @@ describe("crypto", () => {
 
     it("throws on tampered ciphertext", () => {
       const encrypted = encryptCredentials("sensitive");
-      const [iv, tag, data] = encrypted.split(":");
+      const [iv, tag] = encrypted.split(":");
       const tampered = `${iv}:${tag}:${Buffer.from("tampered").toString("base64")}`;
 
       expect(() => decryptCredentials(tampered)).toThrow();

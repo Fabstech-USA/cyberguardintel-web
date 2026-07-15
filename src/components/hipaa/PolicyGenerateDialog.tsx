@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, Sparkles } from "lucide-react";
+import { ChevronDown, Loader2, Sparkles } from "lucide-react";
 import { Industry, PolicyType } from "@/generated/prisma";
+import { HelpTip } from "@/components/shared/HelpTip";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -34,6 +36,7 @@ import {
   snapshotToPolicyGenerateForm,
   type PolicyGenerateFormValues,
 } from "@/lib/policy-generation-context";
+import { cn } from "@/lib/utils";
 
 const TEXTAREA_CLASS =
   "flex min-h-20 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50";
@@ -100,6 +103,58 @@ function TriStateSelect({
         </SelectContent>
       </Select>
     </div>
+  );
+}
+
+function OptionalSection({
+  title,
+  description,
+  defaultOpen = false,
+  children,
+}: {
+  title: string;
+  description: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}): React.JSX.Element {
+  const [open, setOpen] = useState(defaultOpen);
+
+  return (
+    <Collapsible
+      open={open}
+      onOpenChange={setOpen}
+      className="overflow-hidden rounded-xl border border-border bg-card"
+    >
+      <CollapsibleTrigger asChild>
+        <button
+          type="button"
+          className="flex w-full items-start justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/40"
+          aria-expanded={open}
+        >
+          <div className="min-w-0 space-y-0.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-semibold text-foreground">
+                {title}
+              </span>
+              <Badge variant="secondary" className="text-[10px] font-normal">
+                Optional
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground">{description}</p>
+          </div>
+          <ChevronDown
+            className={cn(
+              "mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform duration-200",
+              open && "rotate-180"
+            )}
+            aria-hidden
+          />
+        </button>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="border-t border-border">
+        <div className="space-y-4 px-4 py-4">{children}</div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
@@ -180,11 +235,14 @@ export function PolicyGenerateDialog({
 
     setSubmitting(true);
     setError(null);
+    const overrides = formValuesToContextOverrides(form);
+    // Close immediately so the library page progress panel is visible while AI runs.
+    onOpenChange(false);
     try {
-      await onGenerate(formValuesToContextOverrides(form));
-      onOpenChange(false);
+      await onGenerate(overrides);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Generation failed");
+      onOpenChange(true);
     } finally {
       setSubmitting(false);
     }
@@ -286,7 +344,13 @@ export function PolicyGenerateDialog({
                     />
                   </div>
                   <div className="space-y-2 sm:col-span-2">
-                    <Label htmlFor="pg-phi-systems">PHI systems in scope</Label>
+                    <Label
+                      htmlFor="pg-phi-systems"
+                      className="inline-flex items-center gap-1.5"
+                    >
+                      PHI systems in scope
+                      <HelpTip content="List the systems that store or process patient data so generated policies match your real environment." />
+                    </Label>
                     <textarea
                       id="pg-phi-systems"
                       value={form.phi_systems}
@@ -312,7 +376,13 @@ export function PolicyGenerateDialog({
                     />
                   </div>
                   <div className="space-y-2 sm:col-span-2">
-                    <Label htmlFor="pg-controls">Existing controls</Label>
+                    <Label
+                      htmlFor="pg-controls"
+                      className="inline-flex items-center gap-1.5"
+                    >
+                      Existing controls
+                      <HelpTip content="Describe protections you already have (MFA, encryption, backups, etc.) so drafts reflect what you actually run today." />
+                    </Label>
                     <textarea
                       id="pg-controls"
                       value={form.existing_controls}
@@ -328,14 +398,25 @@ export function PolicyGenerateDialog({
                 </div>
               </section>
 
-              <Collapsible defaultOpen>
-                <CollapsibleTrigger className="text-sm font-medium hover:underline">
-                  Practice details (optional)
-                </CollapsibleTrigger>
-                <CollapsibleContent className="mt-4 space-y-4">
+              <section className="space-y-3">
+                <div className="space-y-1">
+                  <h3 className="text-sm font-medium">More context</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Open any section below to refine the draft. You can generate
+                    without filling these in.
+                  </p>
+                </div>
+
+                <OptionalSection
+                  title="Practice details"
+                  description="Provider type, locations, and states of operation"
+                  defaultOpen
+                >
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="pg-provider-category">Provider category</Label>
+                      <Label htmlFor="pg-provider-category">
+                        Provider category
+                      </Label>
                       <Input
                         id="pg-provider-category"
                         value={form.provider_category}
@@ -370,53 +451,51 @@ export function PolicyGenerateDialog({
                       />
                     </div>
                   </div>
-                </CollapsibleContent>
-              </Collapsible>
+                </OptionalSection>
 
-              <Collapsible>
-                <CollapsibleTrigger className="text-sm font-medium hover:underline">
-                  Systems & platforms (optional)
-                </CollapsibleTrigger>
-                <CollapsibleContent className="mt-4 grid gap-4 sm:grid-cols-2">
-                  {(
-                    [
-                      ["practice_management_system", "Practice management"],
-                      ["patient_portal", "Patient portal"],
-                      ["telehealth_platform", "Telehealth platform"],
-                      ["cloud_storage", "Cloud storage / file sharing"],
-                    ] as const
-                  ).map(([key, label]) => (
-                    <div key={key} className="space-y-2">
-                      <Label htmlFor={`pg-${key}`}>{label}</Label>
-                      <Input
-                        id={`pg-${key}`}
-                        value={form[key]}
-                        onChange={(event) => update(key, event.target.value)}
+                <OptionalSection
+                  title="Systems & platforms"
+                  description="Practice management, portal, telehealth, and other ePHI tools"
+                >
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {(
+                      [
+                        ["practice_management_system", "Practice management"],
+                        ["patient_portal", "Patient portal"],
+                        ["telehealth_platform", "Telehealth platform"],
+                        ["cloud_storage", "Cloud storage / file sharing"],
+                      ] as const
+                    ).map(([key, label]) => (
+                      <div key={key} className="space-y-2">
+                        <Label htmlFor={`pg-${key}`}>{label}</Label>
+                        <Input
+                          id={`pg-${key}`}
+                          value={form[key]}
+                          onChange={(event) => update(key, event.target.value)}
+                          disabled={submitting}
+                        />
+                      </div>
+                    ))}
+                    <div className="space-y-2 sm:col-span-2">
+                      <Label htmlFor="pg-other-ephi">Other ePHI systems</Label>
+                      <textarea
+                        id="pg-other-ephi"
+                        value={form.other_ephi_systems}
+                        onChange={(event) =>
+                          update("other_ephi_systems", event.target.value)
+                        }
                         disabled={submitting}
+                        rows={2}
+                        className={TEXTAREA_CLASS}
                       />
                     </div>
-                  ))}
-                  <div className="space-y-2 sm:col-span-2">
-                    <Label htmlFor="pg-other-ephi">Other ePHI systems</Label>
-                    <textarea
-                      id="pg-other-ephi"
-                      value={form.other_ephi_systems}
-                      onChange={(event) =>
-                        update("other_ephi_systems", event.target.value)
-                      }
-                      disabled={submitting}
-                      rows={2}
-                      className={TEXTAREA_CLASS}
-                    />
                   </div>
-                </CollapsibleContent>
-              </Collapsible>
+                </OptionalSection>
 
-              <Collapsible>
-                <CollapsibleTrigger className="text-sm font-medium hover:underline">
-                  Security posture (optional)
-                </CollapsibleTrigger>
-                <CollapsibleContent className="mt-4 space-y-4">
+                <OptionalSection
+                  title="Security posture"
+                  description="Named officer and yes/no answers for common safeguards"
+                >
                   <div className="space-y-2">
                     <Label htmlFor="pg-security-officer">
                       Security officer name & title
@@ -451,7 +530,9 @@ export function PolicyGenerateDialog({
                       id="pg-has-policies"
                       label="Existing written HIPAA policies"
                       value={form.has_existing_policies}
-                      onChange={(value) => update("has_existing_policies", value)}
+                      onChange={(value) =>
+                        update("has_existing_policies", value)
+                      }
                       disabled={submitting}
                     />
                     <TriStateSelect
@@ -481,7 +562,9 @@ export function PolicyGenerateDialog({
                       id="pg-has-ir"
                       label="Incident response procedure"
                       value={form.has_incident_response}
-                      onChange={(value) => update("has_incident_response", value)}
+                      onChange={(value) =>
+                        update("has_incident_response", value)
+                      }
                       disabled={submitting}
                     />
                     <TriStateSelect
@@ -495,21 +578,23 @@ export function PolicyGenerateDialog({
                       id="pg-has-training"
                       label="Security awareness training (12 mo.)"
                       value={form.has_security_training}
-                      onChange={(value) => update("has_security_training", value)}
+                      onChange={(value) =>
+                        update("has_security_training", value)
+                      }
                       disabled={submitting}
                     />
                   </div>
-                </CollapsibleContent>
-              </Collapsible>
+                </OptionalSection>
 
-              <Collapsible>
-                <CollapsibleTrigger className="text-sm font-medium hover:underline">
-                  Policy owners & notes (optional)
-                </CollapsibleTrigger>
-                <CollapsibleContent className="mt-4 space-y-4">
+                <OptionalSection
+                  title="Policy owners & notes"
+                  description="Role labels, risk factors, and notes for this draft"
+                >
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="pg-so-role">Security officer role label</Label>
+                      <Label htmlFor="pg-so-role">
+                        Security officer role label
+                      </Label>
                       <Input
                         id="pg-so-role"
                         value={form.security_officer_role}
@@ -520,7 +605,9 @@ export function PolicyGenerateDialog({
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="pg-po-role">Privacy officer role label</Label>
+                      <Label htmlFor="pg-po-role">
+                        Privacy officer role label
+                      </Label>
                       <Input
                         id="pg-po-role"
                         value={form.privacy_officer_role}
@@ -531,7 +618,9 @@ export function PolicyGenerateDialog({
                       />
                     </div>
                     <div className="space-y-2 sm:col-span-2">
-                      <Label htmlFor="pg-exec-role">Executive approver role</Label>
+                      <Label htmlFor="pg-exec-role">
+                        Executive approver role
+                      </Label>
                       <Input
                         id="pg-exec-role"
                         value={form.executive_approver_role}
@@ -573,8 +662,8 @@ export function PolicyGenerateDialog({
                       className={TEXTAREA_CLASS}
                     />
                   </div>
-                </CollapsibleContent>
-              </Collapsible>
+                </OptionalSection>
+              </section>
             </div>
           )}
 

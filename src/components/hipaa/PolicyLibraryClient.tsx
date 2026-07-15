@@ -8,6 +8,7 @@ import { PolicyStatus, PolicyType } from "@/generated/prisma";
 import { PolicyGenerationProgress } from "@/components/hipaa/PolicyGenerationProgress";
 import { PolicyGenerateDialog } from "@/components/hipaa/PolicyGenerateDialog";
 import { PolicyUploadDialog } from "@/components/hipaa/PolicyUploadDialog";
+import { HelpTip } from "@/components/shared/HelpTip";
 import { regeneratePoliciesViaStream } from "@/lib/regenerate-policy-client";
 import type { AiPolicyContextOverrides } from "@/lib/policy-generation-context";
 import { Badge } from "@/components/ui/badge";
@@ -348,7 +349,11 @@ export function PolicyLibraryClient() {
             </button>
           ))}
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+            Safeguards
+            <HelpTip content="Administrative = people and process policies. Physical = facility and device protections. Technical = IT and system controls." />
+          </span>
           {SAFEGUARD_TABS.map((tab) => (
             <button
               key={tab.id}

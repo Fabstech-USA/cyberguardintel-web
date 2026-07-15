@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Loader2, Upload } from "lucide-react";
 
+import { HelpTip } from "@/components/shared/HelpTip";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -109,7 +110,13 @@ export function EvidenceUploadClient() {
         <CardContent>
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
-              <Label htmlFor="orgControlId">Control</Label>
+              <Label
+                htmlFor="orgControlId"
+                className="inline-flex items-center gap-1.5"
+              >
+                Control
+                <HelpTip content="Pick the HIPAA safeguard this file proves. The number (e.g. 164.312) is the regulation citation auditors look for." />
+              </Label>
               <Select value={orgControlId} onValueChange={setOrgControlId}>
                 <SelectTrigger id="orgControlId">
                   <SelectValue placeholder="Select control" />

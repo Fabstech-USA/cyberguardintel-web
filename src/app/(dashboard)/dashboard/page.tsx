@@ -1,10 +1,15 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { FrameworkSlug, PolicyStatus } from "@/generated/prisma";
+import {
+  BaaStatus,
+  FrameworkSlug,
+  IntegrationStatus,
+  PolicyStatus,
+} from "@/generated/prisma";
 import { prisma } from "@/lib/prisma";
 import { userShouldRunOrgOnboardingWizard } from "@/lib/clerk-org-onboarding";
 import { ensureOrganizationSyncedFromClerk } from "@/lib/clerk-webhook-sync";
-import { DASHBOARD_NEXT_STEPS } from "@/lib/dashboard-next-steps";
+import { buildDashboardNextSteps } from "@/lib/dashboard-next-steps";
 import { aggregateSafeguardScores } from "@/lib/dashboard-safeguards";
 import { DashboardFrameworkTabs } from "@/components/dashboard/DashboardFrameworkTabs";
 import { HipaaWorkspaceNav } from "@/components/dashboard/HipaaWorkspaceNav";
@@ -13,6 +18,7 @@ import { NextUpSection } from "@/components/dashboard/NextUpSection";
 import { DashboardReadinessLive } from "@/components/dashboard/DashboardReadinessLive";
 import { SafeguardBreakdownSection } from "@/components/dashboard/SafeguardBreakdownSection";
 import { HIPAA_POLICY_TARGET } from "@/lib/hipaa-policy-catalog";
+import type { ControlScoreSnapshot } from "@/lib/hipaa-scoring-core";
 
 export default async function DashboardHomePage(): Promise<React.JSX.Element> {
   const { userId, orgId } = await auth();
@@ -73,7 +79,14 @@ export default async function DashboardHomePage(): Promise<React.JSX.Element> {
   );
   const readinessScore = hipaaEnrollment?.score ?? 0;
 
-  const [orgControls, approvedPolicies] = await Promise.all([
+  const [
+    orgControls,
+    approvedPolicies,
+    unapprovedPolicies,
+    connectedIntegrations,
+    signedBaas,
+    latestRiskAssessment,
+  ] = await Promise.all([
     prisma.orgControl.findMany({
       where: {
         organizationId: org.id,
@@ -83,7 +96,16 @@ export default async function DashboardHomePage(): Promise<React.JSX.Element> {
       },
       select: {
         score: true,
-        frameworkControl: { select: { category: true } },
+        ownerId: true,
+        frameworkControl: { select: { category: true, controlRef: true } },
+        evidence: {
+          where: { isValid: true },
+          select: {
+            expiresAt: true,
+            collectedAt: true,
+            metadata: true,
+          },
+        },
       },
     }),
     prisma.policy.count({
@@ -93,6 +115,38 @@ export default async function DashboardHomePage(): Promise<React.JSX.Element> {
         status: PolicyStatus.APPROVED,
       },
     }),
+    prisma.policy.count({
+      where: {
+        organizationId: org.id,
+        frameworkSlug: FrameworkSlug.HIPAA,
+        status: { in: [PolicyStatus.DRAFT, PolicyStatus.UNDER_REVIEW] },
+      },
+    }),
+    prisma.integration.count({
+      where: {
+        organizationId: org.id,
+        status: {
+          in: [
+            IntegrationStatus.ACTIVE,
+            IntegrationStatus.PAUSED,
+            IntegrationStatus.ERROR,
+          ],
+        },
+      },
+    }),
+    prisma.baaRecord.count({
+      where: {
+        organizationId: org.id,
+        status: BaaStatus.SIGNED,
+      },
+    }),
+    prisma.riskAssessment.findFirst({
+      where: {
+        organizationId: org.id,
+        status: { not: PolicyStatus.ARCHIVED },
+      },
+      select: { id: true },
+    }),
   ]);
 
   const safeguardScores = aggregateSafeguardScores(
@@ -101,6 +155,21 @@ export default async function DashboardHomePage(): Promise<React.JSX.Element> {
       category: row.frameworkControl.category,
     }))
   );
+
+  const controlSnapshots: ControlScoreSnapshot[] = orgControls.map((row) => ({
+    controlRef: row.frameworkControl.controlRef,
+    ownerId: row.ownerId,
+    evidence: row.evidence,
+  }));
+
+  const nextSteps = buildDashboardNextSteps({
+    controls: controlSnapshots,
+    approvedPolicyCount: approvedPolicies,
+    unapprovedPolicyCount: unapprovedPolicies,
+    hasConnectedIntegration: connectedIntegrations > 0,
+    hasSignedBaa: signedBaas > 0,
+    hasRiskAssessment: Boolean(latestRiskAssessment),
+  });
 
   const policiesValue = `${approvedPolicies}/${HIPAA_POLICY_TARGET}`;
 
@@ -117,7 +186,7 @@ export default async function DashboardHomePage(): Promise<React.JSX.Element> {
 
         <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
           <DashboardReadinessLive initialScore={readinessScore} />
-          <NextUpSection steps={DASHBOARD_NEXT_STEPS} />
+          <NextUpSection steps={nextSteps} />
         </div>
 
         <SafeguardBreakdownSection scores={safeguardScores} />

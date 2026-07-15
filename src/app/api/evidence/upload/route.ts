@@ -7,6 +7,11 @@ import { createEvidence } from "@/lib/evidence-mutations";
 import { prisma } from "@/lib/prisma";
 import { uploadEvidenceFile } from "@/lib/s3";
 import { withTenant } from "@/lib/tenant";
+import {
+  MAX_UPLOAD_LABEL,
+  isActiveContentMimeType,
+  uploadTooLarge,
+} from "@/lib/upload-limits";
 
 const uploadSchema = z.object({
   orgControlId: z.string().min(1),
@@ -56,9 +61,22 @@ export const POST = withTenant(async (req, ctx) => {
     return NextResponse.json({ error: "Control not found" }, { status: 404 });
   }
 
+  if (uploadTooLarge(file)) {
+    return NextResponse.json(
+      { error: `File exceeds the ${MAX_UPLOAD_LABEL} upload limit` },
+      { status: 413 }
+    );
+  }
+
   const bytes = Buffer.from(await file.arrayBuffer());
   if (bytes.length === 0) {
     return NextResponse.json({ error: "Uploaded file is empty" }, { status: 400 });
+  }
+  if (uploadTooLarge(file, bytes.length)) {
+    return NextResponse.json(
+      { error: `File exceeds the ${MAX_UPLOAD_LABEL} upload limit` },
+      { status: 413 }
+    );
   }
 
   const fileName =
@@ -78,6 +96,13 @@ export const POST = withTenant(async (req, ctx) => {
     file.type.trim()
       ? file.type
       : "application/octet-stream";
+
+  if (isActiveContentMimeType(mimeType)) {
+    return NextResponse.json(
+      { error: "HTML and SVG files are not accepted as evidence" },
+      { status: 415 }
+    );
+  }
 
   const uploaded = await uploadEvidenceFile({
     orgId: ctx.organizationId,

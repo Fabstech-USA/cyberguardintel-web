@@ -105,3 +105,25 @@ export function getWizardControlByRef(
 ): WizardControl | undefined {
   return BY_REF.get(controlRef);
 }
+
+/** Explicit confirmed / not-confirmed safeguard summary for risk-assessment AI context. */
+export function formatWizardSafeguardsForAi(
+  implementedControlIds: ReadonlyArray<WizardControlId>
+): string {
+  const implemented = new Set(implementedControlIds);
+  const confirmed = WIZARD_CONTROLS.filter((c) => implemented.has(c.id)).map(
+    (c) => `${c.label} (${c.controlRef})`
+  );
+  const notConfirmed = WIZARD_CONTROLS.filter((c) => !implemented.has(c.id)).map(
+    (c) => `${c.label} (${c.controlRef})`
+  );
+
+  return [
+    `Safeguards confirmed by organization (${confirmed.length}/${WIZARD_CONTROLS.length}): ${
+      confirmed.length > 0 ? confirmed.join("; ") : "None"
+    }`,
+    `Safeguards not confirmed (${notConfirmed.length}/${WIZARD_CONTROLS.length}): ${
+      notConfirmed.length > 0 ? notConfirmed.join("; ") : "None"
+    }`,
+  ].join(". ");
+}

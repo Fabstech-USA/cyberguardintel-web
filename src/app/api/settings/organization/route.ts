@@ -6,6 +6,7 @@ import { withTenant } from "@/lib/tenant";
 import { prisma } from "@/lib/prisma";
 import { writeAuditLog, writeAuditLogAwait } from "@/lib/audit-log";
 import { Industry, type OrgRole } from "@/generated/prisma";
+import { getMergedOrgTechStack } from "@/lib/tech-stack-server";
 
 const HipaaSubjectTypeSchema = z
   .enum(["covered_entity", "business_associate", "both"])
@@ -57,8 +58,14 @@ export const GET = withTenant(async (_req, ctx): Promise<Response> => {
     },
   });
 
+  if (!org) {
+    return NextResponse.json({ error: "Organization not found" }, { status: 404 });
+  }
+
+  const techStack = await getMergedOrgTechStack(ctx.organizationId);
+
   return NextResponse.json({
-    organization: org,
+    organization: { ...org, techStack },
     currentUserRole: ctx.orgRole,
   });
 });

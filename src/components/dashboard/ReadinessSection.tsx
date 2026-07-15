@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { HelpTip } from "@/components/shared/HelpTip";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -39,7 +40,13 @@ export function ReadinessSection({ score }: Props): React.JSX.Element {
   return (
     <Card className="h-full border-border shadow-none">
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-semibold">Readiness</CardTitle>
+        <CardTitle className="inline-flex items-center gap-1.5 text-base font-semibold">
+          Readiness
+          <HelpTip
+            label="About readiness"
+            content="Your overall HIPAA readiness score (0 to 100) based on evidence, policies, BAAs, training, and other controls. Aim higher before an audit. Gaps pull this number down."
+          />
+        </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col items-center gap-4 pb-6">
         <div

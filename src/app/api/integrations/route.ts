@@ -15,6 +15,7 @@ import { IntegrationLimitError } from "@/lib/integration-limits";
 import { assertIntegrationCapacity } from "@/lib/integration-limits-server";
 import { validateConnectIntegrationBody } from "@/lib/integration-route-validation";
 import { prisma } from "@/lib/prisma";
+import { addIntegrationToOrgTechStack } from "@/lib/tech-stack-server";
 import { withTenant, type TenantContext } from "@/lib/tenant";
 
 async function getOrganizationPlan(organizationId: string) {
@@ -132,6 +133,8 @@ export const POST = withTenant(async (req, ctx: TenantContext) => {
     resourceId: integration.id,
     metadata: { type },
   });
+
+  await addIntegrationToOrgTechStack(ctx.organizationId, type);
 
   return NextResponse.json(toIntegrationPublicDto(integration), { status: 201 });
 });
