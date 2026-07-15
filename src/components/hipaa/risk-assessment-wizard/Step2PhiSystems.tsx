@@ -52,34 +52,42 @@ export function Step2PhiSystems({
         <div className="rounded-xl border border-border bg-muted/40 p-6 text-sm">
           <p className="font-medium">No PHI systems on record.</p>
           <p className="mt-1 text-muted-foreground">
-            You need at least one system before generating an assessment.{" "}
-            <Link
-              href="/onboarding"
-              className="text-brand underline underline-offset-2 hover:text-brand-hover"
-            >
-              Add PHI systems in onboarding
-            </Link>
-            .
+            You need at least one system before generating an assessment. Add
+            systems on the PHI flow map, then return here to continue.
           </p>
+          <Button asChild className="mt-4 bg-brand text-brand-foreground hover:bg-brand-hover">
+            <Link href="/hipaa/phi-map">Go to PHI map</Link>
+          </Button>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-border bg-muted/40">
-          {phiSystems.map((s, idx) => (
-            <div
-              key={`${s.name}-${idx}`}
-              className={
-                "flex items-start justify-between gap-4 px-4 py-3" +
-                (idx < phiSystems.length - 1 ? " border-b border-border" : "")
-              }
+        <div className="space-y-3">
+          <div className="overflow-hidden rounded-xl border border-border bg-muted/40">
+            {phiSystems.map((s, idx) => (
+              <div
+                key={`${s.name}-${idx}`}
+                className={
+                  "flex items-start justify-between gap-4 px-4 py-3" +
+                  (idx < phiSystems.length - 1 ? " border-b border-border" : "")
+                }
+              >
+                <span className="text-sm font-medium text-foreground">
+                  {s.name}
+                </span>
+                <span className="text-right text-sm text-muted-foreground">
+                  {describeSystem(s)}
+                </span>
+              </div>
+            ))}
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Need to add or change systems?{" "}
+            <Link
+              href="/hipaa/phi-map"
+              className="font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
             >
-              <span className="text-sm font-medium text-foreground">
-                {s.name}
-              </span>
-              <span className="text-right text-sm text-muted-foreground">
-                {describeSystem(s)}
-              </span>
-            </div>
-          ))}
+              Edit on PHI map
+            </Link>
+          </p>
         </div>
       )}
 

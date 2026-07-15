@@ -302,3 +302,29 @@
     margin-block: 0.75em;
   }
 }
+/* AI generation wait: sweeping shimmer on the top edge */
+@keyframes ai-gen-shimmer {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(420%);
+  }
+}
+
+.ai-gen-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--brand) 55%, white),
+    transparent
+  );
+  animation: ai-gen-shimmer 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-gen-shimmer {
+    animation: none;
+    opacity: 0;
+  }
+}

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { WIZARD_CONTROLS } from "@/lib/risk-assessment-controls";
@@ -43,6 +44,14 @@ export function Step4Review({
         <ReviewRow
           label="PHI systems"
           value={`${phiSystemCount} ${phiSystemCount === 1 ? "system" : "systems"}`}
+          action={
+            <Link
+              href="/hipaa/phi-map"
+              className="text-sm font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
+            >
+              Edit on PHI map
+            </Link>
+          }
         />
         <ReviewRow
           label="Controls in place"
@@ -79,21 +88,26 @@ export function Step4Review({
 function ReviewRow({
   label,
   value,
+  action,
   isLast,
 }: {
   label: string;
   value: string;
+  action?: React.ReactNode;
   isLast?: boolean;
 }): React.JSX.Element {
   return (
     <div
       className={
-        "flex items-center justify-between px-4 py-3" +
+        "flex items-center justify-between gap-3 px-4 py-3" +
         (isLast ? "" : " border-b border-border")
       }
     >
       <span className="text-sm text-muted-foreground">{label}</span>
-      <span className="text-sm font-medium text-foreground">{value}</span>
+      <div className="flex items-center gap-3">
+        <span className="text-sm font-medium text-foreground">{value}</span>
+        {action}
+      </div>
     </div>
   );
 }

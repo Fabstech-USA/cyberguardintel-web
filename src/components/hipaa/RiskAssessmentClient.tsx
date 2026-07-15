@@ -46,7 +46,7 @@ export function RiskAssessmentClient({
 
   function handleCancelWizard(): void {
     if (assessment) setView("result");
-    else router.push("/hipaa");
+    else router.push("/dashboard");
   }
 
   function handleWizardComplete(created: RiskAssessment): void {

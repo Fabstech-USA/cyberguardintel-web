@@ -1,18 +1,40 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { ArrowLeft, CheckIcon, Loader2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import {
+  AiGenerationWaitPanel,
+  useSoftAiProgress,
+  type AiGenerationPhase,
+} from "@/components/shared/AiGenerationWaitPanel";
 
-const PHASES = [
-  "Scoping PHI systems",
-  "Identifying threat sources",
-  "Scoring likelihood & impact",
-  "Drafting recommendations",
-] as const;
-
-const PHASE_INTERVAL_MS = 15_000;
+const PHASES: ReadonlyArray<AiGenerationPhase> = [
+  {
+    id: "scope",
+    label: "Scoping PHI systems",
+    detail: "Reviewing systems that create, receive, or store ePHI",
+  },
+  {
+    id: "threats",
+    label: "Identifying threat sources",
+    detail: "Human, environmental, and technical threat scenarios",
+  },
+  {
+    id: "score",
+    label: "Scoring likelihood & impact",
+    detail: "Ranking risks against your controls and environment",
+  },
+  {
+    id: "recommend",
+    label: "Drafting recommendations",
+    detail: "Mapping findings to HIPAA Security Rule safeguards",
+  },
+  {
+    id: "finish",
+    label: "Assembling your assessment",
+    detail: "Packaging threats, gaps, and next steps",
+  },
+];
 
 type Props = {
   phiSystemCount: number;
@@ -27,20 +49,11 @@ export function Step5Generating({
   onBack,
   onRetry,
 }: Props): React.JSX.Element {
-  // Cycle through the four phases on a fixed timeline. Once we exhaust the
-  // list we hold on the last phase indefinitely until the parent unmounts
-  // this step (request resolved) or surfaces an error.
-  const [phaseIndex, setPhaseIndex] = useState(0);
-
-  useEffect(() => {
-    if (error) return;
-    const id = setInterval(() => {
-      setPhaseIndex((prev) => Math.min(prev + 1, PHASES.length - 1));
-    }, PHASE_INTERVAL_MS);
-    return () => clearInterval(id);
-  }, [error]);
-
-  const finishingUp = phaseIndex >= PHASES.length - 1;
+  const softProgress = useSoftAiProgress({
+    active: !error,
+    ceiling: 94,
+    tickMs: 900,
+  });
 
   if (error) {
     return (
@@ -73,49 +86,23 @@ export function Step5Generating({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col items-center gap-6 py-10 text-center">
-        <Loader2
-          className="h-10 w-10 animate-spin text-brand"
-          aria-hidden="true"
-        />
-        <div className="space-y-2">
-          <h2 className="text-xl font-semibold tracking-tight">
-            Generating your assessment
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Analyzing threats across {phiSystemCount}{" "}
-            {phiSystemCount === 1 ? "PHI system" : "PHI systems"} and mapping to
-            HIPAA Security Rule controls.
-          </p>
-        </div>
-        <ul className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs">
-          {PHASES.map((phase, idx) => (
-            <li
-              key={phase}
-              className={cn(
-                "flex items-center gap-1.5",
-                idx <= phaseIndex
-                  ? "text-foreground"
-                  : "text-muted-foreground"
-              )}
-              aria-current={idx === phaseIndex ? "step" : undefined}
-            >
-              {idx < phaseIndex ? (
-                <CheckIcon
-                  className="h-3.5 w-3.5 text-brand"
-                  aria-hidden="true"
-                />
-              ) : (
-                <span
-                  className="inline-block h-1.5 w-1.5 rounded-full bg-current"
-                  aria-hidden="true"
-                />
-              )}
-              {phase}
-            </li>
-          ))}
-        </ul>
+      <div className="space-y-1">
+        <p className="text-sm text-muted-foreground">
+          Step 5 of 5 - Generating
+        </p>
       </div>
+
+      <AiGenerationWaitPanel
+        title="Generating your assessment"
+        subtitle={`Analyzing threats across ${phiSystemCount} ${
+          phiSystemCount === 1 ? "PHI system" : "PHI systems"
+        } and mapping to HIPAA Security Rule controls.`}
+        phases={PHASES}
+        progress={softProgress}
+        metaLeft="AI risk analysis in progress"
+        accent="brand"
+        phaseIntervalMs={14_000}
+      />
 
       <div className="flex items-center justify-between gap-3 border-t border-border pt-4">
         <Button type="button" variant="outline" disabled>
@@ -127,7 +114,7 @@ export function Step5Generating({
           disabled
           className="bg-brand text-brand-foreground"
         >
-          {finishingUp ? "Finishing up..." : "Generating..."}
+          {softProgress >= 90 ? "Finishing up…" : "Generating…"}
         </Button>
       </div>
     </div>

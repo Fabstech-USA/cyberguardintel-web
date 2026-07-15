@@ -1,7 +1,11 @@
 "use client";
 
-import { Loader2, Sparkles } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
+import { useMemo } from "react";
+import {
+  AiGenerationWaitPanel,
+  useSoftAiProgress,
+  type AiGenerationPhase,
+} from "@/components/shared/AiGenerationWaitPanel";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -12,6 +16,34 @@ type Props = {
   className?: string;
 };
 
+const POLICY_PHASES: ReadonlyArray<AiGenerationPhase> = [
+  {
+    id: "context",
+    label: "Loading organization context",
+    detail: "PHI systems, stack, and controls from your profile",
+  },
+  {
+    id: "outline",
+    label: "Outlining policy sections",
+    detail: "Mapping required HIPAA policy structure",
+  },
+  {
+    id: "draft",
+    label: "Drafting with AI",
+    detail: "Writing role-specific procedures and responsibilities",
+  },
+  {
+    id: "align",
+    label: "Aligning to Security Rule language",
+    detail: "Checking safeguards and operational fit",
+  },
+  {
+    id: "finalize",
+    label: "Finalizing the draft",
+    detail: "Formatting for review and approval",
+  },
+];
+
 export function PolicyGenerationProgress({
   label,
   currentPolicyTitle,
@@ -20,89 +52,60 @@ export function PolicyGenerationProgress({
   className,
 }: Props): React.JSX.Element {
   const isSingle = total === 1;
-  // Count the policy currently being drafted as half a step so the bar moves
-  // during long AI calls (we only get stream events at start/complete per policy).
   const inProgress = currentPolicyTitle !== null;
-  const progressUnits = completed + (inProgress ? 0.5 : 0);
-  const pct =
-    total > 0 ? Math.min(100, Math.round((progressUnits / total) * 100)) : 0;
+  const soft = useSoftAiProgress({
+    active: inProgress || completed < total,
+    ceiling: 88,
+  });
+
+  // Blend batch completion with soft progress for the active policy.
+  const base = total > 0 ? (completed / total) * 100 : 0;
+  const activeSlice = total > 0 ? 100 / total : 0;
+  const progress = Math.min(
+    99,
+    base + (inProgress ? (soft / 100) * activeSlice * 0.9 : 0)
+  );
+
+  const phases = useMemo(() => {
+    if (!currentPolicyTitle) {
+      return [
+        {
+          id: "prep",
+          label: "Preparing your organization context",
+          detail: "Gathering profile data before drafting",
+        },
+        ...POLICY_PHASES.slice(1),
+      ] as AiGenerationPhase[];
+    }
+    return POLICY_PHASES.map((phase, index) =>
+      index === 2
+        ? {
+            ...phase,
+            detail: `Writing “${currentPolicyTitle}”`,
+          }
+        : phase
+    );
+  }, [currentPolicyTitle]);
+
+  const subtitle = currentPolicyTitle
+    ? isSingle
+      ? `Drafting ${currentPolicyTitle}`
+      : `Now generating: ${currentPolicyTitle}`
+    : "Preparing your organization context…";
 
   return (
-    <div
-      role="status"
-      aria-live="polite"
-      aria-busy="true"
-      className={cn(
-        "border-emerald-500/30 bg-card relative overflow-hidden rounded-xl border p-4 shadow-sm",
-        className
-      )}
-    >
-      <div
-        className="pointer-events-none absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-transparent to-emerald-500/10 motion-safe:animate-pulse"
-        aria-hidden
-      />
-
-      <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
-        <div className="flex shrink-0 items-center justify-center">
-          <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10">
-            <Loader2
-              className="h-6 w-6 animate-spin text-emerald-500"
-              aria-hidden
-            />
-            <Sparkles
-              className="absolute -right-0.5 -top-0.5 h-4 w-4 text-emerald-400 motion-safe:animate-pulse"
-              aria-hidden
-            />
-          </div>
-        </div>
-
-        <div className="min-w-0 flex-1 space-y-3">
-          <div className="space-y-1">
-            <p className="text-sm font-medium">{label}</p>
-            {currentPolicyTitle ? (
-              <p className="text-muted-foreground truncate text-sm">
-                {isSingle ? (
-                  <>
-                    Drafting{" "}
-                    <span className="text-foreground font-medium">
-                      {currentPolicyTitle}
-                    </span>
-                    …
-                  </>
-                ) : (
-                  <>
-                    Now generating:{" "}
-                    <span className="text-foreground font-medium">
-                      {currentPolicyTitle}
-                    </span>
-                  </>
-                )}
-              </p>
-            ) : (
-              <p className="text-muted-foreground text-sm">
-                Preparing your organization context…
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-1.5">
-            <Progress value={pct} className="h-2" />
-            <div className="text-muted-foreground flex items-center justify-between text-xs">
-              <span>
-                {completed} of {total} {total === 1 ? "policy" : "policies"}{" "}
-                complete
-                {inProgress && completed < total ? " · 1 in progress" : ""}
-              </span>
-              <span className="tabular-nums">{pct}%</span>
-            </div>
-          </div>
-
-          <p className="text-muted-foreground text-xs">
-            This usually takes about a minute per policy. You can keep this tab
-            open while we draft each document.
-          </p>
-        </div>
-      </div>
-    </div>
+    <AiGenerationWaitPanel
+      title={label}
+      subtitle={subtitle}
+      phases={phases}
+      progress={progress}
+      metaLeft={`${completed} of ${total} ${total === 1 ? "policy" : "policies"} complete${
+        inProgress && completed < total ? " · 1 in progress" : ""
+      }`}
+      metaRight={`${Math.round(progress)}%`}
+      accent="emerald"
+      phaseIntervalMs={isSingle ? 10_000 : 8_000}
+      className={cn(className)}
+    />
   );
 }

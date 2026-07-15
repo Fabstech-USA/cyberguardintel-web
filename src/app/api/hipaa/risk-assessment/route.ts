@@ -22,6 +22,8 @@ import {
   type WizardControlId,
 } from "@/lib/risk-assessment-controls";
 import { withTenant, type TenantContext } from "@/lib/tenant";
+import { formatTechStackLabel } from "@/lib/tech-stack";
+import { getMergedOrgTechStack } from "@/lib/tech-stack-server";
 
 const INDUSTRY_LABELS: Record<Industry, string> = {
   HEALTHCARE: "Healthcare",
@@ -77,14 +79,14 @@ type OrgContextForAi = {
 async function loadOrgContext(
   ctx: TenantContext
 ): Promise<{ payload: OrgContextForAi; latestVersion: number | null } | null> {
-  const [organization, phiSystems, orgControls, latestRa] = await Promise.all([
+  const [organization, phiSystems, orgControls, latestRa, techStack] =
+    await Promise.all([
     prisma.organization.findUnique({
       where: { id: ctx.organizationId },
       select: {
         industry: true,
         employeeCount: true,
         hipaaSubjectType: true,
-        techStack: true,
       },
     }),
     prisma.phiSystem.findMany({
@@ -106,6 +108,7 @@ async function loadOrgContext(
       orderBy: { version: "desc" },
       select: { version: true },
     }),
+    getMergedOrgTechStack(ctx.organizationId),
   ]);
 
   if (!organization) return null;
@@ -115,8 +118,8 @@ async function loadOrgContext(
       ? phiSystems.map((p) => p.name).join(", ")
       : "None recorded";
   const techStackStr =
-    organization.techStack.length > 0
-      ? organization.techStack.join(", ")
+    techStack.length > 0
+      ? techStack.map(formatTechStackLabel).join(", ")
       : "Not specified";
   const existingControlsStr =
     orgControls.length > 0

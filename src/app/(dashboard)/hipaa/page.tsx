@@ -1,11 +1,6 @@
-export default function Page() {
-  return (
-    <div className="flex w-full flex-col gap-2">
-      <h1 className="text-2xl font-semibold">HIPAA</h1>
-      <p className="text-sm text-muted-foreground">
-        HIPAA overview dashboard (placeholder).
-      </p>
-    </div>
-  );
-}
+import { redirect } from "next/navigation";
 
+/** Legacy HIPAA overview path — Overview lives on the main dashboard. */
+export default function Page(): never {
+  redirect("/dashboard");
+}

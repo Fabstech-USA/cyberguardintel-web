@@ -12,6 +12,7 @@ import {
 import { IntegrationLimitError } from "@/lib/integration-limits";
 import { assertIntegrationCapacity } from "@/lib/integration-limits-server";
 import { prisma } from "@/lib/prisma";
+import { addIntegrationToOrgTechStack } from "@/lib/tech-stack-server";
 import { withTenant, type TenantContext } from "@/lib/tenant";
 
 type RouteCtx = { params: Promise<{ type: string }> };
@@ -132,6 +133,8 @@ export async function GET(req: Request, { params }: RouteCtx): Promise<Response>
       resourceId: integration.id,
       metadata: { type: provider.type },
     });
+
+    await addIntegrationToOrgTechStack(ctx.organizationId, provider.type);
 
     return redirectWithCookieClear(`/integrations?connected=${provider.type}`);
   })(req);
