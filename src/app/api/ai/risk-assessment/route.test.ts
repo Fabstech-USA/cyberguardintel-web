@@ -109,6 +109,15 @@ describe("AiRiskOutputSchema", () => {
     expect(result.success).toBe(false);
   });
 
+  it("accepts empty critical_gaps when residual risk is low", () => {
+    const result = AiRiskOutputSchema.safeParse({
+      ...validOutput,
+      overall_risk_level: "low",
+      critical_gaps: [],
+    });
+    expect(result.success).toBe(true);
+  });
+
   it("rejects non-array immediate_actions", () => {
     const result = AiRiskOutputSchema.safeParse({
       ...validOutput,

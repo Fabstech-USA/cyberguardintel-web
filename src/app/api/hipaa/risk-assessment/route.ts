@@ -19,6 +19,7 @@ import { prisma } from "@/lib/prisma";
 import {
   WIZARD_CONTROL_IDS,
   WIZARD_CONTROLS,
+  formatWizardSafeguardsForAi,
   type WizardControlId,
 } from "@/lib/risk-assessment-controls";
 import { withTenant, type TenantContext } from "@/lib/tenant";
@@ -77,39 +78,40 @@ type OrgContextForAi = {
 };
 
 async function loadOrgContext(
-  ctx: TenantContext
+  ctx: TenantContext,
+  implementedControlIds: ReadonlyArray<WizardControlId>
 ): Promise<{ payload: OrgContextForAi; latestVersion: number | null } | null> {
   const [organization, phiSystems, orgControls, latestRa, techStack] =
     await Promise.all([
-    prisma.organization.findUnique({
-      where: { id: ctx.organizationId },
-      select: {
-        industry: true,
-        employeeCount: true,
-        hipaaSubjectType: true,
-      },
-    }),
-    prisma.phiSystem.findMany({
-      where: { organizationId: ctx.organizationId },
-      select: { name: true },
-    }),
-    prisma.orgControl.findMany({
-      where: {
-        organizationId: ctx.organizationId,
-        status: { in: IMPLEMENTED_STATUSES },
-        frameworkControl: { framework: { slug: FrameworkSlug.HIPAA } },
-      },
-      select: {
-        frameworkControl: { select: { controlRef: true, title: true } },
-      },
-    }),
-    prisma.riskAssessment.findFirst({
-      where: { organizationId: ctx.organizationId },
-      orderBy: { version: "desc" },
-      select: { version: true },
-    }),
-    getMergedOrgTechStack(ctx.organizationId),
-  ]);
+      prisma.organization.findUnique({
+        where: { id: ctx.organizationId },
+        select: {
+          industry: true,
+          employeeCount: true,
+          hipaaSubjectType: true,
+        },
+      }),
+      prisma.phiSystem.findMany({
+        where: { organizationId: ctx.organizationId },
+        select: { name: true },
+      }),
+      prisma.orgControl.findMany({
+        where: {
+          organizationId: ctx.organizationId,
+          status: { in: IMPLEMENTED_STATUSES },
+          frameworkControl: { framework: { slug: FrameworkSlug.HIPAA } },
+        },
+        select: {
+          frameworkControl: { select: { controlRef: true, title: true } },
+        },
+      }),
+      prisma.riskAssessment.findFirst({
+        where: { organizationId: ctx.organizationId },
+        orderBy: { version: "desc" },
+        select: { version: true },
+      }),
+      getMergedOrgTechStack(ctx.organizationId),
+    ]);
 
   if (!organization) return null;
 
@@ -121,7 +123,9 @@ async function loadOrgContext(
     techStack.length > 0
       ? techStack.map(formatTechStackLabel).join(", ")
       : "Not specified";
-  const existingControlsStr =
+
+  const wizardSafeguards = formatWizardSafeguardsForAi(implementedControlIds);
+  const documentedControls =
     orgControls.length > 0
       ? orgControls
           .map(
@@ -129,7 +133,9 @@ async function loadOrgContext(
               `${c.frameworkControl.controlRef}: ${c.frameworkControl.title}`
           )
           .join("; ")
-      : "None documented";
+      : "None documented beyond wizard answers";
+
+  const existingControlsStr = `${wizardSafeguards}. Additional documented HIPAA controls: ${documentedControls}`;
 
   const subjectType =
     organization.hipaaSubjectType?.toLowerCase() ?? "covered_entity";
@@ -255,7 +261,7 @@ export const POST = withTenant(async (req, ctx): Promise<Response> => {
     await triggerHipaaScoreRecalculation(ctx.organizationId);
   }
 
-  const loaded = await loadOrgContext(ctx);
+  const loaded = await loadOrgContext(ctx, implementedControlIds);
   if (!loaded) {
     return NextResponse.json(
       { error: "Organization not found" },

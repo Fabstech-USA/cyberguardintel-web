@@ -38,15 +38,15 @@ export type ThreatItem = z.infer<typeof ThreatItemSchema>;
 
 /**
  * Mirrors `RiskAssessmentOutput` in cyberguardintel-ai/chains/hipaa_risk_assessment.py.
- * The Pydantic model enforces exactly 5 threats, 3-4 critical_gaps, 5 immediate/long-term actions;
- * we relax to min/max ranges on the TS side so a near-miss from the LLM does not 502 the user.
+ * Threats are exactly 5 on the AI side; critical_gaps may be empty when residual
+ * risk is low. We keep min ranges relaxed so a near-miss from the LLM does not 502.
  */
 export const AiRiskOutputSchema = z.object({
   executive_summary: z.string(),
   scope: z.string(),
   threats: z.array(ThreatItemSchema).min(1),
   overall_risk_level: AiRiskLevelSchema,
-  critical_gaps: z.array(z.string()).min(1),
+  critical_gaps: z.array(z.string()).max(4),
   immediate_actions: z.array(z.string()).min(1),
   long_term_actions: z.array(z.string()).min(1),
 });
