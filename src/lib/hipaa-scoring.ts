@@ -1,97 +1,23 @@
-import { addDays } from "date-fns";
 import { revalidatePath } from "next/cache";
-import {
-  FrameworkSlug,
-  PolicyStatus,
-  type Evidence,
-} from "@/generated/prisma";
+import { FrameworkSlug, PolicyStatus } from "@/generated/prisma";
 import { HIPAA_POLICY_TARGET } from "@/lib/hipaa-policy-catalog";
+import { scoreControl } from "@/lib/hipaa-scoring-core";
 import { prisma } from "@/lib/prisma";
 
-export const WEIGHTS = {
-  evidence_completeness: 0.45,
-  evidence_freshness: 0.25,
-  policy_approved: 0.2,
-  owner_assigned: 0.1,
-} as const;
-
-export const FRESHNESS_DAYS = {
-  access_review: 90,
-  vulnerability_scan: 30,
-  config: 180,
-  log: 30,
-  training: 365,
-  report: 90,
-} as const;
-
-export type FreshnessEvidenceType = keyof typeof FRESHNESS_DAYS;
-
-export type EvidenceFreshnessInput = Pick<
-  Evidence,
-  "expiresAt" | "collectedAt" | "metadata"
->;
-
-function getMetadataEvidenceType(metadata: unknown): string | null {
-  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
-    return null;
-  }
-  const value = (metadata as Record<string, unknown>).evidenceType;
-  return typeof value === "string" ? value : null;
-}
-
-export function isFreshnessEvidenceType(
-  value: string
-): value is FreshnessEvidenceType {
-  return value in FRESHNESS_DAYS;
-}
-
-/** Compute expiry from collectedAt + FRESHNESS_DAYS when evidence is written. */
-export function computeExpiresAt(
-  collectedAt: Date,
-  evidenceType: string
-): Date | null {
-  if (!isFreshnessEvidenceType(evidenceType)) return null;
-  return addDays(collectedAt, FRESHNESS_DAYS[evidenceType]);
-}
-
-/** True when evidence is within its validity window (expiresAt or type-based fallback). */
-export function isEvidenceFresh(
-  evidence: EvidenceFreshnessInput,
-  now: Date = new Date()
-): boolean {
-  if (evidence.expiresAt) {
-    return evidence.expiresAt.getTime() > now.getTime();
-  }
-
-  const evidenceType = getMetadataEvidenceType(evidence.metadata);
-  if (evidenceType && isFreshnessEvidenceType(evidenceType)) {
-    const expiresAt = computeExpiresAt(evidence.collectedAt, evidenceType);
-    return expiresAt !== null && expiresAt.getTime() > now.getTime();
-  }
-
-  // No expiry metadata — treat as always fresh per architecture §7.4
-  return true;
-}
-
-export function scoreControl(params: {
-  evidence: EvidenceFreshnessInput[];
-  policyScore: number;
-  ownerId: string | null;
-  now?: Date;
-}): number {
-  const { evidence, policyScore, ownerId, now = new Date() } = params;
-  const completeness = evidence.length > 0 ? 1.0 : 0.0;
-  const freshCount = evidence.filter((e) => isEvidenceFresh(e, now)).length;
-  const freshness = evidence.length > 0 ? freshCount / evidence.length : 0;
-  const ownerScore = ownerId ? 1.0 : 0.0;
-
-  return (
-    completeness * WEIGHTS.evidence_completeness +
-    freshness * WEIGHTS.evidence_freshness +
-    policyScore * WEIGHTS.policy_approved +
-    ownerScore * WEIGHTS.owner_assigned
-  );
-}
+export {
+  WEIGHTS,
+  FRESHNESS_DAYS,
+  computeExpiresAt,
+  computeOverallReadinessScore,
+  estimateEvidenceCoverageScoreGain,
+  estimatePolicyApprovalScoreGain,
+  isEvidenceFresh,
+  isFreshnessEvidenceType,
+  scoreControl,
+  type ControlScoreSnapshot,
+  type EvidenceFreshnessInput,
+  type FreshnessEvidenceType,
+} from "@/lib/hipaa-scoring-core";
 
 /**
  * Recalculate HIPAA readiness (Section 7.4), persist OrgFramework.score and
