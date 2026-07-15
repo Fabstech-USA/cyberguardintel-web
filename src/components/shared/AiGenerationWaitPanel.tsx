@@ -35,6 +35,10 @@ function formatElapsed(seconds: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
+function phasesIdentity(phases: ReadonlyArray<AiGenerationPhase>): string {
+  return phases.map((p) => p.id).join("\0");
+}
+
 export function AiGenerationWaitPanel({
   title,
   subtitle,
@@ -47,13 +51,18 @@ export function AiGenerationWaitPanel({
   className,
   compact = false,
 }: Props): React.JSX.Element {
+  const phasesKey = phasesIdentity(phases);
   const [phaseIndex, setPhaseIndex] = useState(0);
   const [elapsedSec, setElapsedSec] = useState(0);
+  const [trackedPhasesKey, setTrackedPhasesKey] = useState(phasesKey);
 
-  useEffect(() => {
+  // Reset progress UI when the phase list identity changes (React-recommended
+  // alternative to setState-in-effect for prop-driven resets).
+  if (trackedPhasesKey !== phasesKey) {
+    setTrackedPhasesKey(phasesKey);
     setPhaseIndex(0);
     setElapsedSec(0);
-  }, [phases]);
+  }
 
   useEffect(() => {
     if (phases.length <= 1) return;
@@ -61,14 +70,14 @@ export function AiGenerationWaitPanel({
       setPhaseIndex((prev) => Math.min(prev + 1, phases.length - 1));
     }, phaseIntervalMs);
     return () => clearInterval(id);
-  }, [phases, phaseIntervalMs]);
+  }, [phasesKey, phases.length, phaseIntervalMs]);
 
   useEffect(() => {
     const id = setInterval(() => {
       setElapsedSec((prev) => prev + 1);
     }, 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [phasesKey]);
 
   const accentSpin =
     accent === "brand" ? "text-brand" : "text-emerald-500";
@@ -288,14 +297,16 @@ export function useSoftAiProgress(options?: {
   const ceiling = options?.ceiling ?? 92;
   const tickMs = options?.tickMs ?? 800;
   const step = options?.step ?? 1.2;
-  const [value, setValue] = useState(6);
+  const [value, setValue] = useState(() => (active ? 6 : 100));
+  const [wasActive, setWasActive] = useState(active);
+
+  if (wasActive !== active) {
+    setWasActive(active);
+    setValue(active ? 6 : 100);
+  }
 
   useEffect(() => {
-    if (!active) {
-      setValue(100);
-      return;
-    }
-    setValue(6);
+    if (!active) return;
     const id = setInterval(() => {
       setValue((prev) => {
         if (prev >= ceiling) return prev;

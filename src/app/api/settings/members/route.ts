@@ -97,13 +97,6 @@ function clerkTimeToDate(ts: number): Date {
   return new Date(ts < 1_000_000_000_000 ? ts * 1000 : ts);
 }
 
-function toIso(d: string | number | Date | null | undefined): string {
-  if (d instanceof Date) return d.toISOString();
-  if (typeof d === "number") return clerkTimeToDate(d).toISOString();
-  if (typeof d === "string" && d.length > 0) return d;
-  return new Date(0).toISOString();
-}
-
 function isRecord(x: unknown): x is Record<string, unknown> {
   return Boolean(x) && typeof x === "object";
 }

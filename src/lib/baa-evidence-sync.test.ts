@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { BaaStatus, EvidenceSource, FrameworkSlug } from "@/generated/prisma";
+import { BaaStatus, EvidenceSource } from "@/generated/prisma";
 
 const {
   frameworkFindUniqueMock,
