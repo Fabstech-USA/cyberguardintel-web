@@ -861,7 +861,7 @@ function SystemFormDialog({
           <div className="space-y-2">
             <p className="inline-flex items-center gap-1.5 text-sm font-medium">
               PHI lifecycle
-              <HelpTip content="Describe what this system does with patient data—contains, creates, transmits, stores, or destroys it." />
+              <HelpTip content="Describe what this system does with patient data: contains, creates, transmits, stores, or destroys it." />
             </p>
             <div className="grid grid-cols-2 gap-2 text-sm">
             <label className="flex items-center gap-2">

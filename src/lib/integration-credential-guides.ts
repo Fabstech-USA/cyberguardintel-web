@@ -19,11 +19,11 @@ const GUIDES: Record<string, CredentialSetupGuide> = {
   aws: {
     title: "How to create AWS credentials",
     steps: [
-      "In AWS IAM, create a dedicated user (e.g. cyberguardintel-readonly) — do not use your root account.",
+      "In AWS IAM, create a dedicated user (e.g. cyberguardintel-readonly). Do not use your root account.",
       "Attach read-only policies for IAM, CloudTrail, S3, EC2 (security groups), and GuardDuty. AWS managed ReadOnlyAccess works for demos; tighten for production.",
       "Open the user → Security credentials → Create access key → choose Application running outside AWS.",
       "Copy the Access key ID and Secret access key once (the secret is only shown at creation).",
-      "Select your default AWS region from the list below (e.g. US East — us-east-1).",
+      "Select your default AWS region from the list below (e.g. US East, us-east-1).",
     ],
     docsUrl:
       "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html",
@@ -32,7 +32,7 @@ const GUIDES: Record<string, CredentialSetupGuide> = {
   [DEMO_AWS_ID]: {
     title: "Demo AWS credentials",
     steps: [
-      "Demo mode is on — sample access keys are prefilled so you can connect without a real AWS account.",
+      "Demo mode is on. Sample access keys are prefilled so you can connect without a real AWS account.",
       "In production, create a read-only IAM user and access key as described for the live AWS connector.",
     ],
   },
@@ -54,7 +54,7 @@ const GUIDES: Record<string, CredentialSetupGuide> = {
       "Sign in to 1Password Business (Events API requires a Business or Enterprise plan).",
       "Open Integrations → Events Reporting (or Directory → Events API, depending on your console).",
       "Create a new Events API token with permission to read sign-in attempts and item usage.",
-      "Copy the token and paste it below. Store a backup in your vault — it may only be shown once.",
+      "Copy the token and paste it below. Store a backup in your vault. It may only be shown once.",
     ],
     docsUrl: "https://developer.1password.com/docs/events-api/setup/",
     docsLabel: "1Password Events API setup",
@@ -65,7 +65,7 @@ const GENERIC_GUIDE: CredentialSetupGuide = {
   title: "How to create credentials",
   steps: [
     "In the provider’s admin console, create an API key or token dedicated to CyberGuardIntel.",
-    "Grant read-only / reporting permissions only — we never need write access.",
+    "Grant read-only / reporting permissions only. We never need write access.",
     "Copy the key or token immediately (many providers show secrets only once) and paste it below.",
   ],
 };

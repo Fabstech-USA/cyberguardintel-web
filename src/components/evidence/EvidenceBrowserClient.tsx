@@ -353,7 +353,7 @@ export function EvidenceBrowserClient() {
               </Select>
               <HelpTip
                 label="About freshness"
-                content="Freshness tracks whether evidence is still within its collection window. Stale means the window expired—auditors may flag it, so re-collect or upload a current version."
+                content="Freshness tracks whether evidence is still within its collection window. Stale means the window expired. Auditors may flag it, so re-collect or upload a current version."
               />
             </div>
 

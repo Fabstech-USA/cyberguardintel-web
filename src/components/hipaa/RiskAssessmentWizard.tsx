@@ -115,7 +115,7 @@ export function RiskAssessmentWizard({
           <div className="space-y-1">
             <h1 className="inline-flex items-center gap-1.5 text-2xl font-semibold tracking-tight">
               New risk assessment
-              <HelpTip content="This walkthrough builds a HIPAA risk analysis from your answers. Only mark controls you truly run today—unchecked items become documented gaps." />
+              <HelpTip content="This walkthrough builds a HIPAA risk analysis from your answers. Only mark controls you truly run today. Unchecked items become documented gaps." />
             </h1>
             <p className="text-sm text-muted-foreground">
               Step through the five-question flow. You can edit any answer

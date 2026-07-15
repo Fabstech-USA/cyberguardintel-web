@@ -135,15 +135,51 @@ type ExportJobResponse = {
 
 const POLL_INTERVAL_MS = 1000;
 
-const PACKAGE_INCLUDES = [
-  "Cover README with org profile and scope",
-  "Evidence files organized by safeguard",
-  "All approved policy PDFs",
-  "Risk assessment report",
-  "BAA inventory with status log",
-  "Training records and attestations",
-  "PHI flow map (systems and data flows)",
-  "Timestamped audit trail CSV",
+const PACKAGE_INCLUDE_ITEMS: {
+  id: AuditPackageSectionId;
+  title: string;
+  detail: string;
+}[] = [
+  {
+    id: "readme",
+    title: "Cover README",
+    detail: "Org profile, scope, and what is in this ZIP",
+  },
+  {
+    id: "evidence",
+    title: "Evidence files",
+    detail: "Organized by HIPAA safeguard for the date range",
+  },
+  {
+    id: "policies",
+    title: "Approved policies",
+    detail: "Current policy PDFs ready for auditor review",
+  },
+  {
+    id: "risk_assessment",
+    title: "Risk assessment",
+    detail: "Your latest risk analysis report",
+  },
+  {
+    id: "baa",
+    title: "BAA inventory",
+    detail: "Vendor agreements and signature status",
+  },
+  {
+    id: "training",
+    title: "Training records",
+    detail: "Workforce HIPAA training and attestations",
+  },
+  {
+    id: "phi_map",
+    title: "PHI flow map",
+    detail: "Systems that handle patient data and how it moves",
+  },
+  {
+    id: "audit_log",
+    title: "Audit trail",
+    detail: "Timestamped activity log (CSV)",
+  },
 ];
 
 const SIDEBAR_METRIC_IDS: AuditPackageSectionId[] = [
@@ -468,12 +504,12 @@ export function AuditPackageWizard() {
     .join(" · ");
 
   return (
-    <div className="w-full max-w-[900px]">
+    <div className="w-full">
       {phase === "config" && (
         <div className="flex flex-col gap-4">
           {partialSelected.length > 0 ? (
-            <div className="flex gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-3 text-[13px] leading-relaxed text-amber-950">
-              <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-amber-700" />
+            <div className="flex gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-3 text-sm leading-relaxed text-amber-950 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
+              <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-amber-700 dark:text-amber-300" />
               <div>
                 <strong>
                   {partialSelected.length} item
@@ -485,9 +521,9 @@ export function AuditPackageWizard() {
             </div>
           ) : null}
 
-          <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
-            <div className="rounded-xl border bg-background p-4 shadow-xs">
-              <p className="mb-1 inline-flex items-center gap-1.5 text-[13px] font-medium">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(260px,320px)]">
+            <div className="rounded-xl border bg-background p-4 shadow-xs sm:p-5">
+              <p className="mb-1 inline-flex items-center gap-1.5 text-sm font-medium">
                 Include in package
                 <HelpTip content="Check what to bundle for an auditor. The date range below limits which evidence files are included in the ZIP." />
               </p>
@@ -506,7 +542,7 @@ export function AuditPackageWizard() {
                   return (
                     <li
                       key={id}
-                      className="flex cursor-pointer items-center gap-2.5 border-b border-border/60 py-2.5 text-[12.5px] last:border-b-0"
+                      className="flex cursor-pointer items-center gap-2.5 border-b border-border/60 py-2.5 text-sm last:border-b-0"
                       onClick={() => {
                         if (!locked) toggleSection(id, !checked);
                       }}
@@ -527,7 +563,7 @@ export function AuditPackageWizard() {
                         {AUDIT_PACKAGE_SECTION_LABELS[id]}
                       </label>
                       <span
-                        className="shrink-0 whitespace-nowrap text-[11px] text-zinc-500 tabular-nums dark:text-zinc-400"
+                        className="shrink-0 whitespace-nowrap text-xs text-muted-foreground tabular-nums"
                         title={section?.reason}
                       >
                         {shortCount}
@@ -547,7 +583,7 @@ export function AuditPackageWizard() {
 
               <div className="mt-3.5 grid grid-cols-1 gap-2.5 border-t border-border/60 pt-3.5 sm:grid-cols-2">
                 <div>
-                  <Label className="mb-1 inline-flex items-center gap-1.5 text-[11.5px] font-medium text-muted-foreground">
+                  <Label className="mb-1 inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                     Evidence from
                     <HelpTip content="Only evidence collected on or after this date is included in the export ZIP." />
                   </Label>
@@ -555,7 +591,7 @@ export function AuditPackageWizard() {
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        className="h-9 w-full justify-start gap-2 text-[13px] font-normal"
+                        className="h-9 w-full justify-start gap-2 text-sm font-normal"
                       >
                         <CalendarIcon className="size-3.5 text-muted-foreground" />
                         {range.from
@@ -581,14 +617,14 @@ export function AuditPackageWizard() {
                   </Popover>
                 </div>
                 <div>
-                  <Label className="mb-1 text-[11.5px] font-medium text-muted-foreground">
+                  <Label className="mb-1 text-xs font-medium text-muted-foreground">
                     Evidence through
                   </Label>
                   <Popover open={toOpen} onOpenChange={setToOpen}>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        className="h-9 w-full justify-start gap-2 text-[13px] font-normal"
+                        className="h-9 w-full justify-start gap-2 text-sm font-normal"
                       >
                         <CalendarIcon className="size-3.5 text-muted-foreground" />
                         {range.to
@@ -617,16 +653,18 @@ export function AuditPackageWizard() {
                 </div>
               </div>
 
-              <div className="mt-2 flex flex-wrap justify-end gap-2">
+              <div className="mt-4 flex flex-wrap items-center justify-end gap-2 border-t border-border/60 pt-4">
                 <Button
-                  variant="ghost"
-                  className="h-8 text-[12.5px]"
+                  type="button"
+                  variant="outline"
+                  className="h-9 text-sm"
                   onClick={() => setPreviewOpen(true)}
                 >
                   Preview contents
                 </Button>
                 <Button
-                  className="h-8 text-[12.5px]"
+                  type="button"
+                  className="h-9 text-sm"
                   onClick={() => void startExport()}
                   disabled={!fromIso || !toIso}
                 >
@@ -635,8 +673,11 @@ export function AuditPackageWizard() {
               </div>
             </div>
 
-            <div className="rounded-xl border bg-background p-4 shadow-xs">
-              <p className="mb-3.5 text-[13px] font-medium">Package readiness</p>
+            <div className="rounded-xl border bg-background p-4 shadow-xs sm:p-5">
+              <p className="mb-3.5 inline-flex items-center gap-1.5 text-sm font-medium">
+                Package readiness
+                <HelpTip content="How complete each selected section is for an auditor. Ready means good coverage; Partial or Needs work means you can still export, but expect follow-up questions." />
+              </p>
               <div className="mb-3.5">
                 <div className="mb-1.5 h-2 overflow-hidden rounded bg-muted">
                   <div
@@ -644,7 +685,7 @@ export function AuditPackageWizard() {
                     style={{ width: `${percentReady}%` }}
                   />
                 </div>
-                <div className="flex justify-between text-[11px]">
+                <div className="flex justify-between text-xs">
                   <span className="text-muted-foreground">
                     {selectedList.length} sections selected
                   </span>
@@ -671,14 +712,14 @@ export function AuditPackageWizard() {
                   return (
                     <div
                       key={id}
-                      className="flex items-center justify-between gap-3 py-1.5 text-[12px]"
+                      className="flex items-center justify-between gap-3 py-1.5 text-sm"
                     >
                       <span className="shrink-0 text-muted-foreground">
                         {label}
                       </span>
                       <span
                         className={cn(
-                          "min-w-0 text-right font-medium leading-snug",
+                          "min-w-0 text-right text-sm font-medium leading-snug",
                           section
                             ? metricColor(section.state)
                             : "text-muted-foreground"
@@ -693,12 +734,59 @@ export function AuditPackageWizard() {
               </div>
 
               <div className="mt-3 border-t border-border/60 pt-3">
-                <p className="mb-1.5 text-[13px] font-medium">Package includes</p>
-                <div className="text-[12px] leading-relaxed text-muted-foreground">
-                  {PACKAGE_INCLUDES.map((line) => (
-                    <div key={line}>{line}</div>
-                  ))}
-                </div>
+                <p className="mb-2 text-sm font-medium">Package includes</p>
+                <p className="mb-2.5 text-xs text-muted-foreground">
+                  Based on what you selected on the left. Unchecked sections are
+                  left out of the ZIP.
+                </p>
+                <ul className="space-y-2">
+                  {PACKAGE_INCLUDE_ITEMS.map((item) => {
+                    const included = selectedSections.has(item.id);
+                    return (
+                      <li
+                        key={item.id}
+                        className={cn(
+                          "flex gap-2.5 rounded-md px-2 py-1.5 transition-colors",
+                          included ? "bg-muted/40" : "opacity-45"
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full",
+                            included
+                              ? "bg-emerald-600 text-white"
+                              : "border border-border bg-background text-muted-foreground"
+                          )}
+                          aria-hidden
+                        >
+                          {included ? (
+                            <Check className="size-2.5" strokeWidth={3} />
+                          ) : (
+                            <Circle className="size-2" strokeWidth={2} />
+                          )}
+                        </span>
+                        <div className="min-w-0">
+                          <p
+                            className={cn(
+                              "text-sm font-medium leading-snug",
+                              !included && "text-muted-foreground"
+                            )}
+                          >
+                            {item.title}
+                            {!included ? (
+                              <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+                                (not selected)
+                              </span>
+                            ) : null}
+                          </p>
+                          <p className="text-xs leading-snug text-muted-foreground">
+                            {item.detail}
+                          </p>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
               </div>
             </div>
           </div>
@@ -716,8 +804,8 @@ export function AuditPackageWizard() {
           <div className="mx-auto mb-3.5 flex size-11 items-center justify-center rounded-full bg-emerald-50 text-emerald-800">
             <Download className="size-[22px]" strokeWidth={2} />
           </div>
-          <div className="mb-1 text-base font-medium">Building your audit package</div>
-          <div className="mb-4.5 text-[12.5px] text-muted-foreground">
+          <div className="mb-1 text-lg font-semibold tracking-tight">Building your audit package</div>
+          <div className="mb-4.5 text-sm text-muted-foreground">
             Gathering sections into a dated, organized ZIP.
           </div>
           <div className="mx-auto mb-2.5 h-1.5 w-[280px] overflow-hidden rounded-sm bg-muted">
@@ -726,7 +814,7 @@ export function AuditPackageWizard() {
               style={{ width: `${progressPercent}%` }}
             />
           </div>
-          <div className="mx-auto flex max-w-lg flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11.5px] text-muted-foreground">
+          <div className="mx-auto flex max-w-lg flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
             {steps.length === 0 ? (
               <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
                 <Loader2 className="size-3 animate-spin" />
@@ -757,19 +845,19 @@ export function AuditPackageWizard() {
           <div className="mx-auto mb-3.5 flex size-11 items-center justify-center rounded-full bg-[#EAF3DE] text-[#3B6D11]">
             <Check className="size-[22px]" strokeWidth={2.5} />
           </div>
-          <div className="mb-1 text-base font-medium">Audit package ready</div>
-          <div className="mx-auto mb-4.5 max-w-[440px] text-[12.5px] text-muted-foreground">
+          <div className="mb-1 text-lg font-semibold tracking-tight">Audit package ready</div>
+          <div className="mx-auto mb-4.5 max-w-xl text-sm text-muted-foreground">
             {packageSummary ||
-              "Evidence, policies, risk assessment, BAA inventory, training records, and audit log — packaged and timestamped."}
+              "Evidence, policies, risk assessment, BAA inventory, training records, and audit log, packaged and timestamped."}
           </div>
 
-          <div className="mx-auto mt-4 flex max-w-[340px] items-center gap-3 rounded-lg bg-muted/60 px-3.5 py-3 text-left">
+          <div className="mx-auto mt-4 flex max-w-md items-center gap-3 rounded-lg bg-muted/60 px-3.5 py-3 text-left">
             <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border bg-background text-muted-foreground">
               <Download className="size-[18px]" strokeWidth={1.8} />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="truncate text-[13px] font-medium">{zipName}</div>
-              <div className="mt-px text-[11px] text-muted-foreground">
+              <div className="truncate text-sm font-medium">{zipName}</div>
+              <div className="mt-px text-xs text-muted-foreground">
                 Generated{" "}
                 {completedAt
                   ? format(completedAt, "MMM d, yyyy · h:mm a")
@@ -792,14 +880,14 @@ export function AuditPackageWizard() {
           <div className="mt-5 flex flex-wrap justify-center gap-2">
             <Button
               variant="outline"
-              className="h-8 text-[12.5px]"
+              className="h-8 text-sm"
               onClick={resetToConfig}
             >
               Configure new export
             </Button>
             <Button
               variant="outline"
-              className="h-8 text-[12.5px]"
+              className="h-8 text-sm"
               onClick={() => setEmailOpen(true)}
             >
               Email to auditor
@@ -807,7 +895,7 @@ export function AuditPackageWizard() {
           </div>
 
           {emailSent ? (
-            <p className="mt-3 text-[12.5px] text-emerald-800">
+            <p className="mt-3 text-sm text-emerald-800">
               Signed download link emailed. Delivery logged for chain of custody.
             </p>
           ) : null}
@@ -848,7 +936,7 @@ export function AuditPackageWizard() {
             <DialogTitle>Email to auditor</DialogTitle>
             <DialogDescription>
               Sends a read-only signed download URL (expires in 15 minutes). No
-              file attachment — preserves chain of custody via audit log.
+              file attachment. Preserves chain of custody via audit log.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-2 py-2">

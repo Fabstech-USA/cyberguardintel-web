@@ -70,7 +70,7 @@ export function EvidenceTable({
                   Freshness
                   <HelpTip
                     label="About freshness"
-                    content="Freshness tracks whether evidence is still within its collection window. Stale means the window expired—auditors may flag it."
+                    content="Freshness tracks whether evidence is still within its collection window. Stale means the window expired. Auditors may flag it."
                   />
                 </span>
               </th>
