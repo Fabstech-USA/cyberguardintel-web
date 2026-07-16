@@ -11,7 +11,10 @@ type Props = {
 
 export function NextUpSection({ steps }: Props): React.JSX.Element {
   return (
-    <Card className="h-full border-border shadow-none">
+    <Card
+      data-tour="next-up-section"
+      className="h-full border-border shadow-none"
+    >
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-semibold">
           Next up: biggest impact first

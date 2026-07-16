@@ -191,11 +191,19 @@ export async function listEvidenceControlRefs(
 
 export async function listOrgControlsForEvidence(
   organizationId: string
-): Promise<Array<{ id: string; controlRef: string; controlTitle: string }>> {
+): Promise<
+  Array<{
+    id: string;
+    controlRef: string;
+    controlTitle: string;
+    ownerId: string | null;
+  }>
+> {
   const rows = await prisma.orgControl.findMany({
     where: { organizationId },
     select: {
       id: true,
+      ownerId: true,
       frameworkControl: {
         select: { controlRef: true, title: true },
       },
@@ -207,6 +215,7 @@ export async function listOrgControlsForEvidence(
     id: row.id,
     controlRef: row.frameworkControl.controlRef,
     controlTitle: row.frameworkControl.title,
+    ownerId: row.ownerId,
   }));
 }
 

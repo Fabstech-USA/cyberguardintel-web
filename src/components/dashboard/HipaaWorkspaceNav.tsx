@@ -34,6 +34,13 @@ const items: Item[] = [
       p === "/hipaa/policies" || p.startsWith("/hipaa/policies/"),
   },
   {
+    id: "controls",
+    href: "/hipaa/controls",
+    label: "Controls",
+    isActive: (p) =>
+      p === "/hipaa/controls" || p.startsWith("/hipaa/controls/"),
+  },
+  {
     id: "phi-flow",
     href: "/hipaa/phi-map",
     label: "PHI flow",
@@ -73,6 +80,7 @@ export function HipaaWorkspaceNav(): React.JSX.Element {
 
   return (
     <nav
+      data-tour="hipaa-workspace-nav"
       className="-mx-1 flex flex-wrap items-center gap-2 border-t border-border/70 px-1 pt-4"
       aria-label="HIPAA workspace"
     >
@@ -82,6 +90,7 @@ export function HipaaWorkspaceNav(): React.JSX.Element {
           <Link
             key={id}
             href={href}
+            data-tour={`workspace-${id}`}
             className={cn(
               "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
               active

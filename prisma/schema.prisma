@@ -184,6 +184,7 @@ model OrgMember {
   organizationId String
   role           OrgRole  @default(MEMBER)
   jobTitle       String?  // free-form role the user picked during onboarding (Compliance lead, etc.)
+  productTourCompletedAt DateTime? // null = product tour not finished
   createdAt      DateTime @default(now())
 
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)

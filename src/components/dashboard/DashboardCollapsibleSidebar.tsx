@@ -102,6 +102,7 @@ export function DashboardCollapsibleSidebar(): React.JSX.Element | null {
   const nav = (
     <nav
       id={DASHBOARD_SIDEBAR_NAV_ID}
+      data-tour="nav-sidebar"
       className="flex flex-1 flex-col gap-1 p-2 sm:p-3"
       aria-label="Main navigation"
     >
@@ -111,6 +112,7 @@ export function DashboardCollapsibleSidebar(): React.JSX.Element | null {
           <Link
             key={id}
             href={href}
+            data-tour={`nav-${id}`}
             title={sidebarCollapsed ? label : undefined}
             className={cn(
               "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",

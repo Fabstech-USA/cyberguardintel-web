@@ -328,3 +328,91 @@
     opacity: 0;
   }
 }
+
+/* Product tour (driver.js) — follow light/dark theme tokens.
+   Higher specificity beats driver.js hardcoded #fff / #2d2d2d defaults. */
+.driver-popover.cgi-product-tour-popover {
+  background-color: var(--popover) !important;
+  background: var(--popover) !important;
+  color: var(--popover-foreground) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 12px 40px oklch(0 0 0 / 28%) !important;
+  max-width: 22rem !important;
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif !important;
+}
+
+.driver-popover.cgi-product-tour-popover .driver-popover-title {
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  color: var(--foreground) !important;
+}
+
+.driver-popover.cgi-product-tour-popover .driver-popover-description {
+  font-size: 0.8125rem !important;
+  line-height: 1.45 !important;
+  color: var(--muted-foreground) !important;
+}
+
+.driver-popover.cgi-product-tour-popover .driver-popover-progress-text {
+  font-size: 0.75rem !important;
+  color: var(--muted-foreground) !important;
+}
+
+.driver-popover.cgi-product-tour-popover .driver-popover-navigation-btns {
+  gap: 0.5rem;
+}
+
+.driver-popover.cgi-product-tour-popover .driver-popover-prev-btn,
+.driver-popover.cgi-product-tour-popover .driver-popover-next-btn,
+.driver-popover.cgi-product-tour-popover .driver-popover-footer-btn {
+  border-radius: 0.5rem !important;
+  border: 1px solid var(--border) !important;
+  text-shadow: none !important;
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  padding: 0.35rem 0.75rem !important;
+  background-color: transparent !important;
+  color: var(--muted-foreground) !important;
+}
+
+.driver-popover.cgi-product-tour-popover .driver-popover-prev-btn:hover,
+.driver-popover.cgi-product-tour-popover .driver-popover-footer-btn:hover,
+.driver-popover.cgi-product-tour-popover .driver-popover-prev-btn:focus,
+.driver-popover.cgi-product-tour-popover .driver-popover-footer-btn:focus {
+  background-color: var(--muted) !important;
+  color: var(--foreground) !important;
+}
+
+.driver-popover.cgi-product-tour-popover .driver-popover-next-btn {
+  background-color: var(--brand) !important;
+  border-color: var(--brand) !important;
+  color: var(--brand-foreground) !important;
+}
+
+.driver-popover.cgi-product-tour-popover .driver-popover-next-btn:hover,
+.driver-popover.cgi-product-tour-popover .driver-popover-next-btn:focus {
+  background-color: var(--brand-hover) !important;
+  border-color: var(--brand-hover) !important;
+  color: var(--brand-foreground) !important;
+}
+
+.driver-popover.cgi-product-tour-popover .driver-popover-close-btn {
+  color: var(--muted-foreground) !important;
+}
+
+.driver-popover.cgi-product-tour-popover .driver-popover-close-btn:hover,
+.driver-popover.cgi-product-tour-popover .driver-popover-close-btn:focus {
+  color: var(--foreground) !important;
+}
+
+.driver-popover.cgi-product-tour-popover .driver-popover-arrow {
+  border-color: var(--popover) !important;
+}
+
+.driver-popover.cgi-product-tour-popover .driver-popover-arrow-side-left,
+.driver-popover.cgi-product-tour-popover .driver-popover-arrow-side-right,
+.driver-popover.cgi-product-tour-popover .driver-popover-arrow-side-top,
+.driver-popover.cgi-product-tour-popover .driver-popover-arrow-side-bottom {
+  border-color: var(--popover) !important;
+}

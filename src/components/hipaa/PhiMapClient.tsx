@@ -297,6 +297,7 @@ export function PhiMapClient({
             <Button
               type="button"
               variant="outline"
+              data-tour="phi-map-add-flow"
               onClick={() => {
                 setEditingFlowId(null);
                 setFlowDialogOpen(true);
@@ -306,6 +307,7 @@ export function PhiMapClient({
             </Button>
             <Button
               type="button"
+              data-tour="phi-map-add-system"
               onClick={() => {
                 setEditingSystemId(null);
                 setSystemDialogOpen(true);
@@ -315,7 +317,14 @@ export function PhiMapClient({
               Add system
             </Button>
           </div>
-        ) : null}
+        ) : (
+          <div
+            data-tour="phi-map-add-system"
+            className="text-muted-foreground shrink-0 text-sm"
+          >
+            PHI systems &amp; flows
+          </div>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-4 border-b border-border pb-3">

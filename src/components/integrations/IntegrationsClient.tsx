@@ -466,7 +466,7 @@ export function IntegrationsClient({
         </section>
       ) : null}
 
-      <section>
+      <section data-tour="integrations-catalog">
         <div className="mb-3">
           <h2 className="text-sm font-medium">
             Available{" "}
