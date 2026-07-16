@@ -10,6 +10,7 @@ export {
   computeExpiresAt,
   computeOverallReadinessScore,
   estimateEvidenceCoverageScoreGain,
+  estimateOwnerAssignmentScoreGain,
   estimatePolicyApprovalScoreGain,
   isEvidenceFresh,
   isFreshnessEvidenceType,

@@ -248,7 +248,10 @@ export function PolicyLibraryClient() {
           </p>
         </div>
         {data?.canManagePolicies ? (
-          <div className="flex shrink-0 flex-wrap gap-2">
+          <div
+            data-tour="policies-generate-cta"
+            className="flex shrink-0 flex-wrap gap-2"
+          >
             {missingCount > 0 && !allNotStarted ? (
               <Button
                 type="button"
@@ -284,7 +287,14 @@ export function PolicyLibraryClient() {
               Upload policy
             </Button>
           </div>
-        ) : null}
+        ) : (
+          <div
+            data-tour="policies-generate-cta"
+            className="text-muted-foreground shrink-0 text-sm"
+          >
+            Policy library
+          </div>
+        )}
       </div>
 
       {batchRunning && batchLabel ? (

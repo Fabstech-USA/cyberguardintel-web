@@ -1,5 +1,5 @@
 /**
- * Dashboard “Next up” queue — ordered by estimated readiness-score impact.
+ * Dashboard "Next up" queue ordered by estimated readiness score impact.
  * Point values come from the same formula as `recalculateHipaaScore`.
  */
 
@@ -7,6 +7,7 @@ import { BAA_EVIDENCE_CONTROL_REF } from "@/lib/baa-control-ref";
 import { HIPAA_POLICY_TARGET } from "@/lib/hipaa-policy-catalog";
 import {
   estimateEvidenceCoverageScoreGain,
+  estimateOwnerAssignmentScoreGain,
   estimatePolicyApprovalScoreGain,
   type ControlScoreSnapshot,
 } from "@/lib/hipaa-scoring-core";
@@ -18,7 +19,7 @@ export type DashboardNextStep = {
   subtitle: string;
   href: string;
   ctaLabel: string;
-  /** Estimated readiness points (0–100 scale). 0 = no score claim. */
+  /** Estimated readiness points (0 to 100 scale). 0 = no score claim. */
   estimatedPoints: number;
 };
 
@@ -97,8 +98,8 @@ export function buildDashboardNextSteps(
         subtitle: formatSubtitle(
           points,
           hasDrafts
-            ? `after approving ${approvalsTowardTarget} draft${approvalsTowardTarget === 1 ? "" : "s"} · about 10–20 min`
-            : `after approving new drafts · about 15–25 min`
+            ? `after approving ${approvalsTowardTarget} draft${approvalsTowardTarget === 1 ? "" : "s"} · about 10 to 20 min`
+            : `after approving new drafts · about 15 to 25 min`
         ),
         href: "/hipaa/policies",
         ctaLabel: hasDrafts ? "Review" : "Generate",
@@ -120,7 +121,7 @@ export function buildDashboardNextSteps(
         title: "Connect your first integration",
         subtitle: formatSubtitle(
           points,
-          "after first evidence sync · about 5–10 min"
+          "after first evidence sync · about 5 to 10 min"
         ),
         href: "/integrations",
         ctaLabel: "Connect",
@@ -151,7 +152,29 @@ export function buildDashboardNextSteps(
     }
   }
 
-  // Risk assessment does not feed the readiness formula today — keep it as an
+  const unownedCount = input.controls.filter((c) => !c.ownerId).length;
+  if (unownedCount > 0) {
+    const points = estimateOwnerAssignmentScoreGain(
+      input.controls,
+      input.approvedPolicyCount,
+      now
+    );
+    if (points > 0) {
+      candidates.push({
+        id: "control-owners",
+        title: "Assign control owners",
+        subtitle: formatSubtitle(
+          points,
+          `after assigning ${unownedCount} control${unownedCount === 1 ? "" : "s"} · about 5 to 10 min`
+        ),
+        href: "/hipaa/controls",
+        ctaLabel: "Assign",
+        estimatedPoints: points,
+      });
+    }
+  }
+
+  // Risk assessment does not feed the readiness formula today. Keep it as an
   // audit-prep nudge without claiming readiness points.
   if (!input.hasRiskAssessment) {
     candidates.push({

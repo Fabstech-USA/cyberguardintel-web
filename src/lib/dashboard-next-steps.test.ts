@@ -7,6 +7,7 @@ import {
 import {
   computeOverallReadinessScore,
   estimateEvidenceCoverageScoreGain,
+  estimateOwnerAssignmentScoreGain,
   estimatePolicyApprovalScoreGain,
   type ControlScoreSnapshot,
 } from "@/lib/hipaa-scoring-core";
@@ -74,6 +75,13 @@ describe("readiness score estimates", () => {
       )
     ).toBe(0);
   });
+
+  it("gains 10 points when assigning owners to all unowned controls from zero", () => {
+    const controls = emptyControls(10);
+    expect(estimateOwnerAssignmentScoreGain(controls, 0, now)).toBe(10);
+    const owned = controls.map((c) => ({ ...c, ownerId: "user_1" }));
+    expect(estimateOwnerAssignmentScoreGain(owned, 0, now)).toBe(0);
+  });
 });
 
 describe("buildDashboardNextSteps", () => {
@@ -106,6 +114,7 @@ describe("buildDashboardNextSteps", () => {
     expect(steps.some((s) => s.id === "policies")).toBe(true);
     expect(steps.some((s) => s.id === "integrations")).toBe(true);
     expect(steps.some((s) => s.id === "baa")).toBe(true);
+    expect(steps.some((s) => s.id === "control-owners")).toBe(true);
     expect(steps.find((s) => s.id === "risk-assessment")?.estimatedPoints).toBe(
       0
     );
@@ -134,9 +143,27 @@ describe("buildDashboardNextSteps", () => {
     expect(policies?.subtitle).toMatch(/\+/);
   });
 
+  it("surfaces assign control owners when unowned and points remain", () => {
+    const steps = buildDashboardNextSteps({
+      controls: emptyControls(8),
+      approvedPolicyCount: 18,
+      unapprovedPolicyCount: 0,
+      hasConnectedIntegration: true,
+      hasSignedBaa: true,
+      hasRiskAssessment: true,
+      now,
+    });
+
+    const owners = steps.find((s) => s.id === "control-owners");
+    expect(owners).toBeDefined();
+    expect(owners?.href).toBe("/hipaa/controls");
+    expect(owners?.ctaLabel).toBe("Assign");
+    expect(owners?.estimatedPoints).toBeGreaterThan(0);
+  });
+
   it("returns empty list when nothing meaningful remains", () => {
     const steps = buildDashboardNextSteps({
-      controls: emptyControls(3),
+      controls: emptyControls(3).map((c) => ({ ...c, ownerId: "user_1" })),
       approvedPolicyCount: 18,
       unapprovedPolicyCount: 0,
       hasConnectedIntegration: true,

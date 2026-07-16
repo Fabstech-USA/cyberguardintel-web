@@ -37,6 +37,7 @@
     "dagre": "^0.8.5",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.5",
+    "driver.js": "^1.7.0",
     "jszip": "^3.10.1",
     "lucide-react": "^1.7.0",
     "mammoth": "^1.12.0",

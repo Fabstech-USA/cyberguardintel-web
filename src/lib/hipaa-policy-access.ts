@@ -10,3 +10,8 @@ export function canManageHipaaPolicies(orgRole: string): boolean {
 export function canApproveHipaaPolicies(orgRole: string): boolean {
   return canManageHipaaPolicies(orgRole);
 }
+
+/** Owners and admins may assign or clear OrgControl owners. */
+export function canManageHipaaControls(orgRole: string): boolean {
+  return POLICY_MANAGER_ROLES.includes(orgRole as OrgRole);
+}

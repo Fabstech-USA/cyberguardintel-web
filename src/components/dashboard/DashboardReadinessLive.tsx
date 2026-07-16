@@ -46,7 +46,10 @@ export function DashboardReadinessLive({
   }, [fetchScore]);
 
   return (
-    <Card className="h-full border-border shadow-none">
+    <Card
+      data-tour="readiness-score"
+      className="h-full border-border shadow-none"
+    >
       <CardHeader className="pb-2">
         <CardTitle className="inline-flex items-center gap-1.5 text-base font-semibold">
           Readiness

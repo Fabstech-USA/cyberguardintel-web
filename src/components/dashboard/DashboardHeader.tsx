@@ -7,6 +7,7 @@ import { Menu } from "lucide-react";
 
 import { DASHBOARD_SIDEBAR_NAV_ID } from "@/components/dashboard/DashboardCollapsibleSidebar";
 import { useDashboardLayout } from "@/components/dashboard/dashboard-layout-context";
+import { ProductTourHelpMenu } from "@/components/product-tour/ProductTourHelpMenu";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -101,6 +102,7 @@ export function DashboardHeader({
             {planChipText}
           </Badge>
         ) : null}
+        {!isOnboarding ? <ProductTourHelpMenu /> : null}
         <ThemeToggle />
         <UserButton />
       </div>

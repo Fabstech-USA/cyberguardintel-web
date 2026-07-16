@@ -2,9 +2,13 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Loader2, Upload } from "lucide-react";
 
+import {
+  ControlOwnerSelect,
+  type ControlOwnerMember,
+} from "@/components/hipaa/ControlOwnerSelect";
 import { HelpTip } from "@/components/shared/HelpTip";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,17 +21,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { canManageHipaaControls } from "@/lib/hipaa-policy-access";
 
 type OrgControlOption = {
   id: string;
   controlRef: string;
   controlTitle: string;
+  ownerId: string | null;
 };
 
 export function EvidenceUploadClient() {
   const router = useRouter();
   const [orgControls, setOrgControls] = useState<OrgControlOption[]>([]);
+  const [members, setMembers] = useState<ControlOwnerMember[]>([]);
+  const [canManage, setCanManage] = useState(false);
   const [orgControlId, setOrgControlId] = useState("");
+  const [ownerId, setOwnerId] = useState<string | null>(null);
+  const [ownerSaving, setOwnerSaving] = useState(false);
+  const [ownerError, setOwnerError] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -37,17 +48,81 @@ export function EvidenceUploadClient() {
   useEffect(() => {
     void (async () => {
       try {
-        const res = await fetch("/api/evidence/controls");
-        if (!res.ok) return;
-        const body = (await res.json()) as { orgControls?: OrgControlOption[] };
-        const controls = body.orgControls ?? [];
-        setOrgControls(controls);
-        if (controls[0]) setOrgControlId(controls[0].id);
+        const [controlsRes, membersRes] = await Promise.all([
+          fetch("/api/evidence/controls"),
+          fetch("/api/settings/members"),
+        ]);
+        if (controlsRes.ok) {
+          const body = (await controlsRes.json()) as {
+            orgControls?: OrgControlOption[];
+          };
+          const controls = body.orgControls ?? [];
+          setOrgControls(controls);
+          if (controls[0]) {
+            setOrgControlId(controls[0].id);
+            setOwnerId(controls[0].ownerId);
+          }
+        }
+        if (membersRes.ok) {
+          const body = (await membersRes.json()) as {
+            members?: ControlOwnerMember[];
+            currentUserRole?: string;
+          };
+          setMembers(
+            (body.members ?? []).filter((m) => Boolean(m.clerkUserId))
+          );
+          setCanManage(canManageHipaaControls(body.currentUserRole ?? ""));
+        }
       } catch {
         /* best-effort */
       }
     })();
   }, []);
+
+  const selectedControl = useMemo(
+    () => orgControls.find((c) => c.id === orgControlId) ?? null,
+    [orgControls, orgControlId]
+  );
+
+  function handleControlChange(nextId: string): void {
+    setOrgControlId(nextId);
+    const next = orgControls.find((c) => c.id === nextId);
+    setOwnerId(next?.ownerId ?? null);
+    setOwnerError(null);
+  }
+
+  async function handleOwnerChange(nextOwnerId: string | null): Promise<void> {
+    if (!orgControlId) return;
+    const previous = ownerId;
+    setOwnerId(nextOwnerId);
+    setOwnerError(null);
+    setOwnerSaving(true);
+    try {
+      const res = await fetch(`/api/hipaa/controls/${orgControlId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ownerId: nextOwnerId }),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as {
+          error?: string;
+        };
+        throw new Error(body.error ?? "Could not update owner.");
+      }
+      setOrgControls((current) =>
+        current.map((c) =>
+          c.id === orgControlId ? { ...c, ownerId: nextOwnerId } : c
+        )
+      );
+    } catch (err) {
+      setOwnerId(previous);
+      setOwnerError(
+        err instanceof Error ? err.message : "Could not update owner."
+      );
+    } finally {
+      setOwnerSaving(false);
+    }
+  }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -117,19 +192,54 @@ export function EvidenceUploadClient() {
                 Control
                 <HelpTip content="Pick the HIPAA safeguard this file proves. The number (e.g. 164.312) is the regulation citation auditors look for." />
               </Label>
-              <Select value={orgControlId} onValueChange={setOrgControlId}>
+              <Select value={orgControlId} onValueChange={handleControlChange}>
                 <SelectTrigger id="orgControlId">
                   <SelectValue placeholder="Select control" />
                 </SelectTrigger>
                 <SelectContent>
                   {orgControls.map((control) => (
                     <SelectItem key={control.id} value={control.id}>
-                      {control.controlRef} — {control.controlTitle}
+                      {control.controlRef}: {control.controlTitle}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+
+            {selectedControl ? (
+              <div className="space-y-2">
+                <Label
+                  htmlFor="controlOwner"
+                  className="inline-flex items-center gap-1.5"
+                >
+                  Control owner
+                  <HelpTip content="Assign who is responsible for this control. Ownership contributes 10% of the control readiness score." />
+                </Label>
+                <div className="flex items-center gap-2">
+                  <ControlOwnerSelect
+                    id="controlOwner"
+                    value={ownerId}
+                    members={members}
+                    canManage={canManage}
+                    disabled={ownerSaving || !orgControlId}
+                    onChange={(next) => {
+                      void handleOwnerChange(next);
+                    }}
+                  />
+                  {ownerSaving ? (
+                    <Loader2
+                      className="size-3.5 shrink-0 animate-spin text-muted-foreground"
+                      aria-hidden
+                    />
+                  ) : null}
+                </div>
+                {ownerError ? (
+                  <p className="text-sm text-destructive" role="alert">
+                    {ownerError}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
 
             <div className="space-y-2">
               <Label htmlFor="title">Title</Label>

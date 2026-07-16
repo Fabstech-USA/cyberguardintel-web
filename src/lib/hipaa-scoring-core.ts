@@ -174,3 +174,33 @@ export function estimateEvidenceCoverageScoreGain(
   );
   return Math.max(0, Math.round((after - before) * 10) / 10);
 }
+
+/**
+ * Points gained if every currently unowned control gets an owner assigned.
+ */
+export function estimateOwnerAssignmentScoreGain(
+  controls: ReadonlyArray<ControlScoreSnapshot>,
+  approvedPolicyCount: number,
+  now: Date = new Date()
+): number {
+  if (controls.length === 0) return 0;
+  const unowned = controls.filter((c) => !c.ownerId);
+  if (unowned.length === 0) return 0;
+
+  const before = computeOverallReadinessScore(
+    controls,
+    approvedPolicyCount,
+    now
+  );
+  const projected = controls.map((control) =>
+    control.ownerId
+      ? control
+      : { ...control, ownerId: "synthetic-owner" }
+  );
+  const after = computeOverallReadinessScore(
+    projected,
+    approvedPolicyCount,
+    now
+  );
+  return Math.max(0, Math.round((after - before) * 10) / 10);
+}

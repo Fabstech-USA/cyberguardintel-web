@@ -64,6 +64,13 @@ export const GET = withTenant(async (_req, ctx) => {
       organizationId: ctx.organizationId,
       frameworkControlId: { in: controlIds },
     },
+    include: {
+      _count: {
+        select: {
+          evidence: { where: { isValid: true } },
+        },
+      },
+    },
   });
 
   const orgByFrameworkControlId = new Map(
@@ -82,7 +89,14 @@ export const GET = withTenant(async (_req, ctx) => {
         { status: 500 }
       );
     }
-    controls.push({ control, orgControl });
+    const { _count, ...orgControlFields } = orgControl;
+    controls.push({
+      control,
+      orgControl: {
+        ...orgControlFields,
+        validEvidenceCount: _count.evidence,
+      },
+    });
   }
 
   return Response.json({ framework, controls });

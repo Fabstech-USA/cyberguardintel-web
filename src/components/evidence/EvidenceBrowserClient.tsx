@@ -242,7 +242,7 @@ export function EvidenceBrowserClient() {
             </span>
           </Button>
           <Button asChild>
-            <Link href="/evidence/upload">
+            <Link href="/evidence/upload" data-tour="evidence-upload-cta">
               <Upload className="mr-2 size-4" />
               Upload evidence
             </Link>
