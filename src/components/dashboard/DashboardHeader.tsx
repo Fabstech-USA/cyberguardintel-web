@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useOrganization, UserButton } from "@clerk/nextjs";
 import { Menu } from "lucide-react";
 
+import { LogoMark } from "@/components/brand/LogoMark";
 import { DASHBOARD_SIDEBAR_NAV_ID } from "@/components/dashboard/DashboardCollapsibleSidebar";
 import { useDashboardLayout } from "@/components/dashboard/dashboard-layout-context";
 import { ProductTourHelpMenu } from "@/components/product-tour/ProductTourHelpMenu";
@@ -67,10 +68,10 @@ export function DashboardHeader({
       <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
         <Link
           href="/dashboard"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand text-sm font-bold text-brand-foreground transition-opacity hover:opacity-90"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-opacity hover:opacity-90"
           aria-label="CyberGuardIntel home"
         >
-          C
+          <LogoMark size={36} />
         </Link>
         {!isOnboarding ? (
           <button

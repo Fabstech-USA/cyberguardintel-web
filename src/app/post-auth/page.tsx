@@ -110,7 +110,7 @@ function PostAuthLoading(props?: { inviteRedirect?: boolean }) {
       <p className="max-w-sm text-xs text-muted-foreground">
         {inviteRedirect
           ? "You’ll finish accepting the invite on the next page. A quick verification step may appear — that’s Clerk protecting your organization."
-          : "Almost done — connecting your account to your organization."}
+          : "Almost done. Connecting your account to your organization."}
       </p>
     </div>
   );
@@ -131,11 +131,15 @@ function PostAuthGate() {
   const routed = useRef(false);
   const completeParamsStripped = useRef(false);
   const [stuck, setStuck] = useState(false);
-  const [inviteError, setInviteError] = useState<string | null>(null);
 
   const ticket = searchParams.get("__clerk_ticket");
   const inviteStatusRaw = searchParams.get("__clerk_status");
   const inviteStatus = parseInviteStatus(inviteStatusRaw);
+
+  const inviteError =
+    ticket && inviteStatusRaw !== null && inviteStatus === null
+      ? `This invitation link is invalid or expired (status: ${inviteStatusRaw}). Request a new invite or sign in.`
+      : null;
 
   useEffect(() => {
     if (typeof window === "undefined" || user?.id === undefined || user.id === "") return;
@@ -171,14 +175,6 @@ function PostAuthGate() {
   }, [authLoaded, isSignedIn, ticket, inviteStatusRaw, inviteStatus, router, searchParams]);
 
   useEffect(() => {
-    if (!ticket || inviteStatusRaw === null) return;
-    if (inviteStatus !== null) return;
-    setInviteError(
-      `This invitation link is invalid or expired (status: ${inviteStatusRaw}). Request a new invite or sign in.`,
-    );
-  }, [ticket, inviteStatusRaw, inviteStatus]);
-
-  useEffect(() => {
     if (completeParamsStripped.current) return;
     if (!ticket || inviteStatus !== "complete") return;
     completeParamsStripped.current = true;
@@ -187,8 +183,11 @@ function PostAuthGate() {
 
   const userMembershipsRef = useRef(userMemberships);
   const listLoadedRef = useRef(listLoaded);
-  userMembershipsRef.current = userMemberships;
-  listLoadedRef.current = listLoaded;
+
+  useEffect(() => {
+    userMembershipsRef.current = userMemberships;
+    listLoadedRef.current = listLoaded;
+  }, [userMemberships, listLoaded]);
 
   useEffect(() => {
     let cancelled = false;
@@ -212,8 +211,12 @@ function PostAuthGate() {
     if (!isSignedIn) {
       if (bumpBounces() >= MAX_BOUNCES) {
         routed.current = true;
-        setStuck(true);
-        return;
+        const timeoutId = window.setTimeout(() => {
+          setStuck(true);
+        }, 0);
+        return () => {
+          window.clearTimeout(timeoutId);
+        };
       }
 
       routed.current = true;
@@ -264,7 +267,7 @@ function PostAuthGate() {
         if (validIds.includes(orgId)) {
           routed.current = true;
           clearPendingOrgInviteMarkers();
-          router.replace("/dashboard");
+          window.location.assign("/dashboard");
           return;
         }
 
@@ -288,25 +291,32 @@ function PostAuthGate() {
       });
 
     function navigateToOnboarding(): void {
-      if (cancelled || routed.current) return;
+      if (routed.current) return;
       routed.current = true;
       clearPendingOrgInviteMarkers();
-      router.replace("/onboarding");
+      window.location.assign("/onboarding");
     }
 
     async function activateOrgAndDashboard(clerkOrganizationId: string): Promise<void> {
-      if (cancelled || routed.current) return;
+      if (routed.current) return;
       routed.current = true;
       clearPendingOrgInviteMarkers();
       try {
         if (setActive) {
-          await setActive({ organization: clerkOrganizationId });
+          await Promise.race([
+            setActive({ organization: clerkOrganizationId }),
+            new Promise<void>((resolve) => {
+              window.setTimeout(resolve, 8_000);
+            }),
+          ]);
         }
-      } finally {
-        if (!cancelled) {
-          router.replace("/dashboard");
-        }
+      } catch {
+        // Still send the user onward; dashboard / onboarding will re-check session.
       }
+      // Hard navigation survives Strict Mode cleanup (soft replace can be skipped when
+      // `cancelled` flips true after we already claimed `routed`) and clears the spinner
+      // even when the dashboard RSC is slow.
+      window.location.assign("/dashboard");
     }
 
     function tryClientMembershipOrgId(): string | null {
