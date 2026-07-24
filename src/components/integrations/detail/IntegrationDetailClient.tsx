@@ -11,6 +11,7 @@ import { EvidenceTab } from "@/components/integrations/detail/EvidenceTab";
 import { OverviewTab } from "@/components/integrations/detail/OverviewTab";
 import { SettingsTab } from "@/components/integrations/detail/SettingsTab";
 import { SyncHistoryTab } from "@/components/integrations/detail/SyncHistoryTab";
+import { IntegrationConnectLink } from "@/components/integrations/IntegrationConnectLink";
 import { IntegrationIcon } from "@/components/integrations/IntegrationIcon";
 import { Button } from "@/components/ui/button";
 import type { EvidenceListItem } from "@/lib/evidence-queries";
@@ -294,7 +295,9 @@ export function IntegrationDetailClient({
           </Button>
           {integration.reconnectHref ? (
             <Button variant="outline" size="sm" asChild>
-              <Link href={integration.reconnectHref}>Edit</Link>
+              <IntegrationConnectLink href={integration.reconnectHref}>
+                Edit
+              </IntegrationConnectLink>
             </Button>
           ) : null}
         </div>

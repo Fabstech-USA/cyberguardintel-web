@@ -16,9 +16,11 @@ export type CredentialFieldOption = {
 export type CredentialField = {
   key: string;
   label: string;
-  inputType?: "text" | "password";
+  inputType?: "text" | "password" | "textarea";
   placeholder?: string;
   defaultValue?: string;
+  /** When true, the connect form does not mark the field required. */
+  optional?: boolean;
   /** When set, render a select instead of a free-text input. */
   options?: CredentialFieldOption[];
 };
@@ -87,6 +89,176 @@ export const CREDENTIAL_FIELDS: Record<string, CredentialField[]> = {
       label: "Events API token",
       inputType: "password",
       placeholder: "Generated in 1Password Business → Integrations",
+    },
+  ],
+  digitalocean: [
+    {
+      key: "api_token",
+      label: "Personal access token",
+      inputType: "password",
+      placeholder: "dop_v1_...",
+    },
+  ],
+  cloudflare: [
+    {
+      key: "api_token",
+      label: "API token",
+      inputType: "password",
+    },
+    {
+      key: "account_id",
+      label: "Account ID",
+      placeholder: "From Cloudflare dashboard URL or Account home",
+    },
+  ],
+  datadog: [
+    { key: "api_key", label: "API key", inputType: "password" },
+    { key: "app_key", label: "Application key", inputType: "password" },
+    {
+      key: "site",
+      label: "Datadog site",
+      defaultValue: "datadoghq.com",
+      placeholder: "datadoghq.com or datadoghq.eu",
+    },
+  ],
+  twilio: [
+    {
+      key: "account_sid",
+      label: "Account SID",
+      placeholder: "ACxxxxxxxx",
+    },
+    { key: "auth_token", label: "Auth token", inputType: "password" },
+  ],
+  snyk: [
+    { key: "api_token", label: "API token", inputType: "password" },
+    {
+      key: "org_id",
+      label: "Organization ID (optional)",
+      placeholder: "Leave blank to use the first accessible org",
+    },
+  ],
+  jumpcloud: [
+    { key: "api_key", label: "API key", inputType: "password" },
+  ],
+  bamboohr: [
+    {
+      key: "subdomain",
+      label: "Company subdomain",
+      placeholder: "acme (from acme.bamboohr.com)",
+    },
+    { key: "api_key", label: "API key", inputType: "password" },
+  ],
+  backblaze: [
+    { key: "key_id", label: "Key ID" },
+    {
+      key: "application_key",
+      label: "Application key",
+      inputType: "password",
+    },
+  ],
+  gcp: [
+    {
+      key: "service_account_json",
+      label: "Service account JSON",
+      inputType: "textarea",
+      placeholder: "Paste the full service account key JSON",
+    },
+    {
+      key: "project_id",
+      label: "Project ID (optional)",
+      optional: true,
+      placeholder: "Defaults to project_id in the JSON key",
+    },
+  ],
+  onelogin: [
+    { key: "client_id", label: "Client ID" },
+    {
+      key: "client_secret",
+      label: "Client secret",
+      inputType: "password",
+    },
+    {
+      key: "region",
+      label: "Region",
+      defaultValue: "us",
+      options: [
+        { value: "us", label: "United States (us)" },
+        { value: "eu", label: "Europe (eu)" },
+      ],
+    },
+  ],
+  duo: [
+    { key: "integration_key", label: "Integration key (ikey)" },
+    {
+      key: "secret_key",
+      label: "Secret key (skey)",
+      inputType: "password",
+    },
+    {
+      key: "api_hostname",
+      label: "API hostname",
+      placeholder: "api-xxxxxxxx.duosecurity.com",
+    },
+  ],
+  crowdstrike: [
+    { key: "client_id", label: "Client ID" },
+    {
+      key: "client_secret",
+      label: "Client secret",
+      inputType: "password",
+    },
+    {
+      key: "base_url",
+      label: "API base URL",
+      defaultValue: "https://api.crowdstrike.com",
+      placeholder: "https://api.crowdstrike.com",
+    },
+  ],
+  tenable: [
+    { key: "access_key", label: "Access key", inputType: "password" },
+    { key: "secret_key", label: "Secret key", inputType: "password" },
+  ],
+  bitwarden: [
+    { key: "client_id", label: "Client ID" },
+    {
+      key: "client_secret",
+      label: "Client secret",
+      inputType: "password",
+    },
+    {
+      key: "server_url",
+      label: "Server URL (optional)",
+      optional: true,
+      defaultValue: "https://api.bitwarden.com",
+      placeholder: "https://api.bitwarden.com",
+    },
+  ],
+  lastpass: [
+    { key: "cid", label: "Company ID (CID)" },
+    {
+      key: "provhash",
+      label: "Provisioning hash",
+      inputType: "password",
+    },
+  ],
+  deel: [
+    {
+      key: "api_token",
+      label: "API token",
+      inputType: "password",
+    },
+  ],
+  doxy: [
+    {
+      key: "api_key",
+      label: "API key",
+      inputType: "password",
+    },
+    {
+      key: "clinic_slug",
+      label: "Clinic slug (optional)",
+      optional: true,
+      placeholder: "your-clinic",
     },
   ],
 };

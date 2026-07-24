@@ -59,6 +59,193 @@ const GUIDES: Record<string, CredentialSetupGuide> = {
     docsUrl: "https://developer.1password.com/docs/events-api/setup/",
     docsLabel: "1Password Events API setup",
   },
+  digitalocean: {
+    title: "How to create a DigitalOcean API token",
+    steps: [
+      "Sign in to the DigitalOcean control panel.",
+      "Open API in the left nav, then generate a new personal access token.",
+      "Grant read scopes only. CyberGuardIntel does not need write access.",
+      "Copy the token immediately and paste it below.",
+    ],
+    docsUrl: "https://docs.digitalocean.com/reference/api/create-personal-access-token/",
+    docsLabel: "DigitalOcean API token docs",
+  },
+  cloudflare: {
+    title: "How to create a Cloudflare API token",
+    steps: [
+      "Sign in to the Cloudflare dashboard and open My Profile, then API Tokens.",
+      "Create a token with read permissions for Zone settings, Zone WAF, and Account Audit Logs.",
+      "Copy the token and your Account ID from the account home overview.",
+      "Paste both values below.",
+    ],
+    docsUrl: "https://developers.cloudflare.com/fundamentals/api/get-started/create-token/",
+    docsLabel: "Cloudflare API token docs",
+  },
+  datadog: {
+    title: "How to create Datadog API and application keys",
+    steps: [
+      "Sign in to Datadog and open Organization Settings.",
+      "Create an API key under API Keys.",
+      "Create an application key under Application Keys with read access to monitors and logs.",
+      "If your org uses an EU or other regional site, set the site field (for example datadoghq.eu).",
+    ],
+    docsUrl: "https://docs.datadoghq.com/account_management/api-app-keys/",
+    docsLabel: "Datadog API and app keys",
+  },
+  twilio: {
+    title: "How to find your Twilio Account SID and Auth Token",
+    steps: [
+      "Sign in to the Twilio Console.",
+      "Open Account, then API keys and tokens (or the account dashboard).",
+      "Copy the Account SID and the Auth Token for this account.",
+      "Prefer a restricted API key with read permissions when available.",
+    ],
+    docsUrl: "https://www.twilio.com/docs/iam/api",
+    docsLabel: "Twilio API credentials",
+  },
+  snyk: {
+    title: "How to create a Snyk API token",
+    steps: [
+      "Sign in to Snyk and open Account Settings, then General.",
+      "Generate or copy your personal API token.",
+      "Optionally paste your Organization ID if you want evidence scoped to one org.",
+      "Use a service account token with read access when your plan supports it.",
+    ],
+    docsUrl: "https://docs.snyk.io/snyk-api/authentication-for-api",
+    docsLabel: "Snyk API authentication",
+  },
+  jumpcloud: {
+    title: "How to create a JumpCloud API key",
+    steps: [
+      "Sign in to the JumpCloud Admin Portal as an administrator.",
+      "Open your admin profile or API Settings and create an API key.",
+      "Grant read access to users and systems.",
+      "Copy the key and paste it below.",
+    ],
+    docsUrl: "https://docs.jumpcloud.com/api/1.0/authentication/",
+    docsLabel: "JumpCloud API authentication",
+  },
+  bamboohr: {
+    title: "How to create a BambooHR API key",
+    steps: [
+      "Sign in to BambooHR as an admin.",
+      "Open your user menu, then API Keys, and generate a new key.",
+      "Enter your company subdomain only (acme from acme.bamboohr.com).",
+      "Paste the API key below. Store a backup. Keys are often shown once.",
+    ],
+    docsUrl: "https://documentation.bamboohr.com/docs/getting-started",
+    docsLabel: "BambooHR API getting started",
+  },
+  backblaze: {
+    title: "How to create a Backblaze B2 application key",
+    steps: [
+      "Sign in to Backblaze and open App Keys under B2 Cloud Storage.",
+      "Create a new application key with read bucket and list file permissions.",
+      "Copy the keyID and applicationKey immediately.",
+      "Paste both values below.",
+    ],
+    docsUrl: "https://www.backblaze.com/apidocs/b2-create-key",
+    docsLabel: "Backblaze B2 application keys",
+  },
+  gcp: {
+    title: "How to create a Google Cloud service account key",
+    steps: [
+      "In Google Cloud Console, open IAM and Admin, then Service Accounts.",
+      "Create a dedicated service account for CyberGuardIntel evidence collection.",
+      "Grant read roles such as Viewer, Security Reviewer, Logging Viewer, and Cloud KMS Viewer.",
+      "Create a JSON key, download it, and paste the full JSON below.",
+    ],
+    docsUrl: "https://cloud.google.com/iam/docs/keys-create-delete",
+    docsLabel: "GCP service account keys",
+  },
+  onelogin: {
+    title: "How to create a OneLogin API credential",
+    steps: [
+      "Sign in to the OneLogin Admin portal.",
+      "Open Developers, then API Credentials, and create a new credential pair.",
+      "Choose a read-only scope that can list users and authentication factors.",
+      "Copy the client ID and client secret, then select your region (us or eu).",
+    ],
+    docsUrl: "https://developers.onelogin.com/api-docs/2/getting-started/working-with-api-credentials",
+    docsLabel: "OneLogin API credentials",
+  },
+  duo: {
+    title: "How to create Duo Admin API credentials",
+    steps: [
+      "Sign in to the Duo Admin Panel.",
+      "Open Applications and protect an Admin API application (or create one).",
+      "Copy the integration key, secret key, and API hostname.",
+      "Paste all three values below. Use read permissions only.",
+    ],
+    docsUrl: "https://duo.com/docs/adminapi",
+    docsLabel: "Duo Admin API",
+  },
+  crowdstrike: {
+    title: "How to create a CrowdStrike API client",
+    steps: [
+      "Sign in to the Falcon console and open Support and resources, then API clients and keys.",
+      "Create an API client with read scopes for Hosts and Detections (or Alerts).",
+      "Copy the client ID and client secret.",
+      "If you use a regional cloud, set the API base URL accordingly.",
+    ],
+    docsUrl: "https://falcon.crowdstrike.com/documentation/page/a2a7fc0e/crowdstrike-oauth2-based-apis",
+    docsLabel: "CrowdStrike OAuth2 APIs",
+  },
+  tenable: {
+    title: "How to create Tenable.io API keys",
+    steps: [
+      "Sign in to Tenable.io / Tenable Vulnerability Management.",
+      "Open your user profile, then API Keys, and generate access and secret keys.",
+      "Copy both keys immediately. They are shown only once.",
+      "Paste them below. Prefer a user with read-only vulnerability access.",
+    ],
+    docsUrl: "https://docs.tenable.com/vulnerability-management/Content/Settings/GenerateAPIKey.htm",
+    docsLabel: "Tenable API keys",
+  },
+  bitwarden: {
+    title: "How to create Bitwarden organization API credentials",
+    steps: [
+      "Sign in to the Bitwarden Admin Console for your organization.",
+      "Open Settings, then Organization info / API key, and view the organization API key.",
+      "Copy the client_id and client_secret.",
+      "Paste them below. Leave server URL blank for Bitwarden cloud.",
+    ],
+    docsUrl: "https://bitwarden.com/help/public-api/",
+    docsLabel: "Bitwarden Public API",
+  },
+  lastpass: {
+    title: "How to create a LastPass Enterprise provisioning hash",
+    steps: [
+      "Sign in to the LastPass Admin Console as a super admin.",
+      "Open Advanced, then Enterprise API (or Users / Provisioning depending on your console).",
+      "Generate or copy your company ID (CID) and provisioning hash.",
+      "Paste both values below.",
+    ],
+    docsUrl: "https://support.lastpass.com/help/use-the-lastpass-directory-integration-api",
+    docsLabel: "LastPass Enterprise API",
+  },
+  deel: {
+    title: "How to create a Deel API token",
+    steps: [
+      "Sign in to Deel and open App Store / Developer settings for API access.",
+      "Create an API token with read access to contracts and contractors.",
+      "Copy the token and paste it below.",
+      "Store a backup. Tokens may only be shown once.",
+    ],
+    docsUrl: "https://developer.deel.com/",
+    docsLabel: "Deel developer docs",
+  },
+  doxy: {
+    title: "How to create a Doxy.me API key",
+    steps: [
+      "Sign in to your Doxy.me clinic dashboard.",
+      "Open clinic settings or developer / API access for your plan.",
+      "Create an API key with read access to clinic configuration.",
+      "Optionally add your clinic slug, then paste the API key below.",
+    ],
+    docsUrl: "https://help.doxy.me/",
+    docsLabel: "Doxy.me help center",
+  },
 };
 
 const GENERIC_GUIDE: CredentialSetupGuide = {

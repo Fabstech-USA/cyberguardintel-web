@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { Shield } from "lucide-react";
 
+import { IntegrationConnectLink } from "@/components/integrations/IntegrationConnectLink";
 import { Button } from "@/components/ui/button";
 import type { IntegrationDetailDto } from "@/lib/integration-detail-queries";
 import { cn } from "@/lib/utils";
@@ -68,7 +68,9 @@ export function SettingsTab({
           </div>
           {integration.reconnectHref ? (
             <Button variant="outline" size="sm" className="h-8 text-[11.5px]" asChild>
-              <Link href={integration.reconnectHref}>Rotate credentials</Link>
+              <IntegrationConnectLink href={integration.reconnectHref}>
+                Rotate credentials
+              </IntegrationConnectLink>
             </Button>
           ) : null}
         </div>

@@ -8,6 +8,7 @@ import { useState } from "react";
 import { PlanLimitUpgradePrompt } from "@/components/integrations/PlanLimitUpgradePrompt";
 import { EvidenceCollectedBulletin } from "@/components/integrations/EvidenceCollectedBulletin";
 import { CredentialSetupGuidePanel } from "@/components/integrations/CredentialSetupGuidePanel";
+import { IntegrationConnectLink } from "@/components/integrations/IntegrationConnectLink";
 import { HelpTip } from "@/components/shared/HelpTip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -198,9 +199,9 @@ export default function ConnectIntegrationPage() {
           <EvidenceCollectedBulletin items={evidenceItems} />
           {entry.connectable ? (
             <Button asChild>
-              <Link href={getConnectHref(entry)}>
+              <IntegrationConnectLink href={getConnectHref(entry)}>
                 Connect with {entry.name}
-              </Link>
+              </IntegrationConnectLink>
             </Button>
           ) : (
             <Button disabled>Coming soon</Button>
@@ -263,7 +264,7 @@ export default function ConnectIntegrationPage() {
                       [field.key]: value,
                     }))
                   }
-                  required
+                  required={!field.optional}
                 >
                   <SelectTrigger id={`cred-${field.key}`} className="w-full">
                     <SelectValue placeholder={`Select ${field.label.toLowerCase()}`} />
@@ -276,6 +277,22 @@ export default function ConnectIntegrationPage() {
                     ))}
                   </SelectContent>
                 </Select>
+              ) : field.inputType === "textarea" ? (
+                <textarea
+                  id={`cred-${field.key}`}
+                  value={values[field.key] ?? ""}
+                  placeholder={field.placeholder}
+                  onChange={(event) =>
+                    setValues((prev) => ({
+                      ...prev,
+                      [field.key]: event.target.value,
+                    }))
+                  }
+                  required={!field.optional}
+                  autoComplete="off"
+                  rows={8}
+                  className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[120px] w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                />
               ) : (
                 <Input
                   id={`cred-${field.key}`}
@@ -288,7 +305,7 @@ export default function ConnectIntegrationPage() {
                       [field.key]: event.target.value,
                     }))
                   }
-                  required
+                  required={!field.optional}
                   autoComplete="off"
                 />
               )}

@@ -46,10 +46,13 @@ describe("integrations route validation", () => {
 
   it("rejects non-connectable integrations", () => {
     const result = validateConnectIntegrationBody({
-      type: "gcp",
+      type: "azure",
       credentials: { key: "value" },
     });
     expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toContain("not connectable");
+    }
   });
 
   it("accepts demo aws with iam credentials when demo is enabled", () => {
