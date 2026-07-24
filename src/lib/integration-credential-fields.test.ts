@@ -24,6 +24,40 @@ describe("integration credential fields", () => {
     expect(fields.map((f) => f.key)).toEqual(["api_token"]);
   });
 
+  it("defines Batch 1 non-OAuth fields matching Python connector keys", () => {
+    expect(getCredentialFields("digitalocean").map((f) => f.key)).toEqual([
+      "api_token",
+    ]);
+    expect(getCredentialFields("cloudflare").map((f) => f.key)).toEqual([
+      "api_token",
+      "account_id",
+    ]);
+    expect(getCredentialFields("datadog").map((f) => f.key)).toEqual([
+      "api_key",
+      "app_key",
+      "site",
+    ]);
+    expect(getCredentialFields("twilio").map((f) => f.key)).toEqual([
+      "account_sid",
+      "auth_token",
+    ]);
+    expect(getCredentialFields("snyk").map((f) => f.key)).toEqual([
+      "api_token",
+      "org_id",
+    ]);
+    expect(getCredentialFields("jumpcloud").map((f) => f.key)).toEqual([
+      "api_key",
+    ]);
+    expect(getCredentialFields("bamboohr").map((f) => f.key)).toEqual([
+      "subdomain",
+      "api_key",
+    ]);
+    expect(getCredentialFields("backblaze").map((f) => f.key)).toEqual([
+      "key_id",
+      "application_key",
+    ]);
+  });
+
   it("falls back to generic key/secret fields", () => {
     const fields = getCredentialFields("unknown-type");
     expect(fields.map((f) => f.key)).toEqual(["api_key", "api_secret"]);

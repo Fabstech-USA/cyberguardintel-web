@@ -50,6 +50,13 @@ describe("google-workspace integration helpers", () => {
     );
   });
 
+  it("falls back to ENCRYPTION_KEY when OAUTH_STATE_SECRET is empty", () => {
+    process.env.OAUTH_STATE_SECRET = "";
+    process.env.ENCRYPTION_KEY = TEST_SECRET;
+    const state = createOAuthState("org-456");
+    expect(parseOAuthState(state)?.organizationId).toBe("org-456");
+  });
+
   it("parseOAuthState rejects tampered signatures", () => {
     const state = createOAuthState("org-123");
     const tampered = `${state}x`;

@@ -8,6 +8,7 @@ import { useState } from "react";
 import { PlanLimitUpgradePrompt } from "@/components/integrations/PlanLimitUpgradePrompt";
 import { EvidenceCollectedBulletin } from "@/components/integrations/EvidenceCollectedBulletin";
 import { CredentialSetupGuidePanel } from "@/components/integrations/CredentialSetupGuidePanel";
+import { IntegrationConnectLink } from "@/components/integrations/IntegrationConnectLink";
 import { HelpTip } from "@/components/shared/HelpTip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -198,9 +199,9 @@ export default function ConnectIntegrationPage() {
           <EvidenceCollectedBulletin items={evidenceItems} />
           {entry.connectable ? (
             <Button asChild>
-              <Link href={getConnectHref(entry)}>
+              <IntegrationConnectLink href={getConnectHref(entry)}>
                 Connect with {entry.name}
-              </Link>
+              </IntegrationConnectLink>
             </Button>
           ) : (
             <Button disabled>Coming soon</Button>

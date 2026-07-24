@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import type { IntegrationStatus } from "@/generated/prisma";
+import { IntegrationConnectLink } from "@/components/integrations/IntegrationConnectLink";
 import { IntegrationIcon } from "@/components/integrations/IntegrationIcon";
 import { Button } from "@/components/ui/button";
 import type { IntegrationPublicDto } from "@/lib/integration-api";
@@ -137,7 +138,9 @@ export function ConnectedIntegrationRow({
             className="h-8 border-emerald-600 px-3 text-[11.5px] text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 dark:border-emerald-500 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
             asChild
           >
-            <Link href={reconnectHref}>Reconnect</Link>
+            <IntegrationConnectLink href={reconnectHref}>
+              Reconnect
+            </IntegrationConnectLink>
           </Button>
         ) : (
           <Button

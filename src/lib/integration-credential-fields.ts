@@ -89,6 +89,71 @@ export const CREDENTIAL_FIELDS: Record<string, CredentialField[]> = {
       placeholder: "Generated in 1Password Business → Integrations",
     },
   ],
+  digitalocean: [
+    {
+      key: "api_token",
+      label: "Personal access token",
+      inputType: "password",
+      placeholder: "dop_v1_...",
+    },
+  ],
+  cloudflare: [
+    {
+      key: "api_token",
+      label: "API token",
+      inputType: "password",
+    },
+    {
+      key: "account_id",
+      label: "Account ID",
+      placeholder: "From Cloudflare dashboard URL or Account home",
+    },
+  ],
+  datadog: [
+    { key: "api_key", label: "API key", inputType: "password" },
+    { key: "app_key", label: "Application key", inputType: "password" },
+    {
+      key: "site",
+      label: "Datadog site",
+      defaultValue: "datadoghq.com",
+      placeholder: "datadoghq.com or datadoghq.eu",
+    },
+  ],
+  twilio: [
+    {
+      key: "account_sid",
+      label: "Account SID",
+      placeholder: "ACxxxxxxxx",
+    },
+    { key: "auth_token", label: "Auth token", inputType: "password" },
+  ],
+  snyk: [
+    { key: "api_token", label: "API token", inputType: "password" },
+    {
+      key: "org_id",
+      label: "Organization ID (optional)",
+      placeholder: "Leave blank to use the first accessible org",
+    },
+  ],
+  jumpcloud: [
+    { key: "api_key", label: "API key", inputType: "password" },
+  ],
+  bamboohr: [
+    {
+      key: "subdomain",
+      label: "Company subdomain",
+      placeholder: "acme (from acme.bamboohr.com)",
+    },
+    { key: "api_key", label: "API key", inputType: "password" },
+  ],
+  backblaze: [
+    { key: "key_id", label: "Key ID" },
+    {
+      key: "application_key",
+      label: "Application key",
+      inputType: "password",
+    },
+  ],
 };
 
 export function getCredentialFields(type: string): CredentialField[] {

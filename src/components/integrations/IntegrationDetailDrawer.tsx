@@ -1,13 +1,16 @@
 "use client";
 
-import Link from "next/link";
 import { Check } from "lucide-react";
 
+import { CredentialSetupGuidePanel } from "@/components/integrations/CredentialSetupGuidePanel";
+import { EvidenceCollectedBulletin } from "@/components/integrations/EvidenceCollectedBulletin";
+import { IntegrationConnectLink } from "@/components/integrations/IntegrationConnectLink";
 import { IntegrationIcon } from "@/components/integrations/IntegrationIcon";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -22,8 +25,6 @@ import { getCredentialSetupGuideOrDefault } from "@/lib/integration-credential-g
 import { getEvidenceCollected } from "@/lib/integration-evidence";
 import { toIconTarget } from "@/lib/integration-icons";
 import { cn } from "@/lib/utils";
-import { CredentialSetupGuidePanel } from "@/components/integrations/CredentialSetupGuidePanel";
-import { EvidenceCollectedBulletin } from "@/components/integrations/EvidenceCollectedBulletin";
 
 type IntegrationDetailDrawerProps = {
   entry: IntegrationCatalogEntry | null;
@@ -60,9 +61,9 @@ export function IntegrationDetailDrawer({
             <IntegrationIcon target={toIconTarget(entry)} size="lg" />
             <div>
               <DialogTitle>{entry.name}</DialogTitle>
-              <p className="text-xs text-muted-foreground">
+              <DialogDescription className="text-xs text-muted-foreground">
                 {getCategoryLabel(entry.category)} · {entry.authMethod}
-              </p>
+              </DialogDescription>
             </div>
           </div>
         </DialogHeader>
@@ -121,9 +122,12 @@ export function IntegrationDetailDrawer({
           </Button>
           {entry.connectable ? (
             <Button className="flex-1" asChild>
-              <Link href={connectHref} onClick={() => onOpenChange(false)}>
+              <IntegrationConnectLink
+                href={connectHref}
+                onClick={() => onOpenChange(false)}
+              >
                 Continue with {entry.authMethod} →
-              </Link>
+              </IntegrationConnectLink>
             </Button>
           ) : (
             <Button className="flex-1" disabled>

@@ -27,7 +27,11 @@ export type GoogleWorkspaceOAuthState = {
 };
 
 function oauthStateSecret(): string {
-  return process.env.OAUTH_STATE_SECRET ?? process.env.ENCRYPTION_KEY ?? "";
+  const explicit = process.env.OAUTH_STATE_SECRET?.trim();
+  if (explicit) return explicit;
+  const encryptionKey = process.env.ENCRYPTION_KEY?.trim();
+  if (encryptionKey) return encryptionKey;
+  return "";
 }
 
 function signPayload(payload: string): string {

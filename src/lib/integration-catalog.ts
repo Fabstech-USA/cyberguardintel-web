@@ -53,6 +53,14 @@ export const CONNECTABLE_INTEGRATION_IDS = new Set([
   "dropbox",
   "box",
   "1password",
+  "digitalocean",
+  "cloudflare",
+  "datadog",
+  "twilio",
+  "snyk",
+  "jumpcloud",
+  "bamboohr",
+  "backblaze",
 ]);
 
 const DEFAULT_PERMISSIONS = (name: string): string[] => [

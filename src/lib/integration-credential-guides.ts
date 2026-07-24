@@ -59,6 +59,94 @@ const GUIDES: Record<string, CredentialSetupGuide> = {
     docsUrl: "https://developer.1password.com/docs/events-api/setup/",
     docsLabel: "1Password Events API setup",
   },
+  digitalocean: {
+    title: "How to create a DigitalOcean API token",
+    steps: [
+      "Sign in to the DigitalOcean control panel.",
+      "Open API in the left nav, then generate a new personal access token.",
+      "Grant read scopes only. CyberGuardIntel does not need write access.",
+      "Copy the token immediately and paste it below.",
+    ],
+    docsUrl: "https://docs.digitalocean.com/reference/api/create-personal-access-token/",
+    docsLabel: "DigitalOcean API token docs",
+  },
+  cloudflare: {
+    title: "How to create a Cloudflare API token",
+    steps: [
+      "Sign in to the Cloudflare dashboard and open My Profile, then API Tokens.",
+      "Create a token with read permissions for Zone settings, Zone WAF, and Account Audit Logs.",
+      "Copy the token and your Account ID from the account home overview.",
+      "Paste both values below.",
+    ],
+    docsUrl: "https://developers.cloudflare.com/fundamentals/api/get-started/create-token/",
+    docsLabel: "Cloudflare API token docs",
+  },
+  datadog: {
+    title: "How to create Datadog API and application keys",
+    steps: [
+      "Sign in to Datadog and open Organization Settings.",
+      "Create an API key under API Keys.",
+      "Create an application key under Application Keys with read access to monitors and logs.",
+      "If your org uses an EU or other regional site, set the site field (for example datadoghq.eu).",
+    ],
+    docsUrl: "https://docs.datadoghq.com/account_management/api-app-keys/",
+    docsLabel: "Datadog API and app keys",
+  },
+  twilio: {
+    title: "How to find your Twilio Account SID and Auth Token",
+    steps: [
+      "Sign in to the Twilio Console.",
+      "Open Account, then API keys and tokens (or the account dashboard).",
+      "Copy the Account SID and the Auth Token for this account.",
+      "Prefer a restricted API key with read permissions when available.",
+    ],
+    docsUrl: "https://www.twilio.com/docs/iam/api",
+    docsLabel: "Twilio API credentials",
+  },
+  snyk: {
+    title: "How to create a Snyk API token",
+    steps: [
+      "Sign in to Snyk and open Account Settings, then General.",
+      "Generate or copy your personal API token.",
+      "Optionally paste your Organization ID if you want evidence scoped to one org.",
+      "Use a service account token with read access when your plan supports it.",
+    ],
+    docsUrl: "https://docs.snyk.io/snyk-api/authentication-for-api",
+    docsLabel: "Snyk API authentication",
+  },
+  jumpcloud: {
+    title: "How to create a JumpCloud API key",
+    steps: [
+      "Sign in to the JumpCloud Admin Portal as an administrator.",
+      "Open your admin profile or API Settings and create an API key.",
+      "Grant read access to users and systems.",
+      "Copy the key and paste it below.",
+    ],
+    docsUrl: "https://docs.jumpcloud.com/api/1.0/authentication/",
+    docsLabel: "JumpCloud API authentication",
+  },
+  bamboohr: {
+    title: "How to create a BambooHR API key",
+    steps: [
+      "Sign in to BambooHR as an admin.",
+      "Open your user menu, then API Keys, and generate a new key.",
+      "Enter your company subdomain only (acme from acme.bamboohr.com).",
+      "Paste the API key below. Store a backup. Keys are often shown once.",
+    ],
+    docsUrl: "https://documentation.bamboohr.com/docs/getting-started",
+    docsLabel: "BambooHR API getting started",
+  },
+  backblaze: {
+    title: "How to create a Backblaze B2 application key",
+    steps: [
+      "Sign in to Backblaze and open App Keys under B2 Cloud Storage.",
+      "Create a new application key with read bucket and list file permissions.",
+      "Copy the keyID and applicationKey immediately.",
+      "Paste both values below.",
+    ],
+    docsUrl: "https://www.backblaze.com/apidocs/b2-create-key",
+    docsLabel: "Backblaze B2 application keys",
+  },
 };
 
 const GENERIC_GUIDE: CredentialSetupGuide = {
