@@ -131,11 +131,15 @@ function PostAuthGate() {
   const routed = useRef(false);
   const completeParamsStripped = useRef(false);
   const [stuck, setStuck] = useState(false);
-  const [inviteError, setInviteError] = useState<string | null>(null);
 
   const ticket = searchParams.get("__clerk_ticket");
   const inviteStatusRaw = searchParams.get("__clerk_status");
   const inviteStatus = parseInviteStatus(inviteStatusRaw);
+
+  const inviteError =
+    ticket && inviteStatusRaw !== null && inviteStatus === null
+      ? `This invitation link is invalid or expired (status: ${inviteStatusRaw}). Request a new invite or sign in.`
+      : null;
 
   useEffect(() => {
     if (typeof window === "undefined" || user?.id === undefined || user.id === "") return;
@@ -169,14 +173,6 @@ function PostAuthGate() {
       window.location.replace(href);
     }
   }, [authLoaded, isSignedIn, ticket, inviteStatusRaw, inviteStatus, router, searchParams]);
-
-  useEffect(() => {
-    if (!ticket || inviteStatusRaw === null) return;
-    if (inviteStatus !== null) return;
-    setInviteError(
-      `This invitation link is invalid or expired (status: ${inviteStatusRaw}). Request a new invite or sign in.`,
-    );
-  }, [ticket, inviteStatusRaw, inviteStatus]);
 
   useEffect(() => {
     if (completeParamsStripped.current) return;
@@ -215,8 +211,12 @@ function PostAuthGate() {
     if (!isSignedIn) {
       if (bumpBounces() >= MAX_BOUNCES) {
         routed.current = true;
-        setStuck(true);
-        return;
+        const timeoutId = window.setTimeout(() => {
+          setStuck(true);
+        }, 0);
+        return () => {
+          window.clearTimeout(timeoutId);
+        };
       }
 
       routed.current = true;
