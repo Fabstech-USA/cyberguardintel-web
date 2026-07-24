@@ -147,6 +147,105 @@ const GUIDES: Record<string, CredentialSetupGuide> = {
     docsUrl: "https://www.backblaze.com/apidocs/b2-create-key",
     docsLabel: "Backblaze B2 application keys",
   },
+  gcp: {
+    title: "How to create a Google Cloud service account key",
+    steps: [
+      "In Google Cloud Console, open IAM and Admin, then Service Accounts.",
+      "Create a dedicated service account for CyberGuardIntel evidence collection.",
+      "Grant read roles such as Viewer, Security Reviewer, Logging Viewer, and Cloud KMS Viewer.",
+      "Create a JSON key, download it, and paste the full JSON below.",
+    ],
+    docsUrl: "https://cloud.google.com/iam/docs/keys-create-delete",
+    docsLabel: "GCP service account keys",
+  },
+  onelogin: {
+    title: "How to create a OneLogin API credential",
+    steps: [
+      "Sign in to the OneLogin Admin portal.",
+      "Open Developers, then API Credentials, and create a new credential pair.",
+      "Choose a read-only scope that can list users and authentication factors.",
+      "Copy the client ID and client secret, then select your region (us or eu).",
+    ],
+    docsUrl: "https://developers.onelogin.com/api-docs/2/getting-started/working-with-api-credentials",
+    docsLabel: "OneLogin API credentials",
+  },
+  duo: {
+    title: "How to create Duo Admin API credentials",
+    steps: [
+      "Sign in to the Duo Admin Panel.",
+      "Open Applications and protect an Admin API application (or create one).",
+      "Copy the integration key, secret key, and API hostname.",
+      "Paste all three values below. Use read permissions only.",
+    ],
+    docsUrl: "https://duo.com/docs/adminapi",
+    docsLabel: "Duo Admin API",
+  },
+  crowdstrike: {
+    title: "How to create a CrowdStrike API client",
+    steps: [
+      "Sign in to the Falcon console and open Support and resources, then API clients and keys.",
+      "Create an API client with read scopes for Hosts and Detections (or Alerts).",
+      "Copy the client ID and client secret.",
+      "If you use a regional cloud, set the API base URL accordingly.",
+    ],
+    docsUrl: "https://falcon.crowdstrike.com/documentation/page/a2a7fc0e/crowdstrike-oauth2-based-apis",
+    docsLabel: "CrowdStrike OAuth2 APIs",
+  },
+  tenable: {
+    title: "How to create Tenable.io API keys",
+    steps: [
+      "Sign in to Tenable.io / Tenable Vulnerability Management.",
+      "Open your user profile, then API Keys, and generate access and secret keys.",
+      "Copy both keys immediately. They are shown only once.",
+      "Paste them below. Prefer a user with read-only vulnerability access.",
+    ],
+    docsUrl: "https://docs.tenable.com/vulnerability-management/Content/Settings/GenerateAPIKey.htm",
+    docsLabel: "Tenable API keys",
+  },
+  bitwarden: {
+    title: "How to create Bitwarden organization API credentials",
+    steps: [
+      "Sign in to the Bitwarden Admin Console for your organization.",
+      "Open Settings, then Organization info / API key, and view the organization API key.",
+      "Copy the client_id and client_secret.",
+      "Paste them below. Leave server URL blank for Bitwarden cloud.",
+    ],
+    docsUrl: "https://bitwarden.com/help/public-api/",
+    docsLabel: "Bitwarden Public API",
+  },
+  lastpass: {
+    title: "How to create a LastPass Enterprise provisioning hash",
+    steps: [
+      "Sign in to the LastPass Admin Console as a super admin.",
+      "Open Advanced, then Enterprise API (or Users / Provisioning depending on your console).",
+      "Generate or copy your company ID (CID) and provisioning hash.",
+      "Paste both values below.",
+    ],
+    docsUrl: "https://support.lastpass.com/help/use-the-lastpass-directory-integration-api",
+    docsLabel: "LastPass Enterprise API",
+  },
+  deel: {
+    title: "How to create a Deel API token",
+    steps: [
+      "Sign in to Deel and open App Store / Developer settings for API access.",
+      "Create an API token with read access to contracts and contractors.",
+      "Copy the token and paste it below.",
+      "Store a backup. Tokens may only be shown once.",
+    ],
+    docsUrl: "https://developer.deel.com/",
+    docsLabel: "Deel developer docs",
+  },
+  doxy: {
+    title: "How to create a Doxy.me API key",
+    steps: [
+      "Sign in to your Doxy.me clinic dashboard.",
+      "Open clinic settings or developer / API access for your plan.",
+      "Create an API key with read access to clinic configuration.",
+      "Optionally add your clinic slug, then paste the API key below.",
+    ],
+    docsUrl: "https://help.doxy.me/",
+    docsLabel: "Doxy.me help center",
+  },
 };
 
 const GENERIC_GUIDE: CredentialSetupGuide = {

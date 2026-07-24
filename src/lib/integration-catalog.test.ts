@@ -42,6 +42,23 @@ describe("integration catalog", () => {
     }
   });
 
+  it("marks Batch 2 non-OAuth integrations as connectable", () => {
+    const batch2Ids = [
+      "gcp",
+      "onelogin",
+      "duo",
+      "crowdstrike",
+      "tenable",
+      "bitwarden",
+      "lastpass",
+      "deel",
+      "doxy",
+    ];
+    for (const id of batch2Ids) {
+      expect(getCatalogEntry(id)?.connectable, id).toBe(true);
+    }
+  });
+
   it("searches by HIPAA control reference", () => {
     const aws = getCatalogEntry("aws");
     expect(aws).toBeDefined();

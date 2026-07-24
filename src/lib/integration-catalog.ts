@@ -61,6 +61,15 @@ export const CONNECTABLE_INTEGRATION_IDS = new Set([
   "jumpcloud",
   "bamboohr",
   "backblaze",
+  "gcp",
+  "onelogin",
+  "duo",
+  "crowdstrike",
+  "tenable",
+  "bitwarden",
+  "lastpass",
+  "deel",
+  "doxy",
 ]);
 
 const DEFAULT_PERMISSIONS = (name: string): string[] => [
