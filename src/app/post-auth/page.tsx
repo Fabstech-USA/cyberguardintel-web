@@ -110,7 +110,7 @@ function PostAuthLoading(props?: { inviteRedirect?: boolean }) {
       <p className="max-w-sm text-xs text-muted-foreground">
         {inviteRedirect
           ? "You’ll finish accepting the invite on the next page. A quick verification step may appear — that’s Clerk protecting your organization."
-          : "Almost done — connecting your account to your organization."}
+          : "Almost done. Connecting your account to your organization."}
       </p>
     </div>
   );
@@ -187,8 +187,11 @@ function PostAuthGate() {
 
   const userMembershipsRef = useRef(userMemberships);
   const listLoadedRef = useRef(listLoaded);
-  userMembershipsRef.current = userMemberships;
-  listLoadedRef.current = listLoaded;
+
+  useEffect(() => {
+    userMembershipsRef.current = userMemberships;
+    listLoadedRef.current = listLoaded;
+  }, [userMemberships, listLoaded]);
 
   useEffect(() => {
     let cancelled = false;
@@ -264,7 +267,7 @@ function PostAuthGate() {
         if (validIds.includes(orgId)) {
           routed.current = true;
           clearPendingOrgInviteMarkers();
-          router.replace("/dashboard");
+          window.location.assign("/dashboard");
           return;
         }
 
@@ -288,25 +291,32 @@ function PostAuthGate() {
       });
 
     function navigateToOnboarding(): void {
-      if (cancelled || routed.current) return;
+      if (routed.current) return;
       routed.current = true;
       clearPendingOrgInviteMarkers();
-      router.replace("/onboarding");
+      window.location.assign("/onboarding");
     }
 
     async function activateOrgAndDashboard(clerkOrganizationId: string): Promise<void> {
-      if (cancelled || routed.current) return;
+      if (routed.current) return;
       routed.current = true;
       clearPendingOrgInviteMarkers();
       try {
         if (setActive) {
-          await setActive({ organization: clerkOrganizationId });
+          await Promise.race([
+            setActive({ organization: clerkOrganizationId }),
+            new Promise<void>((resolve) => {
+              window.setTimeout(resolve, 8_000);
+            }),
+          ]);
         }
-      } finally {
-        if (!cancelled) {
-          router.replace("/dashboard");
-        }
+      } catch {
+        // Still send the user onward; dashboard / onboarding will re-check session.
       }
+      // Hard navigation survives Strict Mode cleanup (soft replace can be skipped when
+      // `cancelled` flips true after we already claimed `routed`) and clears the spinner
+      // even when the dashboard RSC is slow.
+      window.location.assign("/dashboard");
     }
 
     function tryClientMembershipOrgId(): string | null {

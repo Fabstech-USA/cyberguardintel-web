@@ -17,8 +17,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CyberGuardIntel",
-  description: "Compliance readiness platform",
+  title: {
+    default: "CyberGuardIntel AI",
+    template: "%s | CyberGuardIntel AI",
+  },
+  description:
+    "HIPAA compliance readiness platform. AI policy drafts, control-mapped evidence, and one-click audit packages.",
 };
 
 export default function RootLayout({
@@ -39,7 +43,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <ClerkProvider afterSignOutUrl="/sign-in">
+          <ClerkProvider afterSignOutUrl="/">
             {/*
               Smart CAPTCHA mounts into #clerk-captcha. Hidden outside auth routes
               so Turnstile does not stay on screen after navigating to the app.

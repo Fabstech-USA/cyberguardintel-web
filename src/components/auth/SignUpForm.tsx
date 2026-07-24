@@ -147,7 +147,7 @@ export function SignUpForm() {
           Create your account
         </h2>
         <p className="text-sm text-muted-foreground">
-          Start your 14-day free trial — no card required.
+          Start your 14-day free trial. No card required.
         </p>
       </div>
 
