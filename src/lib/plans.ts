@@ -118,5 +118,9 @@ export function getPlan(id: PlanId): Plan {
   return plan;
 }
 
-/** Sales contact for the Enterprise "Talk to us" CTA. */
-export const ENTERPRISE_SALES_EMAIL = "sales@cyberguardintel.ai";
+/** Sales contact for the Enterprise "Talk to us" CTA.
+ * Uses notifications.cyberguardintel.ai — the domain actually verified for
+ * sending/receiving in Resend (see .env.local for setup notes). The bare
+ * cyberguardintel.ai domain is not configured in Resend, so mail sent there
+ * would not be deliverable/receivable. */
+export const ENTERPRISE_SALES_EMAIL = "sales@notifications.cyberguardintel.ai";
