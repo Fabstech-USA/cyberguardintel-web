@@ -1,8 +1,8 @@
 # .github/workflows/ci-web.yml
 name: CI - Web
 on:
-  push:        { branches: [main] }
-  pull_request: { branches: [main] }
+  push:         { branches: [main, develop] }
+  pull_request: { branches: [main, develop] }
 
 jobs:
   test:
@@ -21,5 +21,21 @@ jobs:
       - run: npm run lint           # ESLint
       - run: npm run test           # Vitest
 
-  # Vercel deploys automatically via GitHub integration on merge to main
-  # No deploy step needed here
+  # Vercel deploys automatically via GitHub integration on merge to
+  # main (Production) or develop (Preview, dev.cyberguardintel.ai).
+  # This job does not deploy the app - it only runs the Prisma
+  # migration against the database matching the branch that was
+  # pushed to, so schema changes land before/alongside the deploy.
+  migrate:
+    needs: test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ github.ref == 'refs/heads/main' && secrets.DATABASE_URL_PROD || secrets.DATABASE_URL_DEV }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm' }
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npx prisma migrate deploy
