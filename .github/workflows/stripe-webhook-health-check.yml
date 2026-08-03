@@ -1,0 +1,31 @@
+# .github/workflows/stripe-webhook-health-check.yml
+#
+# Stripe's only built-in webhook-failure alert is an automatic email after
+# ~3 days of continuous delivery failure (right before it auto-disables the
+# endpoint). That's too slow for a live-mode payment endpoint, and Vercel
+# Hobby's cron scheduler only runs jobs once a day (see vercel.json), so this
+# workflow does the frequent polling instead: every 15 minutes it hits
+# /api/monitoring/stripe-webhook-health, which emails OPS_ALERT_EMAIL as soon
+# as a delivery has been failing for 30+ minutes.
+name: Stripe Webhook Health Check
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping stripe-webhook-health endpoint
+        run: |
+          status=$(curl -s -o /tmp/response.json -w "%{http_code}" \
+            -X POST "https://cyberguardintel.ai/api/monitoring/stripe-webhook-health" \
+            -H "Authorization: Bearer ${{ secrets.INTERNAL_API_KEY }}")
+          echo "HTTP status: $status"
+          cat /tmp/response.json
+          if [ "$status" -ne 200 ]; then
+            echo "Health check endpoint returned non-200 status"
+            exit 1
+          fi

@@ -22,6 +22,7 @@
     "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.7.0",
     "@react-pdf/renderer": "^4.5.1",
+    "@sentry/nextjs": "^10.69.0",
     "@tailwindcss/typography": "^0.5.19",
     "@tiptap/core": "^3.23.5",
     "@tiptap/markdown": "^3.23.5",
