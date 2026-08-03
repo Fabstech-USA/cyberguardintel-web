@@ -59,6 +59,20 @@ export function RiskAssessmentWizard({
     });
   }
 
+  function toggleControls(
+    ids: ReadonlyArray<WizardControlId>,
+    checked: boolean
+  ): void {
+    setControls((prev) => {
+      const next = new Set(prev);
+      for (const id of ids) {
+        if (checked) next.add(id);
+        else next.delete(id);
+      }
+      return next;
+    });
+  }
+
   async function submit(): Promise<void> {
     setError(null);
     setGenerating(true);
@@ -144,6 +158,7 @@ export function RiskAssessmentWizard({
           <Step3ExistingControls
             selected={controls}
             onToggle={toggleControl}
+            onToggleMany={toggleControls}
             onBack={() => go(2)}
             onContinue={() => go(4)}
           />
