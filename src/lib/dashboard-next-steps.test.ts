@@ -119,7 +119,7 @@ describe("buildDashboardNextSteps", () => {
       0
     );
     expect(steps.find((s) => s.id === "risk-assessment")?.subtitle).toContain(
-      "audit package"
+      "Implemented"
     );
   });
 
@@ -137,6 +137,8 @@ describe("buildDashboardNextSteps", () => {
     expect(steps.some((s) => s.id === "integrations")).toBe(false);
     expect(steps.some((s) => s.id === "baa")).toBe(false);
     expect(steps.some((s) => s.id === "risk-assessment")).toBe(false);
+    expect(steps.some((s) => s.id === "evidence-gaps")).toBe(true);
+    expect(steps.some((s) => s.id === "risk-assessment-update")).toBe(true);
     const policies = steps.find((s) => s.id === "policies");
     expect(policies?.title).toBe("Approve draft policies");
     expect(policies?.estimatedPoints).toBeGreaterThan(0);
@@ -162,8 +164,21 @@ describe("buildDashboardNextSteps", () => {
   });
 
   it("returns empty list when nothing meaningful remains", () => {
+    const covered = emptyControls(3).map((c, i) => ({
+      ...c,
+      ownerId: "user_1",
+      status: "IMPLEMENTED",
+      evidence: [
+        {
+          expiresAt: new Date("2026-08-15T12:00:00Z"),
+          collectedAt: now,
+          metadata: { evidenceType: "config" },
+        },
+      ],
+      controlRef: `done-${i}`,
+    }));
     const steps = buildDashboardNextSteps({
-      controls: emptyControls(3).map((c) => ({ ...c, ownerId: "user_1" })),
+      controls: covered,
       approvedPolicyCount: 18,
       unapprovedPolicyCount: 0,
       hasConnectedIntegration: true,
@@ -172,5 +187,34 @@ describe("buildDashboardNextSteps", () => {
       now,
     });
     expect(steps).toEqual([]);
+  });
+
+  it("nudges confirming status when evidence and owner exist", () => {
+    const steps = buildDashboardNextSteps({
+      controls: [
+        {
+          controlRef: "164.312(d)",
+          ownerId: "user_1",
+          status: "IN_PROGRESS",
+          evidence: [
+            {
+              expiresAt: new Date("2026-08-15T12:00:00Z"),
+              collectedAt: now,
+              metadata: { evidenceType: "config" },
+            },
+          ],
+        },
+      ],
+      approvedPolicyCount: 18,
+      unapprovedPolicyCount: 0,
+      hasConnectedIntegration: true,
+      hasSignedBaa: true,
+      hasRiskAssessment: true,
+      now,
+    });
+    expect(steps.some((s) => s.id === "mark-implemented")).toBe(true);
+    expect(
+      steps.find((s) => s.id === "mark-implemented")?.estimatedPoints
+    ).toBe(0);
   });
 });

@@ -44,7 +44,7 @@ export function ReadinessSection({ score }: Props): React.JSX.Element {
           Readiness
           <HelpTip
             label="About readiness"
-            content="Your overall HIPAA readiness score (0 to 100) based on evidence, policies, BAAs, training, and other controls. Aim higher before an audit. Gaps pull this number down."
+            content="Your overall HIPAA readiness score (0 to 100). It averages every control using evidence coverage, evidence freshness, approved policies, and assigned owners. Expand What makes up your score to see what is contributing and what is still missing."
           />
         </CardTitle>
       </CardHeader>

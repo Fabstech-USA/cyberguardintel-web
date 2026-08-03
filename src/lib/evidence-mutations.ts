@@ -3,6 +3,7 @@ import {
   type EvidenceSource,
   type Prisma,
 } from "@/generated/prisma";
+import { advanceOrgControlToInProgressIfNeeded } from "@/lib/hipaa-control-status";
 import {
   computeExpiresAt,
   isFreshnessEvidenceType,
@@ -66,6 +67,7 @@ export async function createEvidence(
     },
   });
 
+  await advanceOrgControlToInProgressIfNeeded(input.orgControlId);
   await triggerHipaaScoreRecalculation(input.organizationId);
   return evidence;
 }

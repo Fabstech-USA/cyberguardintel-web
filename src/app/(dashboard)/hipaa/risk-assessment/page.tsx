@@ -105,14 +105,14 @@ export default async function RiskAssessmentPage(): Promise<React.JSX.Element> {
       }),
     ]);
 
-  const refToWizardId = new Map(WIZARD_CONTROLS.map((c) => [c.controlRef, c.id]));
+  const knownRefs = new Set(WIZARD_CONTROLS.map((c) => c.id));
   const initialImplementedControlIds: WizardControlId[] = [];
   const seen = new Set<WizardControlId>();
   for (const oc of implementedHipaaControls) {
-    const wizardId = refToWizardId.get(oc.frameworkControl.controlRef);
-    if (wizardId && !seen.has(wizardId)) {
-      initialImplementedControlIds.push(wizardId);
-      seen.add(wizardId);
+    const ref = oc.frameworkControl.controlRef;
+    if (knownRefs.has(ref) && !seen.has(ref)) {
+      initialImplementedControlIds.push(ref);
+      seen.add(ref);
     }
   }
 

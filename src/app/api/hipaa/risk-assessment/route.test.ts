@@ -7,7 +7,8 @@ import {
 } from "@/lib/ai-risk-assessment";
 import {
   WIZARD_CONTROL_IDS,
-  type WizardControlId,
+  isWizardControlId,
+  normalizeWizardControlIds,
 } from "@/lib/risk-assessment-controls";
 
 // Mirrors the schema in route.ts. The route file imports Clerk/Prisma at
@@ -30,10 +31,17 @@ const ProfileSchema = z
 const WizardPayloadSchema = z.object({
   profile: ProfileSchema,
   implementedControlIds: z
-    .array(
-      z.enum(WIZARD_CONTROL_IDS as readonly [WizardControlId, ...WizardControlId[]])
-    )
-    .max(WIZARD_CONTROL_IDS.length),
+    .array(z.string().min(1))
+    .max(WIZARD_CONTROL_IDS.length)
+    .refine(
+      (ids) =>
+        ids.every(
+          (id) =>
+            isWizardControlId(id) ||
+            normalizeWizardControlIds([id]).length === 1
+        ),
+      { message: "One or more implementedControlIds are not valid HIPAA controls" }
+    ),
 });
 
 const sampleOutput: AiRiskOutput = {
@@ -131,7 +139,7 @@ describe("WizardPayloadSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("accepts the full wizard payload with all 9 control ids", () => {
+  it("accepts the full wizard payload with all control ids", () => {
     const result = WizardPayloadSchema.safeParse({
       profile: {
         name: "Sunrise Family Health",
