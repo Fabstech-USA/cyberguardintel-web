@@ -5,6 +5,7 @@ const {
   orgControlFindFirstMock,
   orgControlFindUniqueMock,
   orgControlUpdateMock,
+  orgControlUpdateManyMock,
   orgMemberFindUniqueMock,
   writeAuditLogMock,
   triggerRecalcMock,
@@ -12,6 +13,7 @@ const {
   orgControlFindFirstMock: vi.fn(),
   orgControlFindUniqueMock: vi.fn(),
   orgControlUpdateMock: vi.fn(),
+  orgControlUpdateManyMock: vi.fn(),
   orgMemberFindUniqueMock: vi.fn(),
   writeAuditLogMock: vi.fn(),
   triggerRecalcMock: vi.fn(),
@@ -23,6 +25,7 @@ vi.mock("@/lib/prisma", () => ({
       findFirst: orgControlFindFirstMock,
       findUnique: orgControlFindUniqueMock,
       update: orgControlUpdateMock,
+      updateMany: orgControlUpdateManyMock,
     },
     orgMember: {
       findUnique: orgMemberFindUniqueMock,
@@ -47,6 +50,7 @@ describe("assignOrgControlOwner", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     triggerRecalcMock.mockResolvedValue(72.5);
+    orgControlUpdateManyMock.mockResolvedValue({ count: 1 });
   });
 
   it("rejects MEMBER", async () => {
@@ -90,6 +94,7 @@ describe("assignOrgControlOwner", () => {
     orgControlFindFirstMock.mockResolvedValue({
       id: "oc_1",
       ownerId: null,
+      status: "NOT_STARTED",
       score: 40,
     });
     orgMemberFindUniqueMock.mockResolvedValue(null);
@@ -109,17 +114,20 @@ describe("assignOrgControlOwner", () => {
     orgControlFindFirstMock.mockResolvedValue({
       id: "oc_1",
       ownerId: null,
+      status: "NOT_STARTED",
       score: 40,
     });
     orgMemberFindUniqueMock.mockResolvedValue({ id: "mem_1" });
     orgControlUpdateMock.mockResolvedValue({
       id: "oc_1",
       ownerId: "user_2",
+      status: "NOT_STARTED",
       score: 40,
     });
     orgControlFindUniqueMock.mockResolvedValue({
       id: "oc_1",
       ownerId: "user_2",
+      status: "IN_PROGRESS",
       score: 50,
     });
 
@@ -134,13 +142,15 @@ describe("assignOrgControlOwner", () => {
     expect(result).toEqual({
       id: "oc_1",
       ownerId: "user_2",
+      status: "IN_PROGRESS",
       score: 50,
     });
     expect(orgControlUpdateMock).toHaveBeenCalledWith({
       where: { id: "oc_1" },
       data: { ownerId: "user_2" },
-      select: { id: true, ownerId: true, score: true },
+      select: { id: true, ownerId: true, status: true, score: true },
     });
+    expect(orgControlUpdateManyMock).toHaveBeenCalled();
     expect(writeAuditLogMock).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "org_control.owner_assigned",
@@ -154,16 +164,19 @@ describe("assignOrgControlOwner", () => {
     orgControlFindFirstMock.mockResolvedValue({
       id: "oc_1",
       ownerId: "user_2",
+      status: "IN_PROGRESS",
       score: 50,
     });
     orgControlUpdateMock.mockResolvedValue({
       id: "oc_1",
       ownerId: null,
+      status: "IN_PROGRESS",
       score: 50,
     });
     orgControlFindUniqueMock.mockResolvedValue({
       id: "oc_1",
       ownerId: null,
+      status: "IN_PROGRESS",
       score: 40,
     });
 
@@ -186,6 +199,7 @@ describe("assignOrgControlOwner", () => {
     orgControlFindFirstMock.mockResolvedValue({
       id: "oc_1",
       ownerId: "user_2",
+      status: "IMPLEMENTED",
       score: 55,
     });
     orgMemberFindUniqueMock.mockResolvedValue({ id: "mem_1" });

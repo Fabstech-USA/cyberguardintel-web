@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import {
   ChevronDown,
@@ -30,11 +31,18 @@ import {
 import {
   SAFEGUARD_BUCKETS,
   bucketForCategory,
+  isSafeguardBucket,
   type SafeguardBucket,
 } from "@/lib/dashboard-safeguards";
+import {
+  CONTROL_STATUSES,
+  CONTROL_STATUS_LABELS,
+  isControlStatus,
+} from "@/lib/hipaa-control-status-shared";
 import { canManageHipaaControls } from "@/lib/hipaa-policy-access";
 import { withoutDashPunctuation } from "@/lib/help-copy";
 import { cn } from "@/lib/utils";
+import type { ControlStatus } from "@/generated/prisma";
 
 type FrameworkControlRow = {
   id: string;
@@ -84,8 +92,10 @@ type ControlRow = {
 };
 
 const ALL_BUCKETS = "ALL";
+const ALL_STATUSES = "ALL";
 
 function formatStatus(status: string): string {
+  if (isControlStatus(status)) return CONTROL_STATUS_LABELS[status];
   return status
     .toLowerCase()
     .split("_")
@@ -121,7 +131,36 @@ function scoreChecklist(row: ControlRow): Array<{
   ];
 }
 
+function bucketFromSearchParam(
+  value: string | null
+): SafeguardBucket | typeof ALL_BUCKETS {
+  if (value && isSafeguardBucket(value)) return value;
+  return ALL_BUCKETS;
+}
+
+function statusFromSearchParam(
+  value: string | null
+): ControlStatus | typeof ALL_STATUSES {
+  if (value && isControlStatus(value)) return value;
+  return ALL_STATUSES;
+}
+
+function replaceControlsQuery(
+  router: ReturnType<typeof useRouter>,
+  searchParams: URLSearchParams | ReturnType<typeof useSearchParams>,
+  mutate: (params: URLSearchParams) => void
+): void {
+  const params = new URLSearchParams(searchParams.toString());
+  mutate(params);
+  const query = params.toString();
+  router.replace(query ? `/hipaa/controls?${query}` : "/hipaa/controls", {
+    scroll: false,
+  });
+}
+
 export function HipaaControlsClient(): React.JSX.Element {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { showToast, HipaaToast } = useHipaaToast();
   const [rows, setRows] = useState<ControlRow[]>([]);
   const [members, setMembers] = useState<ControlOwnerMember[]>([]);
@@ -130,11 +169,39 @@ export function HipaaControlsClient(): React.JSX.Element {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [bucket, setBucket] = useState<SafeguardBucket | typeof ALL_BUCKETS>(
-    ALL_BUCKETS
+    () => bucketFromSearchParam(searchParams.get("safeguard"))
   );
+  const [statusFilter, setStatusFilter] = useState<
+    ControlStatus | typeof ALL_STATUSES
+  >(() => statusFromSearchParam(searchParams.get("status")));
   const [unassignedOnly, setUnassignedOnly] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setBucket(bucketFromSearchParam(searchParams.get("safeguard")));
+    setStatusFilter(statusFromSearchParam(searchParams.get("status")));
+  }, [searchParams]);
+
+  function updateBucketFilter(
+    next: SafeguardBucket | typeof ALL_BUCKETS
+  ): void {
+    setBucket(next);
+    replaceControlsQuery(router, searchParams, (params) => {
+      if (next === ALL_BUCKETS) params.delete("safeguard");
+      else params.set("safeguard", next);
+    });
+  }
+
+  function updateStatusFilter(
+    next: ControlStatus | typeof ALL_STATUSES
+  ): void {
+    setStatusFilter(next);
+    replaceControlsQuery(router, searchParams, (params) => {
+      if (next === ALL_STATUSES) params.delete("status");
+      else params.set("status", next);
+    });
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -191,6 +258,9 @@ export function HipaaControlsClient(): React.JSX.Element {
     const q = search.trim().toLowerCase();
     return rows.filter((row) => {
       if (bucket !== ALL_BUCKETS && row.safeguard !== bucket) return false;
+      if (statusFilter !== ALL_STATUSES && row.status !== statusFilter) {
+        return false;
+      }
       if (unassignedOnly && row.ownerId) return false;
       if (!q) return true;
       return (
@@ -199,12 +269,73 @@ export function HipaaControlsClient(): React.JSX.Element {
         row.description.toLowerCase().includes(q)
       );
     });
-  }, [rows, search, bucket, unassignedOnly]);
+  }, [rows, search, bucket, statusFilter, unassignedOnly]);
 
   const unassignedCount = useMemo(
     () => rows.filter((r) => !r.ownerId).length,
     [rows]
   );
+
+  async function updateStatus(
+    orgControlId: string,
+    status: ControlStatus
+  ): Promise<void> {
+    const previous = rows.find((r) => r.orgControlId === orgControlId);
+    if (!previous || previous.status === status) return;
+
+    setSavingId(orgControlId);
+    setRows((current) =>
+      current.map((row) =>
+        row.orgControlId === orgControlId ? { ...row, status } : row
+      )
+    );
+
+    try {
+      const res = await fetch(`/api/hipaa/controls/${orgControlId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as {
+          error?: string;
+        };
+        throw new Error(body.error ?? "Could not update status.");
+      }
+      const body = (await res.json()) as {
+        id: string;
+        status: ControlStatus;
+        score: number;
+      };
+      setRows((current) =>
+        current.map((row) =>
+          row.orgControlId === orgControlId
+            ? { ...row, status: body.status, score: body.score }
+            : row
+        )
+      );
+      showToast(
+        "success",
+        "Status updated",
+        `Marked as ${CONTROL_STATUS_LABELS[body.status]}.`
+      );
+    } catch (err) {
+      setRows((current) =>
+        current.map((row) =>
+          row.orgControlId === orgControlId
+            ? { ...row, status: previous.status }
+            : row
+        )
+      );
+      showToast(
+        "error",
+        "Update failed",
+        err instanceof Error ? err.message : "Could not update status."
+      );
+    } finally {
+      setSavingId(null);
+    }
+  }
 
   async function assignOwner(
     orgControlId: string,
@@ -236,12 +367,18 @@ export function HipaaControlsClient(): React.JSX.Element {
       const body = (await res.json()) as {
         id: string;
         ownerId: string | null;
+        status?: ControlStatus;
         score: number;
       };
       setRows((current) =>
         current.map((row) =>
           row.orgControlId === orgControlId
-            ? { ...row, ownerId: body.ownerId, score: body.score }
+            ? {
+                ...row,
+                ownerId: body.ownerId,
+                score: body.score,
+                ...(body.status ? { status: body.status } : {}),
+              }
             : row
         )
       );
@@ -249,7 +386,7 @@ export function HipaaControlsClient(): React.JSX.Element {
         "success",
         ownerId ? "Owner assigned" : "Owner cleared",
         ownerId
-          ? "Readiness will reflect the owner on this control."
+          ? "Readiness will reflect the owner on this control. Status moves to In progress if it was Not started."
           : "This control no longer has an assigned owner."
       );
     } catch (err) {
@@ -306,7 +443,7 @@ export function HipaaControlsClient(): React.JSX.Element {
           <Select
             value={bucket}
             onValueChange={(v) =>
-              setBucket(v as SafeguardBucket | typeof ALL_BUCKETS)
+              updateBucketFilter(v as SafeguardBucket | typeof ALL_BUCKETS)
             }
           >
             <SelectTrigger id="safeguard-filter" className="w-[11rem]">
@@ -317,6 +454,29 @@ export function HipaaControlsClient(): React.JSX.Element {
               {SAFEGUARD_BUCKETS.map((b) => (
                 <SelectItem key={b} value={b}>
                   {b}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="status-filter" className="text-xs">
+            Status
+          </Label>
+          <Select
+            value={statusFilter}
+            onValueChange={(v) =>
+              updateStatusFilter(v as ControlStatus | typeof ALL_STATUSES)
+            }
+          >
+            <SelectTrigger id="status-filter" className="w-[11rem]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_STATUSES}>All</SelectItem>
+              {CONTROL_STATUSES.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {CONTROL_STATUS_LABELS[status]}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -366,6 +526,7 @@ export function HipaaControlsClient(): React.JSX.Element {
                     <HelpTip content="Per control readiness from 0 to 100. Evidence, freshness, approved policies, and ownership all contribute." />
                   </span>
                 </th>
+                <th className="px-3 py-2.5 font-medium">Status</th>
                 <th className="px-3 py-2.5 font-medium">Owner</th>
               </tr>
             </thead>
@@ -373,7 +534,7 @@ export function HipaaControlsClient(): React.JSX.Element {
               {filtered.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     className="px-3 py-8 text-center text-muted-foreground"
                   >
                     No controls match these filters.
@@ -438,6 +599,37 @@ export function HipaaControlsClient(): React.JSX.Element {
                         <td className="px-3 py-2.5 tabular-nums">
                           {Math.round(row.score)}
                         </td>
+                        <td className="px-3 py-2.5 min-w-[11rem]">
+                          <Select
+                            value={row.status}
+                            disabled={
+                              !canManage || savingId === row.orgControlId
+                            }
+                            onValueChange={(value) => {
+                              void updateStatus(
+                                row.orgControlId,
+                                value as ControlStatus
+                              );
+                            }}
+                          >
+                            <SelectTrigger
+                              aria-label={`Status for ${row.controlRef}`}
+                              className={cn(
+                                "h-8 w-full max-w-[12rem]",
+                                savingId === row.orgControlId && "opacity-70"
+                              )}
+                            >
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {CONTROL_STATUSES.map((status) => (
+                                <SelectItem key={status} value={status}>
+                                  {CONTROL_STATUS_LABELS[status]}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </td>
                         <td className="px-3 py-2.5 min-w-[12rem]">
                           <div className="flex items-center gap-2">
                             <ControlOwnerSelect
@@ -464,7 +656,7 @@ export function HipaaControlsClient(): React.JSX.Element {
                       </tr>
                       {expanded ? (
                         <tr className="border-b border-border bg-muted/15">
-                          <td colSpan={6} className="px-4 py-4 sm:px-6">
+                          <td colSpan={7} className="px-4 py-4 sm:px-6">
                             <div
                               id={`control-summary-${row.orgControlId}`}
                               className="grid gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]"
@@ -477,12 +669,14 @@ export function HipaaControlsClient(): React.JSX.Element {
                                       : "Addressable"}
                                   </Badge>
                                   <Badge variant="outline">
-                                    {formatStatus(row.status)}
-                                  </Badge>
-                                  <Badge variant="outline">
                                     {row.validEvidenceCount} evidence file
                                     {row.validEvidenceCount === 1 ? "" : "s"}
                                   </Badge>
+                                  {!canManage ? (
+                                    <span className="text-xs text-muted-foreground">
+                                      Only owners or admins can change status.
+                                    </span>
+                                  ) : null}
                                 </div>
 
                                 <section className="space-y-1.5">

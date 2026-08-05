@@ -20,6 +20,8 @@ import {
   WIZARD_CONTROL_IDS,
   WIZARD_CONTROLS,
   formatWizardSafeguardsForAi,
+  isWizardControlId,
+  normalizeWizardControlIds,
   type WizardControlId,
 } from "@/lib/risk-assessment-controls";
 import { withTenant, type TenantContext } from "@/lib/tenant";
@@ -64,8 +66,18 @@ const ProfileSchema = z
 const WizardPayloadSchema = z.object({
   profile: ProfileSchema,
   implementedControlIds: z
-    .array(z.enum(WIZARD_CONTROL_IDS as readonly [WizardControlId, ...WizardControlId[]]))
-    .max(WIZARD_CONTROL_IDS.length),
+    .array(z.string().min(1))
+    .max(WIZARD_CONTROL_IDS.length)
+    .refine(
+      (ids) =>
+        ids.every(
+          (id) =>
+            isWizardControlId(id) ||
+            // Legacy short wizard ids from the previous 9-item list.
+            normalizeWizardControlIds([id]).length === 1
+        ),
+      { message: "One or more implementedControlIds are not valid HIPAA controls" }
+    ),
 });
 
 type OrgContextForAi = {
@@ -251,7 +263,10 @@ export const POST = withTenant(async (req, ctx): Promise<Response> => {
     );
   }
 
-  const { profile, implementedControlIds } = parsedBody.data;
+  const { profile } = parsedBody.data;
+  const implementedControlIds = normalizeWizardControlIds(
+    parsedBody.data.implementedControlIds
+  );
 
   if (profile) {
     await applyProfileWritethrough(ctx, profile);

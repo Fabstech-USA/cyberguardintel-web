@@ -5,6 +5,7 @@ import {
   type BaaRecord,
 } from "@/generated/prisma";
 import { BAA_EVIDENCE_CONTROL_REF } from "@/lib/baa-control-ref";
+import { advanceOrgControlToInProgressIfNeeded } from "@/lib/hipaa-control-status";
 import { computeExpiresAt, triggerHipaaScoreRecalculation } from "@/lib/hipaa-scoring";
 import { prisma } from "@/lib/prisma";
 
@@ -96,16 +97,19 @@ export async function syncBaaEvidenceForRecord(
         orgControlId,
       },
     });
-    return;
+  } else {
+    await prisma.evidence.create({
+      data: {
+        organizationId,
+        orgControlId,
+        ...data,
+      },
+    });
   }
 
-  await prisma.evidence.create({
-    data: {
-      organizationId,
-      orgControlId,
-      ...data,
-    },
-  });
+  if (data.isValid) {
+    await advanceOrgControlToInProgressIfNeeded(orgControlId);
+  }
 }
 
 export async function removeBaaEvidence(

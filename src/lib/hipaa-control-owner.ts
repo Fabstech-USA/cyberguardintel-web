@@ -1,5 +1,7 @@
+import type { ControlStatus } from "@/generated/prisma";
 import { writeAuditLog } from "@/lib/audit-log";
 import { canManageHipaaControls } from "@/lib/hipaa-policy-access";
+import { advanceOrgControlToInProgressIfNeeded } from "@/lib/hipaa-control-status";
 import { triggerHipaaScoreRecalculation } from "@/lib/hipaa-scoring";
 import { prisma } from "@/lib/prisma";
 
@@ -19,6 +21,7 @@ export class ControlOwnerError extends Error {
 export type AssignOrgControlOwnerResult = {
   id: string;
   ownerId: string | null;
+  status: ControlStatus;
   score: number;
 };
 
@@ -52,7 +55,7 @@ export async function assignOrgControlOwner(params: {
 
   const orgControl = await prisma.orgControl.findFirst({
     where: { id: orgControlId, organizationId },
-    select: { id: true, ownerId: true, score: true },
+    select: { id: true, ownerId: true, status: true, score: true },
   });
 
   if (!orgControl) {
@@ -81,6 +84,7 @@ export async function assignOrgControlOwner(params: {
     return {
       id: orgControl.id,
       ownerId: orgControl.ownerId,
+      status: orgControl.status,
       score: orgControl.score,
     };
   }
@@ -88,8 +92,12 @@ export async function assignOrgControlOwner(params: {
   const updated = await prisma.orgControl.update({
     where: { id: orgControl.id },
     data: { ownerId: normalizedOwnerId },
-    select: { id: true, ownerId: true, score: true },
+    select: { id: true, ownerId: true, status: true, score: true },
   });
+
+  if (normalizedOwnerId !== null) {
+    await advanceOrgControlToInProgressIfNeeded(updated.id);
+  }
 
   writeAuditLog({
     organizationId,
@@ -110,12 +118,13 @@ export async function assignOrgControlOwner(params: {
 
   const refreshed = await prisma.orgControl.findUnique({
     where: { id: updated.id },
-    select: { id: true, ownerId: true, score: true },
+    select: { id: true, ownerId: true, status: true, score: true },
   });
 
   return {
     id: updated.id,
     ownerId: refreshed?.ownerId ?? updated.ownerId,
+    status: refreshed?.status ?? updated.status,
     score: refreshed?.score ?? overall,
   };
 }

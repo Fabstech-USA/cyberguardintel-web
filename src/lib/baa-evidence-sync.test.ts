@@ -24,7 +24,10 @@ const {
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     framework: { findUnique: frameworkFindUniqueMock },
-    orgControl: { findFirst: orgControlFindFirstMock },
+    orgControl: {
+      findFirst: orgControlFindFirstMock,
+      updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+    },
     evidence: {
       findFirst: evidenceFindFirstMock,
       create: evidenceCreateMock,

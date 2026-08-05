@@ -91,6 +91,8 @@ export type ControlScoreSnapshot = {
   controlRef: string;
   ownerId: string | null;
   evidence: EvidenceFreshnessInput[];
+  /** Optional; ignored by the readiness formula, used by dashboard next-steps. */
+  status?: string;
 };
 
 /** Overall readiness 0–100 (one decimal), matching `recalculateHipaaScore`. */

@@ -76,12 +76,21 @@ function buildQueryParams(
   return params;
 }
 
+const FRESHNESS_FILTERS = new Set(["all", "fresh", "expiring", "stale"]);
+
+function freshnessFromSearchParam(value: string | null): string {
+  if (value && FRESHNESS_FILTERS.has(value)) return value;
+  return "all";
+}
+
 export function EvidenceBrowserClient() {
   const searchParams = useSearchParams();
-  const initialSource = searchParams.get("source") ?? "all";
   const [filters, setFilters] = useState<FiltersState>(() => ({
     ...DEFAULT_FILTERS,
-    source: initialSource || "all",
+    source: searchParams.get("source") || "all",
+    freshness: freshnessFromSearchParam(searchParams.get("freshness")),
+    controlRef: searchParams.get("controlRef") || "all",
+    q: searchParams.get("q") || "",
   }));
   const [items, setItems] = useState<EvidenceListItem[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -134,6 +143,16 @@ export function EvidenceBrowserClient() {
       setLoading(false);
     }
   }, [filters]);
+
+  useEffect(() => {
+    setFilters((prev) => ({
+      ...prev,
+      source: searchParams.get("source") || "all",
+      freshness: freshnessFromSearchParam(searchParams.get("freshness")),
+      controlRef: searchParams.get("controlRef") || "all",
+      q: searchParams.get("q") || prev.q,
+    }));
+  }, [searchParams]);
 
   useEffect(() => {
     setPageIndex(0);
