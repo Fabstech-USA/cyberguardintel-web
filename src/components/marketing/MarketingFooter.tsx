@@ -64,6 +64,12 @@ export function MarketingFooter(): React.JSX.Element {
             >
               Book a demo
             </a>
+            <Link
+              href="/contact"
+              className="text-muted-foreground hover:text-foreground"
+            >
+              Contact us
+            </Link>
           </div>
           <div className="flex flex-col gap-2">
             <p className="font-medium text-foreground">Legal</p>
