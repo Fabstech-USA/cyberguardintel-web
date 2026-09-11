@@ -65,6 +65,21 @@ export function MarketingFooter(): React.JSX.Element {
               Book a demo
             </a>
           </div>
+          <div className="flex flex-col gap-2">
+            <p className="font-medium text-foreground">Legal</p>
+            <Link
+              href="/legal/terms"
+              className="text-muted-foreground hover:text-foreground"
+            >
+              Terms
+            </Link>
+            <Link
+              href="/legal/privacy"
+              className="text-muted-foreground hover:text-foreground"
+            >
+              Privacy
+            </Link>
+          </div>
         </div>
       </div>
     </footer>

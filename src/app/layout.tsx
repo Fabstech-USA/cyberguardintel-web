@@ -4,6 +4,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { ClerkCaptchaHost } from "@/components/clerk/ClerkCaptchaHost";
+import { clerkAuthLocalization } from "@/lib/clerk-auth-localization";
 import "./globals.css";
 
 const inter = Inter({
@@ -43,7 +44,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <ClerkProvider afterSignOutUrl="/">
+          <ClerkProvider afterSignOutUrl="/" localization={clerkAuthLocalization}>
             {/*
               Smart CAPTCHA mounts into #clerk-captcha. Hidden outside auth routes
               so Turnstile does not stay on screen after navigating to the app.
