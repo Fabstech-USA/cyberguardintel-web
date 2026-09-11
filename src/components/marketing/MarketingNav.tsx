@@ -38,6 +38,12 @@ export function MarketingNav(): React.JSX.Element {
               {link.label}
             </a>
           ))}
+          <Link
+            href="/contact"
+            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Contact
+          </Link>
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
@@ -88,6 +94,13 @@ export function MarketingNav(): React.JSX.Element {
               {link.label}
             </a>
           ))}
+          <Link
+            href="/contact"
+            className="py-1 text-sm text-foreground"
+            onClick={() => setOpen(false)}
+          >
+            Contact
+          </Link>
           <a
             href={DEMO_MAILTO}
             className="py-1 text-sm text-muted-foreground"

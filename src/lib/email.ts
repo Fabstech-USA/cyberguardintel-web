@@ -4,6 +4,8 @@ export type EmailMessage = {
   to: string;
   subject: string;
   html: string;
+  /** Lets recipients hit "Reply" and reach the original sender directly. */
+  replyTo?: string;
 };
 
 let resendClient: Resend | null = null;
@@ -35,6 +37,7 @@ export async function sendEmail(message: EmailMessage) {
     to: [message.to],
     subject: message.subject,
     html: message.html,
+    ...(message.replyTo ? { replyTo: message.replyTo } : {}),
   });
 
   if (result.error) {
